@@ -71,14 +71,14 @@ export default function Home() {
         {/* Hero Section */}
         <section className="min-h-screen flex items-center justify-center text-center px-4 -mt-24">
           <div className="space-y-6">
-            <p className="text-lg md:text-xl font-bold text-gray-300 tracking-wider">KAIST ICISTS Presents</p>
+            <p className="text-lg md:text-xl font-bold text-gray-300 tracking-wider">ICISTS Presents</p>
             <h2 className="text-5xl md:text-7xl lg:text-8xl font-black font-roboto tracking-tighter gradient-text">
               GRAFFITI 2025
             </h2>
             <p className="text-2xl md:text-4xl font-bold text-white">&quot;One Idea can Paint the Future&quot;</p>
-            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto">
               여름의 정점, 당신의 아이디어를 세상에 낙서하듯 그릴 시간!<br />
-              AI 스타트업의 기술로 사회 문제를 해결하는 새로운 방식의 해커톤에 당신을 초대합니다.
+              AI 스타트업의 기술로 사회 문제를 해결하는 새로운 방식의 해커톤에 당신을 초대합니다
             </p>
             <a href="#" className="inline-block gradient-button font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-transform">
               해커톤 참여하기
