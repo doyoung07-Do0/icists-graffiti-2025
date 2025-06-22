@@ -8,7 +8,7 @@ export default function Navigation() {
   const pathname = usePathname();
   
   return (
-    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4">
+    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[52rem] px-4">
       <div className="flex items-center justify-between px-6 py-3 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-lg">
         <Link href="/" className="text-lg font-bold font-roboto gradient-text">
           GRAFFITI 2025
@@ -33,7 +33,7 @@ export default function Navigation() {
               }`}
             >
               Investment Game
-              <span className="ml-1 inline-block transform group-hover:rotate-180 transition-transform">
+              <span className="ml-1 inline-block text-xs transform group-hover:scale-75 transition-transform">
                 ▼
               </span>
             </button>

@@ -208,7 +208,7 @@ export default function Home() {
           <div className="container mx-auto">
             <h3 className="text-3xl md:text-4xl font-bold mb-4">당신의 아이디어로 미래를 그릴 준비가 되셨나요?</h3>
             <p className="text-gray-400 mb-8 max-w-2xl mx-auto">망설이지 마세요. GRAFFITI 2025는 당신의 아이디어가 현실이 되는 무대입니다.</p>
-            <a href="#" className="inline-block gradient-button font-bold py-4 px-10 rounded-full text-xl shadow-lg transform hover:scale-105 transition-transform">
+            <a href="https://www.instagram.com/icistskaist/" target="_blank" rel="noopener noreferrer" className="inline-block gradient-button font-bold py-4 px-10 rounded-full text-xl shadow-lg transform hover:scale-105 transition-transform">
               ICISTS 인스타에서 신청하기
             </a>
           </div>
