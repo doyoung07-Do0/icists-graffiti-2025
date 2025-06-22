@@ -14,7 +14,25 @@ export default function Navigation() {
   const [isInvestmentDropdownOpen, setIsInvestmentDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   
-  const isGuest = session?.user?.email ? session.user.email.endsWith('@guest.com') : true;
+  // Debug logging
+  console.log('Navigation Debug:', { session, status });
+  
+  const isGuest = session?.user?.email ? session.user.email.endsWith('@guest.com') : false;
+  
+  // More strict condition: only show user dropdown if it's a real authenticated user
+  // Guest users or any user with @guest.com email should be treated as not logged in
+  const isRealUser = session?.user && 
+                     session.user.email && 
+                     !session.user.email.endsWith('@guest.com') &&
+                     !session.user.email.startsWith('guest-');
+  
+  console.log('Navigation Auth Check:', { 
+    hasSession: !!session, 
+    hasUser: !!session?.user, 
+    email: session?.user?.email,
+    isGuest, 
+    isRealUser 
+  });
   
   // Inline styles for complete independence
   const navStyles: React.CSSProperties = {
@@ -327,7 +345,7 @@ export default function Navigation() {
               <div style={loadingStyles}>
                 Loading...
               </div>
-            ) : session?.user ? (
+            ) : isRealUser ? (
               <div 
                 style={dropdownStyles}
                 onMouseEnter={() => setIsUserDropdownOpen(true)}
@@ -356,7 +374,7 @@ export default function Navigation() {
                     maxWidth: '96px',
                     color: '#ffffff'
                   }}>
-                    {isGuest ? 'Guest' : session.user.email?.split('@')[0] || 'User'}
+                    {session.user.email?.split('@')[0] || 'User'}
                   </span>
                   <span style={{ fontSize: '12px', color: '#ffffff' }}>▼</span>
                 </button>
@@ -368,7 +386,7 @@ export default function Navigation() {
                       color: '#d1d5db',
                       pointerEvents: 'none',
                     }}>
-                      {isGuest ? 'Guest User' : session.user.email}
+                      {session.user.email}
                     </div>
                     <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.2)', margin: '4px 0' }} />
                     <button 
@@ -382,16 +400,12 @@ export default function Navigation() {
                         e.currentTarget.style.color = '#d1d5db';
                       }}
                       onClick={() => {
-                        if (isGuest) {
-                          router.push('/login');
-                        } else {
-                          signOut({
-                            redirectTo: '/',
-                          });
-                        }
+                        signOut({
+                          redirectTo: '/',
+                        });
                       }}
                     >
-                      {isGuest ? 'Login to your account' : 'Sign out'}
+                      Sign out
                     </button>
                   </div>
                 )}
