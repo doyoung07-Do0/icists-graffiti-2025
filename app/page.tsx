@@ -20,14 +20,6 @@ export default function Home() {
           color: #E5E7EB;
         }
 
-        /* 그라데이션 텍스트를 위한 커스텀 클래스 */
-        .gradient-text {
-          background: linear-gradient(to right, #D2D8B2, #4CAF80);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-        }
-
         /* 로고, 제목 등에 사용할 영문 폰트 */
         .font-roboto {
           font-family: 'Roboto', sans-serif;
