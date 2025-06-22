@@ -24,7 +24,7 @@ export default function Navigation() {
     transform: 'translateX(-50%)',
     zIndex: 50,
     width: '100%',
-    maxWidth: '52rem',
+    maxWidth: '72rem',
     padding: '0 16px',
   };
 
@@ -38,6 +38,9 @@ export default function Navigation() {
     borderRadius: '16px',
     border: '1px solid rgba(255, 255, 255, 0.2)',
     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    width: '100%',
+    minWidth: '0',
+    boxSizing: 'border-box',
   };
 
   const logoStyles: React.CSSProperties = {
@@ -170,174 +173,125 @@ export default function Navigation() {
   };
 
   return (
-    <nav style={navStyles}>
-      <div style={containerStyles}>
-        <Link href="/" style={logoStyles}>
-          GRAFFITI 2025
-        </Link>
+    <>
+      {/* Override any global styles that might interfere */}
+      <style jsx>{`
+        .navigation-override {
+          position: fixed !important;
+          top: 16px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          z-index: 50 !important;
+          width: 100% !important;
+          max-width: 72rem !important;
+          padding: 0 16px !important;
+          box-sizing: border-box !important;
+        }
         
-        <div style={menuContainerStyles}>
-          <Link 
-            href="/" 
-            style={getNavLinkStyles(pathname === '/')}
-            onMouseEnter={(e) => {
-              if (pathname !== '/') {
-                e.currentTarget.style.color = '#ffffff';
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (pathname !== '/') {
-                e.currentTarget.style.color = '#d1d5db';
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }
-            }}
-          >
-            Home
-          </Link>
-          <Link 
-            href="/about" 
-            style={getNavLinkStyles(pathname === '/about')}
-            onMouseEnter={(e) => {
-              if (pathname !== '/about') {
-                e.currentTarget.style.color = '#ffffff';
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (pathname !== '/about') {
-                e.currentTarget.style.color = '#d1d5db';
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }
-            }}
-          >
-            About
-          </Link>
-          <Link 
-            href="/chat" 
-            style={getNavLinkStyles(pathname.startsWith('/chat'))}
-            onMouseEnter={(e) => {
-              if (!pathname.startsWith('/chat')) {
-                e.currentTarget.style.color = '#ffffff';
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!pathname.startsWith('/chat')) {
-                e.currentTarget.style.color = '#d1d5db';
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }
-            }}
-          >
-            Ice Breaking
+        .navigation-container-override {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          padding: 12px 24px !important;
+          background-color: rgba(255, 255, 255, 0.1) !important;
+          backdrop-filter: blur(16px) !important;
+          border-radius: 16px !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+        }
+      `}</style>
+      
+      <nav className="navigation-override" style={navStyles}>
+        <div className="navigation-container-override" style={containerStyles}>
+          <Link href="/" style={logoStyles}>
+            GRAFFITI 2025
           </Link>
           
-          {/* Investment Game Dropdown */}
-          <div 
-            style={dropdownStyles}
-            onMouseEnter={() => setIsInvestmentDropdownOpen(true)}
-            onMouseLeave={() => setIsInvestmentDropdownOpen(false)}
-          >
-            <button 
-              style={dropdownButtonStyles}
+          <div style={menuContainerStyles}>
+            <Link 
+              href="/" 
+              style={getNavLinkStyles(pathname === '/')}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#ffffff';
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                if (pathname !== '/') {
+                  e.currentTarget.style.color = '#ffffff';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                }
               }}
               onMouseLeave={(e) => {
-                if (!pathname.startsWith('/investment')) {
+                if (pathname !== '/') {
                   e.currentTarget.style.color = '#d1d5db';
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }
               }}
             >
-              Investment Game
-              <span style={{ fontSize: '12px', marginLeft: '4px' }}>▼</span>
-            </button>
-            {isInvestmentDropdownOpen && (
-              <div style={dropdownContentStyles}>
-                <Link 
-                  href="/investment/overview" 
-                  style={dropdownItemStyles}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-                    e.currentTarget.style.color = '#ffffff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#d1d5db';
-                  }}
-                >
-                  Overview
-                </Link>
-                <Link 
-                  href="/investment/play" 
-                  style={dropdownItemStyles}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-                    e.currentTarget.style.color = '#ffffff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#d1d5db';
-                  }}
-                >
-                  Play
-                </Link>
-              </div>
-            )}
-          </div>
-          
-          {/* User Authentication Section */}
-          {status === 'loading' ? (
-            <div style={loadingStyles}>
-              Loading...
-            </div>
-          ) : session?.user ? (
+              Home
+            </Link>
+            <Link 
+              href="/about" 
+              style={getNavLinkStyles(pathname === '/about')}
+              onMouseEnter={(e) => {
+                if (pathname !== '/about') {
+                  e.currentTarget.style.color = '#ffffff';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (pathname !== '/about') {
+                  e.currentTarget.style.color = '#d1d5db';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+            >
+              About
+            </Link>
+            <Link 
+              href="/chat" 
+              style={getNavLinkStyles(pathname.startsWith('/chat'))}
+              onMouseEnter={(e) => {
+                if (!pathname.startsWith('/chat')) {
+                  e.currentTarget.style.color = '#ffffff';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!pathname.startsWith('/chat')) {
+                  e.currentTarget.style.color = '#d1d5db';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+            >
+              Ice Breaking
+            </Link>
+            
+            {/* Investment Game Dropdown */}
             <div 
               style={dropdownStyles}
-              onMouseEnter={() => setIsUserDropdownOpen(true)}
-              onMouseLeave={() => setIsUserDropdownOpen(false)}
+              onMouseEnter={() => setIsInvestmentDropdownOpen(true)}
+              onMouseLeave={() => setIsInvestmentDropdownOpen(false)}
             >
               <button 
-                style={userButtonStyles}
+                style={dropdownButtonStyles}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-                }}
-                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#ffffff';
                   e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
                 }}
+                onMouseLeave={(e) => {
+                  if (!pathname.startsWith('/investment')) {
+                    e.currentTarget.style.color = '#d1d5db';
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
               >
-                <Image
-                  src={`https://avatar.vercel.sh/${session.user.email}`}
-                  alt={session.user.email ?? 'User Avatar'}
-                  width={20}
-                  height={20}
-                  style={{ borderRadius: '50%' }}
-                />
-                <span style={{ 
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '96px',
-                  color: '#ffffff'
-                }}>
-                  {isGuest ? 'Guest' : session.user.email?.split('@')[0] || 'User'}
-                </span>
-                <span style={{ fontSize: '12px', color: '#ffffff' }}>▼</span>
+                Investment Game
+                <span style={{ fontSize: '12px', marginLeft: '4px' }}>▼</span>
               </button>
-              {isUserDropdownOpen && (
-                <div style={userDropdownContentStyles}>
-                  <div style={{
-                    padding: '8px',
-                    fontSize: '14px',
-                    color: '#d1d5db',
-                    pointerEvents: 'none',
-                  }}>
-                    {isGuest ? 'Guest User' : session.user.email}
-                  </div>
-                  <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.2)', margin: '4px 0' }} />
-                  <button 
+              {isInvestmentDropdownOpen && (
+                <div style={dropdownContentStyles}>
+                  <Link 
+                    href="/investment/overview" 
                     style={dropdownItemStyles}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
@@ -347,39 +301,120 @@ export default function Navigation() {
                       e.currentTarget.style.backgroundColor = 'transparent';
                       e.currentTarget.style.color = '#d1d5db';
                     }}
-                    onClick={() => {
-                      if (isGuest) {
-                        router.push('/login');
-                      } else {
-                        signOut({
-                          redirectTo: '/',
-                        });
-                      }
+                  >
+                    Overview
+                  </Link>
+                  <Link 
+                    href="/investment/play" 
+                    style={dropdownItemStyles}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                      e.currentTarget.style.color = '#ffffff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = '#d1d5db';
                     }}
                   >
-                    {isGuest ? 'Login to your account' : 'Sign out'}
-                  </button>
+                    Play
+                  </Link>
                 </div>
               )}
             </div>
-          ) : (
-            <Link 
-              href="/login" 
-              style={loginButtonStyles}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#ffffff';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              Login
-            </Link>
-          )}
+            
+            {/* User Authentication Section */}
+            {status === 'loading' ? (
+              <div style={loadingStyles}>
+                Loading...
+              </div>
+            ) : session?.user ? (
+              <div 
+                style={dropdownStyles}
+                onMouseEnter={() => setIsUserDropdownOpen(true)}
+                onMouseLeave={() => setIsUserDropdownOpen(false)}
+              >
+                <button 
+                  style={userButtonStyles}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                >
+                  <Image
+                    src={`https://avatar.vercel.sh/${session.user.email}`}
+                    alt={session.user.email ?? 'User Avatar'}
+                    width={20}
+                    height={20}
+                    style={{ borderRadius: '50%' }}
+                  />
+                  <span style={{ 
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '96px',
+                    color: '#ffffff'
+                  }}>
+                    {isGuest ? 'Guest' : session.user.email?.split('@')[0] || 'User'}
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#ffffff' }}>▼</span>
+                </button>
+                {isUserDropdownOpen && (
+                  <div style={userDropdownContentStyles}>
+                    <div style={{
+                      padding: '8px',
+                      fontSize: '14px',
+                      color: '#d1d5db',
+                      pointerEvents: 'none',
+                    }}>
+                      {isGuest ? 'Guest User' : session.user.email}
+                    </div>
+                    <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.2)', margin: '4px 0' }} />
+                    <button 
+                      style={dropdownItemStyles}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.color = '#ffffff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = '#d1d5db';
+                      }}
+                      onClick={() => {
+                        if (isGuest) {
+                          router.push('/login');
+                        } else {
+                          signOut({
+                            redirectTo: '/',
+                          });
+                        }
+                      }}
+                    >
+                      {isGuest ? 'Login to your account' : 'Sign out'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link 
+                href="/login" 
+                style={loginButtonStyles}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ffffff';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                Login
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }
