@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   return (
@@ -32,18 +33,6 @@ export default function Home() {
           font-family: 'Roboto', sans-serif;
         }
 
-        /* 스크롤 애니메이션을 위한 클래스 */
-        .fade-in {
-          opacity: 0;
-          transform: translateY(20px);
-          transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-        }
-
-        .fade-in.visible {
-          opacity: 1;
-          transform: translateY(0);
-        }
-
         /* 그라데이션 버튼 스타일 */
         .gradient-button {
           background-image: linear-gradient(to right, #D2D8B2 0%, #4CAF80 50%, #D2D8B2 100%);
@@ -66,28 +55,42 @@ export default function Home() {
         }
       `}</style>
 
-      {/* Main Content */}
-      <main className="pt-28">
-        {/* Hero Section */}
-        <section className="min-h-screen flex items-center justify-center text-center px-4 -mt-24">
-          <div className="space-y-6">
-            <p className="text-lg md:text-xl font-bold text-gray-300 tracking-wider">ICISTS Presents</p>
-            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black font-roboto tracking-tighter gradient-text">
+      {/* Main Content with page load animation */}
+      <motion.main
+        className="pt-28"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+      >
+        {/* Hero Section with special animation */}
+        <motion.section
+          className="min-h-screen flex items-center justify-center text-center px-4 -mt-24"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+        >
+          <motion.div className="space-y-6" initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }}>
+            <motion.p className="text-lg md:text-xl font-bold text-gray-300 tracking-wider" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              ICISTS Presents
+            </motion.p>
+            <motion.h2 className="text-5xl md:text-7xl lg:text-8xl font-black font-roboto tracking-tighter gradient-text" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               GRAFFITI 2025
-            </h2>
-            <p className="text-2xl md:text-4xl font-bold text-white">&quot;One Idea can Paint the Future&quot;</p>
-            <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto">
+            </motion.h2>
+            <motion.p className="text-2xl md:text-4xl font-bold text-white" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              &quot;One Idea can Paint the Future&quot;
+            </motion.p>
+            <motion.p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               여름의 정점, 당신의 아이디어를 세상에 낙서하듯 그릴 시간!<br />
               AI 스타트업의 기술로 사회 문제를 해결하는 새로운 방식의 해커톤에 당신을 초대합니다
-            </p>
-            <a href="#" className="inline-block gradient-button font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-transform">
+            </motion.p>
+            <motion.a href="#" className="inline-block gradient-button font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-transform" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
               해커톤 참여하기
-            </a>
-          </div>
-        </section>
+            </motion.a>
+          </motion.div>
+        </motion.section>
 
         {/* Why GRAFFITI? Section */}
-        <section id="about" className="py-20 px-4 fade-in">
+        <motion.section id="about" className="py-20 px-4" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.2 }}>
           <div className="container mx-auto max-w-4xl text-center">
             <h3 className="text-4xl md:text-5xl font-bold mb-4">🎨 왜 <span className="gradient-text">GRAFFITI</span>인가요?</h3>
             <div className="section-divider"></div>
@@ -109,10 +112,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Ice Breaking Section */}
-        <section id="ice-breaking" className="py-20 bg-gray-900/50 px-4 fade-in">
+        <motion.section id="ice-breaking" className="py-20 bg-gray-900/50 px-4" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.3 }}>
           <div className="container mx-auto max-w-4xl text-center">
             <h3 className="text-4xl md:text-5xl font-bold mb-4">🧊 <span className="gradient-text">Ice Breaking</span> &amp; Networking</h3>
             <div className="section-divider"></div>
@@ -130,10 +133,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Program Structure / Investment Game Section */}
-        <section id="investment-game" className="py-20 px-4 fade-in">
+        <motion.section id="investment-game" className="py-20 px-4" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.4 }}>
           <div className="container mx-auto max-w-5xl">
             <div className="text-center mb-12">
               <h3 className="text-4xl md:text-5xl font-bold">🚀 행사 구성</h3>
@@ -166,10 +169,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Event Details Section */}
-        <section id="details" className="py-20 bg-gray-900/50 px-4 fade-in">
+        <motion.section id="details" className="py-20 bg-gray-900/50 px-4" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.5 }}>
           <div className="container mx-auto max-w-4xl">
             <div className="text-center mb-12">
               <h3 className="text-4xl md:text-5xl font-bold">💡 행사 개요</h3>
@@ -206,10 +209,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Final CTA Section */}
-        <section className="py-24 text-center px-4 fade-in">
+        <motion.section className="py-24 text-center px-4" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.6 }}>
           <div className="container mx-auto">
             <h3 className="text-3xl md:text-4xl font-bold mb-4">당신의 아이디어로 미래를 그릴 준비가 되셨나요?</h3>
             <p className="text-gray-400 mb-8 max-w-2xl mx-auto">망설이지 마세요. GRAFFITI 2025는 당신의 아이디어가 현실이 되는 무대입니다.</p>
@@ -217,45 +220,22 @@ export default function Home() {
               ICISTS 인스타에서 신청하기
             </a>
           </div>
-        </section>
-      </main>
+        </motion.section>
+      </motion.main>
 
-      {/* Footer */}
-      <footer className="bg-black py-8 px-4">
+      {/* Footer with animation */}
+      <motion.footer
+        className="bg-black py-8 px-4"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.7, ease: 'easeOut' }}
+      >
         <div className="container mx-auto text-center text-gray-500">
           <p className="font-bold text-lg text-gray-300 mb-2">GRAFFITI 2025 by ICISTS</p>
           <p>문의: 인스타그램 DM 또는 이메일 icists@icists.org</p>
           <p className="mt-4 text-sm">&copy; 2025 KAIST ICISTS. All rights reserved.</p>
         </div>
-      </footer>
-
-      {/* Scroll Animation Script */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            // 스크롤에 따른 페이드인 효과
-            const faders = document.querySelectorAll('.fade-in');
-            const appearOptions = {
-              threshold: 0.2, // 20% 보이면 실행
-              rootMargin: "0px 0px -50px 0px"
-            };
-            const appearOnScroll = new IntersectionObserver(function (entries, appearOnScroll) {
-              entries.forEach(entry => {
-                if (!entry.isIntersecting) {
-                  return;
-                } else {
-                  entry.target.classList.add('visible');
-                  appearOnScroll.unobserve(entry.target);
-                }
-              });
-            }, appearOptions);
-
-            faders.forEach(fader => {
-              appearOnScroll.observe(fader);
-            });
-          `,
-        }}
-      />
+      </motion.footer>
     </div>
   );
 }
