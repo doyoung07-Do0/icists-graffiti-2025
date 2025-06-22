@@ -24,7 +24,7 @@ export default function Navigation() {
             Ice Breaking
           </NavLink>
           <NavLink href="#investment-game" isActive={pathname === '#investment-game'}>
-            Investment
+            Investment Game
           </NavLink>
           <Link 
             href="/login" 

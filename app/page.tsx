@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="bg-[#111111] text-[#E5E7EB]">
+    <div className="bg-black text-[#E5E7EB]">
       {/* Custom Styles */}
       <style jsx global>{`
         /* 부드러운 스크롤 효과 */
