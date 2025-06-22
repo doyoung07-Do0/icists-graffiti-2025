@@ -14,9 +14,6 @@ export default function Navigation() {
   const [isInvestmentDropdownOpen, setIsInvestmentDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   
-  // Debug logging
-  console.log('Navigation Debug:', { session, status });
-  
   const isGuest = session?.user?.email ? session.user.email.endsWith('@guest.com') : false;
   
   // More strict condition: only show user dropdown if it's a real authenticated user
@@ -25,14 +22,6 @@ export default function Navigation() {
                      session.user.email && 
                      !session.user.email.endsWith('@guest.com') &&
                      !session.user.email.startsWith('guest-');
-  
-  console.log('Navigation Auth Check:', { 
-    hasSession: !!session, 
-    hasUser: !!session?.user, 
-    email: session?.user?.email,
-    isGuest, 
-    isRealUser 
-  });
   
   // Inline styles for complete independence
   const navStyles: React.CSSProperties = {
