@@ -1,62 +1,101 @@
-<a href="https://chat.vercel.ai/">
-  <img alt="Next.js 14 and App Router-ready AI chatbot." src="app/(chat)/opengraph-image.png">
-  <h1 align="center">Chat SDK</h1>
-</a>
+<div align="center">
+  <h1>GRAFFITI 2025</h1>
+  <h3>AI Startup Innovation Challenge by ICISTS</h3>
+  <p>"One Idea can Paint the Future" - Bridging AI Startups and Student Innovation</p>
+</div>
 
 <p align="center">
-    Chat SDK is a free, open-source template built with Next.js and the AI SDK that helps you quickly build powerful chatbot applications.
-</p>
-
-<p align="center">
-  <a href="https://chat-sdk.dev"><strong>Read Docs</strong></a> ·
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#model-providers"><strong>Model Providers</strong></a> ·
-  <a href="#deploy-your-own"><strong>Deploy Your Own</strong></a> ·
-  <a href="#running-locally"><strong>Running locally</strong></a>
+  <a href="#about"><strong>About</strong></a> ·
+  <a href="#event-details"><strong>Event Details</strong></a> ·
+  <a href="#investment-game"><strong>Investment Game</strong></a> ·
+  <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
+  <a href="#documentation"><strong>Documentation</strong></a>
 </p>
 <br/>
 
-## Features
+## About GRAFFITI 2025
 
-- [Next.js](https://nextjs.org) App Router
-  - Advanced routing for seamless navigation and performance
-  - React Server Components (RSCs) and Server Actions for server-side rendering and increased performance
-- [AI SDK](https://sdk.vercel.ai/docs)
-  - Unified API for generating text, structured objects, and tool calls with LLMs
-  - Hooks for building dynamic chat and generative user interfaces
-  - Supports xAI (default), OpenAI, Fireworks, and other model providers
-- [shadcn/ui](https://ui.shadcn.com)
-  - Styling with [Tailwind CSS](https://tailwindcss.com)
-  - Component primitives from [Radix UI](https://radix-ui.com) for accessibility and flexibility
-- Data Persistence
-  - [Neon Serverless Postgres](https://vercel.com/marketplace/neon) for saving chat history and user data
-  - [Vercel Blob](https://vercel.com/storage/blob) for efficient file storage
-- [Auth.js](https://authjs.dev)
-  - Simple and secure authentication
+GRAFFITI 2025 is a 4-day startup hackathon organized by ICISTS, a student organization at KAIST. This unique event brings together students and AI startups to develop innovative solutions using cutting-edge AI technologies. Unlike traditional hackathons, GRAFFITI focuses on applying existing AI technologies to solve new problems, rather than building from scratch.
 
-## Model Providers
+### Key Highlights
+- 🎯 **Total Prize**: 1,400,000 KRW
+- 🤖 **AI-Powered Innovation**: Work with real AI technologies from partner startups
+- 🌍 **Social Impact**: Solve real-world problems across various domains
+- 🎓 **Inclusive**: Open to all university students, regardless of major
+- 🏆 **Pitch & Network**: Present your solution to industry experts and potential investors
 
-This template ships with [xAI](https://x.ai) `grok-2-1212` as the default chat model. However, with the [AI SDK](https://sdk.vercel.ai/docs), you can switch LLM providers to [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://sdk.vercel.ai/providers/ai-sdk-providers) with just a few lines of code.
+## Event Details
 
-## Deploy Your Own
+### 📅 Date & Location
+- **When**: July 22-25, 2025 (4 days, 3 nights)
+- **Where**: KAIST Main Campus, Daejeon
+- **Eligibility**: University students interested in startups, AI, and social problem-solving
 
-You can deploy your own version of the Next.js AI Chatbot to Vercel with one click:
+### 🎯 Event Structure
+1. **Investment Game**: Evaluate and invest in AI startups, then get matched with one for your team project
+2. **Expert Talks**: Gain insights from VC, AI, and startup industry leaders
+3. **Team Project**: Form 4-6 person teams to develop AI-based service products using your matched startup's technology
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fai-chatbot&env=AUTH_SECRET&envDescription=Learn+more+about+how+to+get+the+API+Keys+for+the+application&envLink=https%3A%2F%2Fgithub.com%2Fvercel%2Fai-chatbot%2Fblob%2Fmain%2F.env.example&demo-title=AI+Chatbot&demo-description=An+Open-Source+AI+Chatbot+Template+Built+With+Next.js+and+the+AI+SDK+by+Vercel.&demo-url=https%3A%2F%2Fchat.vercel.ai&products=%5B%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22ai%22%2C%22productSlug%22%3A%22grok%22%2C%22integrationSlug%22%3A%22xai%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22neon%22%2C%22integrationSlug%22%3A%22neon%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22upstash-kv%22%2C%22integrationSlug%22%3A%22upstash%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D)
+### 💰 Participation Fee
+- **Early Bird (until July 3, 2025)**:
+  - Without accommodation: 65,000 KRW
+  - With accommodation: 85,000 KRW
+- **Regular (until July 18, 2025)**:
+  - Without accommodation: 85,000 KRW
+  - With accommodation: 105,000 KRW
 
-## Running locally
+*Includes lunch, dinner, and networking party during the event*
 
-You will need to use the environment variables [defined in `.env.example`](.env.example) to run Next.js AI Chatbot. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
+## Investment Game
 
-> Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
+The Investment Game is a core component of GRAFFITI 2025, designed to match AI startups with student teams through a simulated investment process. Participants will:
 
-1. Install Vercel CLI: `npm i -g vercel`
-2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
-3. Download your environment variables: `vercel env pull`
+- Evaluate startup pitches
+- Submit investment portfolios
+- Compete for the highest returns
+- Get matched with startups for the team project phase
 
-```bash
-pnpm install
-pnpm dev
-```
+Learn more about the Investment Game process and rules in our documentation:
+- [English Version](/docs/INVESTMENT_GAME.md)
+- [한국어 버전](/docs/INVESTMENT_GAME_KOR.md)
 
-Your app template should now be running on [localhost:3000](http://localhost:3000).
+## Documentation
+
+- [Event Invitation](/docs/INVITE.md) - Complete event details and invitation
+- [Investment Game (English)](/docs/INVESTMENT_GAME.md) - Rules and process
+- [Investment Game (한국어)](/docs/INVESTMENT_GAME_KOR.md) - 투자 게임 규칙 및 진행 방식
+
+## Tech Stack
+
+This project is built with modern web technologies to ensure a seamless development experience:
+
+- **Frontend**:
+  - [Next.js 14](https://nextjs.org/) with App Router
+  - [Tailwind CSS](https://tailwindcss.com) for styling
+  - [shadcn/ui](https://ui.shadcn.com) for accessible components
+  - [Radix UI](https://radix-ui.com) primitives
+
+- **Backend**:
+  - [Next.js API Routes](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)
+  - [Neon Serverless Postgres](https://neon.tech) for database
+  - [Vercel Blob](https://vercel.com/storage/blob) for file storage
+
+- **AI & Authentication**:
+  - [Vercel AI SDK](https://sdk.vercel.ai) for AI integration
+  - [Auth.js](https://authjs.dev) for authentication
+
+
+## License
+
+This project is forked from the Next.js template by Vercel, licensed under Apache 2.0
+
+## Contact
+
+For any questions or support, please contact the ICISTS team at [icists@icists.org](mailto:icists@icists.org).
+
+---
+
+<div align="center">
+  <p>Made by ICISTS</p>
+  <p>© 2025 ICISTS. All rights reserved.</p>
+</div>

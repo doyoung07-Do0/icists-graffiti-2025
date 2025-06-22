@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRAFFITI 2025 : AI Startup 해커톤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Roboto:wght@700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* 부드러운 스크롤 효과 */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* 기본 폰트 설정 */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #111111;
+            color: #E5E7EB;
+        }
+
+        /* 그라데이션 텍스트를 위한 커스텀 클래스 */
+        .gradient-text {
+            background: linear-gradient(to right, #D2D8B2, #4CAF80);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* 로고, 제목 등에 사용할 영문 폰트 */
+        .font-roboto {
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* 스크롤 애니메이션을 위한 클래스 */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 그라데이션 버튼 스타일 */
+        .gradient-button {
+            background-image: linear-gradient(to right, #D2D8B2 0%, #4CAF80 50%, #D2D8B2 100%);
+            background-size: 200% auto;
+            color: #111;
+            transition: 0.5s;
+        }
+
+        .gradient-button:hover {
+            background-position: right center;
+            color: #000;
+        }
+
+        /* 섹션 구분선 */
+        .section-divider {
+            height: 2px;
+            width: 100px;
+            background: linear-gradient(to right, #D2D8B2, #4CAF80);
+            margin: 1rem auto;
+        }
+    </style>
+</head>
+
+<body class="bg-[#111111]">
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 bg-[#111111]/80 backdrop-blur-sm z-50 shadow-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold font-roboto gradient-text">GRAFFITI 2025</h1>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#about" class="text-gray-300 hover:text-white transition-colors duration-300">About</a>
+                <a href="#ice-breaking" class="text-gray-300 hover:text-white transition-colors duration-300">Ice
+                    Breaking</a>
+                <a href="#investment-game"
+                    class="text-gray-300 hover:text-white transition-colors duration-300">Investment Game</a>
+            </nav>
+
+            <a href="#" class="gradient-button font-bold py-2 px-6 rounded-lg text-sm md:text-base">
+                Login
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-24">
+
+        <!-- Hero Section -->
+        <section class="min-h-screen flex items-center justify-center text-center px-4 -mt-24">
+            <div class="space-y-6">
+                <p class="text-lg md:text-xl font-bold text-gray-300 tracking-wider">KAIST ICISTS Presents</p>
+                <h2 class="text-5xl md:text-7xl lg:text-8xl font-black font-roboto tracking-tighter gradient-text">
+                    GRAFFITI 2025</h2>
+                <p class="text-2xl md:text-4xl font-bold text-white">"One Idea can Paint the Future"</p>
+                <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+                    여름의 정점, 당신의 아이디어를 세상에 낙서하듯 그릴 시간!<br>
+                    AI 스타트업의 기술로 사회 문제를 해결하는 새로운 방식의 해커톤에 당신을 초대합니다.
+                </p>
+                <a href="#"
+                    class="inline-block gradient-button font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-transform">
+                    해커톤 참여하기
+                </a>
+            </div>
+        </section>
+
+        <!-- Why GRAFFITI? Section -->
+        <section id="about" class="py-20 px-4 fade-in">
+            <div class="container mx-auto max-w-4xl text-center">
+                <h3 class="text-4xl md:text-5xl font-bold mb-4">🎨 왜 <span class="gradient-text">GRAFFITI</span>인가요?
+                </h3>
+                <div class="section-divider"></div>
+                <p class="text-lg text-gray-300 mb-8">
+                    20대 청년 창업가가 ‘AI를 활용해 세상을 바꿀 색다른 해결책’을 그려 나가자는 메시지를 담고 있습니다.
+                </p>
+                <div class="grid md:grid-cols-2 gap-8 text-left">
+                    <div class="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
+                        <h4 class="text-2xl font-bold mb-3 gradient-text">The Problem</h4>
+                        <p class="text-gray-400">
+                            AI는 환경 🌱, 교육 📚, 금융 💰 등 사회문제를 해결하는 핵심 기술이지만, 대학생들이 AI를 직접 적용해 볼 기회는 제한적이고, 개발 지식이라는 진입 장벽도
+                            여전히 높습니다.
+                        </p>
+                    </div>
+                    <div class="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
+                        <h4 class="text-2xl font-bold mb-3 gradient-text">Our Solution</h4>
+                        <p class="text-gray-400">
+                            GRAFFITI는 현직 AI 스타트업 기술을 응용하는 방식을 채택했습니다. 기술이 주어진 상태에서 "무엇을 바꿀 수 있을까?"를 고민하며, 아이디어와 기획의 가치에
+                            집중합니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ice Breaking Section -->
+        <section id="ice-breaking" class="py-20 bg-gray-900/50 px-4 fade-in">
+            <div class="container mx-auto max-w-4xl text-center">
+                <h3 class="text-4xl md:text-5xl font-bold mb-4">🧊 <span class="gradient-text">Ice Breaking</span> &amp;
+                    Networking</h3>
+                <div class="section-divider"></div>
+                <p class="text-lg text-gray-300 mb-8">
+                    훌륭한 아이디어는 훌륭한 팀에서 시작됩니다. GRAFFITI 2025는 단순한 경쟁을 넘어, 참가자 간의 교류와 협업을 중요하게 생각합니다.
+                </p>
+                <div class="bg-gray-800/50 p-8 rounded-xl border border-gray-700 text-left">
+                    <p class="text-gray-300">
+                        본격적인 해커톤 시작에 앞서, 어색함을 깨고 동료들과 친해질 수 있는 다양한 아이스 브레이킹 활동이 준비되어 있습니다. 가벼운 게임과 미션을 통해 자연스럽게 네트워킹하고,
+                        함께 미래를 그려나갈 최고의 팀원들을 만나보세요!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Program Structure / Investment Game Section -->
+        <section id="investment-game" class="py-20 px-4 fade-in">
+            <div class="container mx-auto max-w-5xl">
+                <div class="text-center mb-12">
+                    <h3 class="text-4xl md:text-5xl font-bold">🚀 행사 구성</h3>
+                    <div class="section-divider"></div>
+                </div>
+                <div class="relative pl-8 border-l-2 border-gray-600 space-y-12">
+                    <!-- Step 1 -->
+                    <div class="relative">
+                        <div class="absolute -left-[42px] top-0 h-full flex items-center">
+                            <div
+                                class="h-5 w-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900">
+                            </div>
+                        </div>
+                        <h4 class="text-2xl font-bold mb-2 gradient-text">📈 투자게임 (Investment Game)</h4>
+                        <p class="text-gray-300">참가자들이 직접 스타트업의 가치를 평가하고 투자자의 관점을 기릅니다. 이 과정을 통해 팀프로젝트를 함께할 스타트업과 매칭됩니다.
+                        </p>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="relative">
+                        <div class="absolute -left-[42px] top-0 h-full flex items-center">
+                            <div
+                                class="h-5 w-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900">
+                            </div>
+                        </div>
+                        <h4 class="text-2xl font-bold mb-2 gradient-text">🎤 전문가 강연</h4>
+                        <p class="text-gray-300">VC, AI, 창업 분야 전문가들의 강연을 통해 AI 창업 인사이트를 얻고 팀프로젝트 아이디어를 구체화하는 데 도움을 받습니다.
+                        </p>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="relative">
+                        <div class="absolute -left-[42px] top-0 h-full flex items-center">
+                            <div
+                                class="h-5 w-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900">
+                            </div>
+                        </div>
+                        <h4 class="text-2xl font-bold mb-2 gradient-text">🚀 팀프로젝트</h4>
+                        <p class="text-gray-300">4~6인으로 팀을 이뤄 매칭된 스타트업의 AI 기술을 이용, 새로운 문제를 정의하고 시장 조사를 통해 AI 기반 서비스/제품을
+                            구체화하는 핵심 프로그램입니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Event Details Section -->
+        <section id="details" class="py-20 bg-gray-900/50 px-4 fade-in">
+            <div class="container mx-auto max-w-4xl">
+                <div class="text-center mb-12">
+                    <h3 class="text-4xl md:text-5xl font-bold">💡 행사 개요</h3>
+                    <div class="section-divider"></div>
+                </div>
+                <div class="bg-gray-800/50 rounded-xl border border-gray-700 p-8 space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div><strong class="gradient-text text-lg">📆 일정:</strong>
+                            <p>2025.07.22(화) ~ 07.25(금) (3박 4일)</p>
+                        </div>
+                        <div><strong class="gradient-text text-lg">🏫 장소:</strong>
+                            <p>대전 KAIST 본원</p>
+                        </div>
+                        <div><strong class="gradient-text text-lg">👥 대상:</strong>
+                            <p>창업, AI, 사회문제 해결에 관심 있는 대학(원)생</p>
+                        </div>
+                        <div><strong class="gradient-text text-lg">💰 총상금:</strong>
+                            <p>140만원</p>
+                        </div>
+                    </div>
+                    <div>
+                        <strong class="gradient-text text-lg">💳 참가비:</strong>
+                        <ul class="list-disc list-inside text-gray-300 mt-2">
+                            <li>얼리버드 (~07.03): 기숙사 제외 65,000원 / 기숙사 포함 85,000원</li>
+                            <li>레귤러 (~07.18): 기숙사 제외 85,000원 / 기숙사 포함 105,000원</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="text-center text-lg bg-green-900/30 p-4 rounded-lg">🛌 행사 기간 점심, 저녁, 숙소 제공 & 네트워킹 파티
+                            🎉</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA Section -->
+        <section class="py-24 text-center px-4 fade-in">
+            <div class="container mx-auto">
+                <h3 class="text-3xl md:text-4xl font-bold mb-4">당신의 아이디어로 미래를 그릴 준비가 되셨나요?</h3>
+                <p class="text-gray-400 mb-8 max-w-2xl mx-auto">망설이지 마세요. GRAFFITI 2025는 당신의 아이디어가 현실이 되는 무대입니다.</p>
+                <a href="#"
+                    class="inline-block gradient-button font-bold py-4 px-10 rounded-full text-xl shadow-lg transform hover:scale-105 transition-transform">
+                    ICISTS 인스타에서 신청하기
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black py-8 px-4">
+        <div class="container mx-auto text-center text-gray-500">
+            <p class="font-bold text-lg text-gray-300 mb-2">GRAFFITI 2025 by ICISTS</p>
+            <p>문의: 인스타그램 DM 또는 이메일 icists@icists.org</p>
+            <p class="mt-4 text-sm">&copy; 2025 KAIST ICISTS. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 스크롤에 따른 페이드인 효과
+        const faders = document.querySelectorAll('.fade-in');
+        const appearOptions = {
+            threshold: 0.2, // 20% 보이면 실행
+            rootMargin: "0px 0px -50px 0px"
+        };
+        const appearOnScroll = new IntersectionObserver(function (entries, appearOnScroll) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                } else {
+                    entry.target.classList.add('visible');
+                    appearOnScroll.unobserve(entry.target);
+                }
+            });
+        }, appearOptions);
+
+        faders.forEach(fader => {
+            appearOnScroll.observe(fader);
+        });
+    </script>
+</body>
+
+</html>
