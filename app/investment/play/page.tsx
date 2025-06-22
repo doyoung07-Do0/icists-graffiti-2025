@@ -89,6 +89,55 @@ export default function InvestmentPlayPage() {
       return initialData;
     });
 
+    // Initialize team total data for all rounds (총 자본금 row)
+    const [teamTotalData, setTeamTotalData] = useState<Record<string, Record<string, number>>>(() => {
+      const initialData: Record<string, Record<string, number>> = {};
+      rounds.forEach(round => {
+        initialData[round] = {};
+        teams.forEach(team => {
+          initialData[round][team] = 0;
+        });
+      });
+      return initialData;
+    });
+
+    // Load data from database
+    const loadData = async (round: string) => {
+      try {
+        // Initialize rounds if needed
+        await fetch('/api/investment/init', { method: 'POST' });
+        
+        // Fetch current data
+        const response = await fetch(`/api/investment?round=${encodeURIComponent(round)}`);
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Update portfolio data
+          if (data.portfolios) {
+            setPortfolioData(prev => ({
+              ...prev,
+              [round]: data.portfolios
+            }));
+          }
+          
+          // Update team capital data
+          if (data.capitals) {
+            setTeamTotalData(prev => ({
+              ...prev,
+              [round]: data.capitals
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    };
+
+    // Load data on mount and round change
+    useEffect(() => {
+      loadData(currentRound);
+    }, [currentRound]);
+
     // Calculate totals
     const calculateStartupTotal = (startup: string) => {
       return teams.reduce((sum, team) => sum + (portfolioData[currentRound]?.[startup]?.[team] || 0), 0);
@@ -102,9 +151,11 @@ export default function InvestmentPlayPage() {
       return startups.reduce((sum, startup) => sum + calculateStartupTotal(startup), 0);
     };
 
-    // Handle cell value change
-    const handleCellChange = (startup: string, team: string, value: string) => {
+    // Handle cell value change with database sync
+    const handleCellChange = async (startup: string, team: string, value: string) => {
       const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+      
+      // Update local state immediately for responsive UI
       setPortfolioData(prev => ({
         ...prev,
         [currentRound]: {
@@ -115,6 +166,61 @@ export default function InvestmentPlayPage() {
           }
         }
       }));
+
+      // Sync to database
+      try {
+        await fetch('/api/investment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            roundName: currentRound,
+            teamName: team,
+            type: 'portfolio',
+            data: {
+              startup,
+              amount: numericValue
+            }
+          }),
+        });
+      } catch (error) {
+        console.error('Error syncing portfolio data:', error);
+      }
+    };
+
+    // Handle team total (총 자본금) change with database sync
+    const handleTeamTotalChange = async (team: string, value: string) => {
+      const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+      
+      // Update local state immediately for responsive UI
+      setTeamTotalData(prev => ({
+        ...prev,
+        [currentRound]: {
+          ...prev[currentRound],
+          [team]: numericValue
+        }
+      }));
+
+      // Sync to database
+      try {
+        await fetch('/api/investment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            roundName: currentRound,
+            teamName: team,
+            type: 'capital',
+            data: {
+              capital: numericValue
+            }
+          }),
+        });
+      } catch (error) {
+        console.error('Error syncing capital data:', error);
+      }
     };
 
     return (
@@ -187,7 +293,6 @@ export default function InvestmentPlayPage() {
                           value={portfolioData[currentRound]?.[startup]?.[team] || ''}
                           onChange={(e) => handleCellChange(startup, team, e.target.value)}
                           onWheel={(e) => e.currentTarget.blur()}
-                          onMouseDown={(e) => e.preventDefault()}
                           className="w-full h-8 bg-gray-700 text-white text-center text-xs rounded border-none focus:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           placeholder="0"
                           min="0"
@@ -207,8 +312,17 @@ export default function InvestmentPlayPage() {
                     총 자본금
                   </td>
                   {teams.map((team) => (
-                    <td key={team} className="border border-gray-600 p-1 text-center font-bold text-purple-400 text-xs">
-                      ${calculateTeamTotal(team).toLocaleString()}
+                    <td key={team} className="border border-gray-600 p-0.5">
+                      <input
+                        type="number"
+                        value={teamTotalData[currentRound]?.[team] || ''}
+                        onChange={(e) => handleTeamTotalChange(team, e.target.value)}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        className="w-full h-8 bg-gray-700 text-white text-center text-xs rounded border-none focus:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold text-purple-400"
+                        placeholder="0"
+                        min="0"
+                        step="0.01"
+                      />
                     </td>
                   ))}
                   <td className="border border-gray-600 p-2 text-center font-bold text-yellow-400 bg-gray-700 text-xs">
@@ -243,16 +357,16 @@ export default function InvestmentPlayPage() {
         {/* Action Buttons */}
         <div className="mt-6 flex flex-wrap gap-3 justify-center">
           <button className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold transition-all">
-            데이터 저장
+            전송 차단
           </button>
           <button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold transition-all">
-            리포트 생성
+            유효성 검사
           </button>
           <button className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-semibold transition-all">
-            CSV 내보내기
+            수익률 뽑기
           </button>
           <button className="bg-orange-600 hover:bg-orange-700 px-6 py-3 rounded-lg font-semibold transition-all">
-            다음 라운드
+            결과 배포
           </button>
         </div>
       </div>

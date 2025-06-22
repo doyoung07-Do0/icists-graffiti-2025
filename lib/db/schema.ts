@@ -9,6 +9,7 @@ import {
   primaryKey,
   foreignKey,
   boolean,
+  decimal,
 } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('User', {
@@ -168,3 +169,39 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// Investment Game Schema
+export const investmentRound = pgTable('InvestmentRound', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  name: varchar('name', { length: 50 }).notNull(), // Pre-seed, Seed, Series A, Series B
+  isActive: boolean('isActive').notNull().default(false),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+export type InvestmentRound = InferSelectModel<typeof investmentRound>;
+
+export const teamPortfolio = pgTable('TeamPortfolio', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  roundId: uuid('roundId')
+    .notNull()
+    .references(() => investmentRound.id),
+  teamName: varchar('teamName', { length: 20 }).notNull(), // team1, team2, etc.
+  startup: varchar('startup', { length: 50 }).notNull(), // startup1, startup2, etc.
+  investmentAmount: decimal('investmentAmount', { precision: 15, scale: 2 }).notNull().default('0'),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+export type TeamPortfolio = InferSelectModel<typeof teamPortfolio>;
+
+export const teamCapital = pgTable('TeamCapital', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  roundId: uuid('roundId')
+    .notNull()
+    .references(() => investmentRound.id),
+  teamName: varchar('teamName', { length: 20 }).notNull(), // team1, team2, etc.
+  totalCapital: decimal('totalCapital', { precision: 15, scale: 2 }).notNull().default('0'),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+export type TeamCapital = InferSelectModel<typeof teamCapital>;
