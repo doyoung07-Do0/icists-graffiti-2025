@@ -138,17 +138,41 @@ export default function InvestmentPlayPage() {
       loadData(currentRound);
     }, [currentRound]);
 
+    // Number formatting utility
+    const formatCurrency = (value: number | string) => {
+      const num = typeof value === 'string' ? parseFloat(value) : value;
+      if (isNaN(num)) return '$0.00';
+      
+      // Round to 2 decimal places and format with commas
+      const rounded = Math.round(num * 100) / 100;
+      return `$${rounded.toLocaleString('en-US', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      })}`;
+    };
+
     // Calculate totals
     const calculateStartupTotal = (startup: string) => {
-      return teams.reduce((sum, team) => sum + (portfolioData[currentRound]?.[startup]?.[team] || 0), 0);
+      const total = teams.reduce((sum, team) => {
+        const value = portfolioData[currentRound]?.[startup]?.[team] || 0;
+        const numValue = typeof value === 'string' ? parseFloat(value) : value;
+        return sum + (isNaN(numValue) ? 0 : numValue);
+      }, 0);
+      return total;
     };
 
     const calculateTeamTotal = (team: string) => {
-      return startups.reduce((sum, startup) => sum + (portfolioData[currentRound]?.[startup]?.[team] || 0), 0);
+      const total = startups.reduce((sum, startup) => {
+        const value = portfolioData[currentRound]?.[startup]?.[team] || 0;
+        const numValue = typeof value === 'string' ? parseFloat(value) : value;
+        return sum + (isNaN(numValue) ? 0 : numValue);
+      }, 0);
+      return total;
     };
 
     const calculateGrandTotal = () => {
-      return startups.reduce((sum, startup) => sum + calculateStartupTotal(startup), 0);
+      const total = startups.reduce((sum, startup) => sum + calculateStartupTotal(startup), 0);
+      return total;
     };
 
     // Handle cell value change with database sync
@@ -301,7 +325,7 @@ export default function InvestmentPlayPage() {
                       </td>
                     ))}
                     <td className="border border-gray-600 p-1 text-center font-bold text-red-400 bg-gray-800/50 text-xs">
-                      ${calculateStartupTotal(startup).toLocaleString()}
+                      {formatCurrency(calculateStartupTotal(startup))}
                     </td>
                   </tr>
                 ))}
@@ -326,7 +350,7 @@ export default function InvestmentPlayPage() {
                     </td>
                   ))}
                   <td className="border border-gray-600 p-1 text-center font-bold text-yellow-400 bg-gray-700 text-xs">
-                    ${calculateGrandTotal().toLocaleString()}
+                    {formatCurrency(calculateGrandTotal())}
                   </td>
                 </tr>
               </tbody>
@@ -338,7 +362,7 @@ export default function InvestmentPlayPage() {
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-gray-800/50 p-3 rounded-xl text-center">
             <h3 className="text-sm font-medium text-green-400 mb-1">총 투자액</h3>
-            <p className="text-lg font-bold text-white">${calculateGrandTotal().toLocaleString()}</p>
+            <p className="text-lg font-bold text-white">{formatCurrency(calculateGrandTotal())}</p>
           </div>
           <div className="bg-gray-800/50 p-3 rounded-xl text-center">
             <h3 className="text-sm font-medium text-blue-400 mb-1">활성 팀</h3>
@@ -376,69 +400,225 @@ export default function InvestmentPlayPage() {
   // Team Dashboard
   const TeamDashboard = () => {
     const teamNumber = session?.user?.email?.match(/team(\d+)@icists\.com/)?.[1];
+    const teamName = `team${teamNumber}`;
+    
+    const [currentRound, setCurrentRound] = useState<string>('Pre-seed');
+    const [portfolioData, setPortfolioData] = useState<Record<string, number>>({});
+    const [teamCapital, setTeamCapital] = useState<number>(0);
+    const [loading, setLoading] = useState(true);
+    
+    const rounds = ['Pre-seed', 'Seed', 'Series A', 'Series B'];
+    const startups = ['startup1', 'startup2', 'startup3', 'startup4'];
+
+    // Number formatting utility
+    const formatCurrency = (value: number | string) => {
+      const num = typeof value === 'string' ? parseFloat(value) : value;
+      if (isNaN(num)) return '$0.00';
+      
+      const rounded = Math.round(num * 100) / 100;
+      return `$${rounded.toLocaleString('en-US', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      })}`;
+    };
+
+    // Load team data from backend
+    const loadTeamData = async (round: string) => {
+      try {
+        setLoading(true);
+        console.log(`[TeamDashboard] Loading data for team: ${teamName}, round: ${round}`);
+        
+        const response = await fetch(`/api/investment?round=${encodeURIComponent(round)}&team=${encodeURIComponent(teamName)}`);
+        console.log(`[TeamDashboard] API Response status: ${response.status}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[TeamDashboard] Received data:`, data);
+          
+          // Update portfolio data - extract team-specific data
+          if (data.portfolios) {
+            const teamPortfolio: Record<string, number> = {};
+            startups.forEach(startup => {
+              if (data.portfolios[startup] && data.portfolios[startup][teamName]) {
+                const value = data.portfolios[startup][teamName];
+                teamPortfolio[startup] = typeof value === 'string' ? parseFloat(value) : value;
+              } else {
+                teamPortfolio[startup] = 0;
+              }
+            });
+            console.log(`[TeamDashboard] Setting portfolio data:`, teamPortfolio);
+            setPortfolioData(teamPortfolio);
+          }
+          
+          // Update team capital
+          if (data.capitals && data.capitals[teamName]) {
+            const capitalValue = data.capitals[teamName];
+            const numCapital = typeof capitalValue === 'string' ? parseFloat(capitalValue) : capitalValue;
+            console.log(`[TeamDashboard] Setting capital: ${numCapital}`);
+            setTeamCapital(numCapital);
+          } else {
+            console.log(`[TeamDashboard] No capital data found for team: ${teamName}`);
+            setTeamCapital(0);
+          }
+        } else {
+          console.error(`[TeamDashboard] API request failed with status: ${response.status}`);
+        }
+      } catch (error) {
+        console.error('[TeamDashboard] Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Load data on mount and round change
+    useEffect(() => {
+      if (teamName && teamName !== 'teamundefined') {
+        console.log(`[TeamDashboard] Initial load triggered for ${teamName}, ${currentRound}`);
+        loadTeamData(currentRound);
+      }
+    }, [teamName, currentRound]);
+
+    // Auto-refresh data every 5 seconds for real-time updates
+    useEffect(() => {
+      if (!teamName || teamName === 'teamundefined') {
+        console.log(`[TeamDashboard] Skipping auto-refresh - invalid team name: ${teamName}`);
+        return;
+      }
+
+      console.log(`[TeamDashboard] Setting up auto-refresh for ${teamName}, ${currentRound}`);
+      
+      const interval = setInterval(() => {
+        console.log(`[TeamDashboard] Auto-refresh triggered for ${teamName}, ${currentRound}`);
+        loadTeamData(currentRound);
+      }, 5000);
+
+      // Cleanup function
+      return () => {
+        console.log(`[TeamDashboard] Cleaning up auto-refresh interval`);
+        clearInterval(interval);
+      };
+    }, [teamName, currentRound]);
+
+    // Calculate team's total investment in current round
+    const calculateTotalInvestment = () => {
+      return startups.reduce((sum, startup) => {
+        const investment = portfolioData[startup] || 0;
+        const numValue = typeof investment === 'string' ? parseFloat(investment) : investment;
+        return sum + (isNaN(numValue) ? 0 : numValue);
+      }, 0);
+    };
+
+    // Calculate remaining capital
+    const calculateRemainingCapital = () => {
+      return teamCapital - calculateTotalInvestment();
+    };
+
+    if (!teamNumber || teamName === 'teamundefined') {
+      return (
+        <div className="bg-gray-900/50 backdrop-blur-sm border border-red-700 rounded-2xl p-8">
+          <div className="text-center">
+            <div className="text-6xl mb-6">❌</div>
+            <h2 className="text-3xl font-bold mb-4 text-red-400">팀 정보를 찾을 수 없습니다</h2>
+            <p className="text-gray-300">올바른 팀 계정으로 로그인해주세요.</p>
+          </div>
+        </div>
+      );
+    }
     
     return (
-      <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4">
+      <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold mb-2">
             <span className="bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
               Team {teamNumber} Dashboard
             </span>
           </h2>
           <p className="text-gray-300">팀 {teamNumber} 투자 게임 대시보드</p>
+          {loading && (
+            <div className="inline-flex items-center mt-2 text-blue-400 text-sm">
+              <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full mr-2"></div>
+              데이터 로딩 중...
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gray-800/50 p-6 rounded-xl">
-            <h3 className="text-xl font-medium mb-4 text-green-400">Portfolio Overview</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Current Balance:</span>
-                <span className="text-green-400 font-semibold">$125,430</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Total Return:</span>
-                <span className="text-blue-400 font-semibold">+25.43%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Rank:</span>
-                <span className="text-purple-400 font-semibold">3rd / 16</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gray-800/50 p-6 rounded-xl">
-            <h3 className="text-xl font-medium mb-4 text-blue-400">Current Holdings</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-400">AAPL:</span>
-                <span className="text-green-400">+12.5%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">GOOGL:</span>
-                <span className="text-red-400">-3.2%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">TSLA:</span>
-                <span className="text-green-400">+8.7%</span>
-              </div>
-            </div>
+        {/* Round Selection */}
+        <div className="mb-6">
+          <div className="flex justify-center space-x-2">
+            {rounds.map((round) => (
+              <button
+                key={round}
+                onClick={() => setCurrentRound(round)}
+                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+                  currentRound === round
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                {round}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="mt-6 bg-gray-800/50 p-6 rounded-xl">
-          <h3 className="text-xl font-medium mb-4 text-purple-400">Trading Interface</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold transition-all">
-              Buy Stocks
-            </button>
-            <button className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition-all">
-              Sell Stocks
-            </button>
-            <button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold transition-all">
-              View Market
-            </button>
+        {/* Capital Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-gray-800/50 p-4 rounded-xl text-center">
+            <h3 className="text-sm font-medium text-green-400 mb-1">총 자본금</h3>
+            <p className="text-xl font-bold text-white">{formatCurrency(teamCapital)}</p>
           </div>
+          <div className="bg-gray-800/50 p-4 rounded-xl text-center">
+            <h3 className="text-sm font-medium text-blue-400 mb-1">총 투자액</h3>
+            <p className="text-xl font-bold text-white">{formatCurrency(calculateTotalInvestment())}</p>
+          </div>
+          <div className="bg-gray-800/50 p-4 rounded-xl text-center">
+            <h3 className="text-sm font-medium text-purple-400 mb-1">잔여 자본</h3>
+            <p className={`text-xl font-bold ${calculateRemainingCapital() >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {formatCurrency(calculateRemainingCapital())}
+            </p>
+          </div>
+        </div>
+
+        {/* Portfolio Breakdown */}
+        <div className="bg-gray-800/50 p-6 rounded-xl">
+          <h3 className="text-xl font-medium mb-4 text-purple-400">포트폴리오 현황 ({currentRound})</h3>
+          <div className="space-y-4">
+            {startups.map((startup) => {
+              const investment = portfolioData[startup] || 0;
+              const numValue = typeof investment === 'string' ? parseFloat(investment) : investment;
+              const safeValue = isNaN(numValue) ? 0 : numValue;
+              const percentage = teamCapital > 0 ? ((safeValue / teamCapital) * 100).toFixed(1) : '0.0';
+              
+              return (
+                <div key={startup} className="bg-gray-700/50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-gray-200 capitalize">
+                      {startup.replace('startup', 'Startup ')}
+                    </span>
+                    <span className="text-lg font-bold text-white">
+                      {formatCurrency(safeValue)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-400">투자 비율</span>
+                    <span className="text-blue-400 font-medium">{percentage}%</span>
+                  </div>
+                  {/* Investment bar */}
+                  <div className="mt-2 w-full bg-gray-600 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(parseFloat(percentage), 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Auto-refresh indicator */}
+        <div className="mt-4 text-center text-xs text-gray-500">
+          🔄 데이터는 5초마다 자동으로 업데이트됩니다
         </div>
       </div>
     );

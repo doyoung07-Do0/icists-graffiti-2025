@@ -47,11 +47,12 @@ export async function GET(request: NextRequest) {
       ]);
 
       return NextResponse.json({
-        capital: capital[0]?.totalCapital || '0',
-        portfolio: portfolio.reduce((acc: Record<string, string>, item: TeamPortfolio) => {
-          acc[item.startup] = item.investmentAmount;
+        capitals: { [teamName]: capital[0]?.totalCapital || 0 },
+        portfolios: portfolio.reduce((acc: Record<string, Record<string, number>>, item: TeamPortfolio) => {
+          if (!acc[item.startup]) acc[item.startup] = {};
+          acc[item.startup][teamName] = parseFloat(item.investmentAmount) || 0;
           return acc;
-        }, {} as Record<string, string>),
+        }, {} as Record<string, Record<string, number>>),
       });
     } else {
       // Get all teams' data for admin dashboard
