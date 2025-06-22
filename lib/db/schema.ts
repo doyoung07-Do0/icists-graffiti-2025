@@ -205,3 +205,15 @@ export const teamCapital = pgTable('TeamCapital', {
 });
 
 export type TeamCapital = InferSelectModel<typeof teamCapital>;
+
+export const teamMarketCap = pgTable('TeamMarketCap', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  roundId: uuid('roundId')
+    .notNull()
+    .references(() => investmentRound.id),
+  teamName: varchar('teamName', { length: 20 }).notNull(), // team1, team2, etc.
+  marketCap: decimal('marketCap', { precision: 15, scale: 2 }).notNull().default('0'),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+export type TeamMarketCap = InferSelectModel<typeof teamMarketCap>;

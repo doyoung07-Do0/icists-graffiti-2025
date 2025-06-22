@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/queries';
-import { teamCapital, teamPortfolio, investmentRound, TeamCapital, TeamPortfolio } from '@/lib/db/schema';
+import { teamCapital, teamPortfolio, teamMarketCap, investmentRound, TeamCapital, TeamPortfolio, TeamMarketCap } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 // GET: Fetch team capital and portfolio data
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     if (teamName) {
       // Get specific team's data
-      const [capital, portfolio] = await Promise.all([
+      const [capital, portfolio, marketCap] = await Promise.all([
         db
           .select()
           .from(teamCapital)
@@ -44,6 +44,15 @@ export async function GET(request: NextRequest) {
               eq(teamPortfolio.teamName, teamName)
             )
           ),
+        db
+          .select()
+          .from(teamMarketCap)
+          .where(
+            and(
+              eq(teamMarketCap.roundId, roundId),
+              eq(teamMarketCap.teamName, teamName)
+            )
+          ),
       ]);
 
       return NextResponse.json({
@@ -53,10 +62,11 @@ export async function GET(request: NextRequest) {
           acc[item.startup][teamName] = parseFloat(item.investmentAmount) || 0;
           return acc;
         }, {} as Record<string, Record<string, number>>),
+        marketCaps: { [teamName]: marketCap[0]?.marketCap || 0 },
       });
     } else {
       // Get all teams' data for admin dashboard
-      const [capitals, portfolios] = await Promise.all([
+      const [capitals, portfolios, marketCaps] = await Promise.all([
         db
           .select()
           .from(teamCapital)
@@ -65,6 +75,10 @@ export async function GET(request: NextRequest) {
           .select()
           .from(teamPortfolio)
           .where(eq(teamPortfolio.roundId, roundId)),
+        db
+          .select()
+          .from(teamMarketCap)
+          .where(eq(teamMarketCap.roundId, roundId)),
       ]);
 
       // Format data for admin dashboard
@@ -79,9 +93,15 @@ export async function GET(request: NextRequest) {
         return acc;
       }, {} as Record<string, Record<string, string>>);
 
+      const formattedMarketCaps = marketCaps.reduce((acc: Record<string, string>, item: TeamMarketCap) => {
+        acc[item.teamName] = item.marketCap;
+        return acc;
+      }, {} as Record<string, string>);
+
       return NextResponse.json({
         capitals: formattedCapitals,
         portfolios: formattedPortfolios,
+        marketCaps: formattedMarketCaps,
       });
     }
   } catch (error) {
@@ -186,6 +206,43 @@ export async function POST(request: NextRequest) {
               eq(teamPortfolio.roundId, roundId),
               eq(teamPortfolio.teamName, teamName),
               eq(teamPortfolio.startup, startup)
+            )
+          );
+      }
+    } else if (type === 'marketCap') {
+      // Update team market cap
+      const { marketCap } = data;
+      
+      // Check if record exists
+      const existing = await db
+        .select()
+        .from(teamMarketCap)
+        .where(
+          and(
+            eq(teamMarketCap.roundId, roundId),
+            eq(teamMarketCap.teamName, teamName)
+          )
+        );
+
+      if (existing.length === 0) {
+        // Create new record
+        await db.insert(teamMarketCap).values({
+          roundId,
+          teamName,
+          marketCap: marketCap.toString(),
+        });
+      } else {
+        // Update existing record
+        await db
+          .update(teamMarketCap)
+          .set({
+            marketCap: marketCap.toString(),
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(teamMarketCap.roundId, roundId),
+              eq(teamMarketCap.teamName, teamName)
             )
           );
       }
