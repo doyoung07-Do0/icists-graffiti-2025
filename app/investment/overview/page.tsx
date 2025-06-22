@@ -69,128 +69,130 @@ export default function InvestmentOverview() {
   const selectedRound = rounds.find(round => round.id === activeRound) || rounds[0];
 
   return (
-    <div className="container mx-auto px-4 pt-32 pb-12 max-w-6xl">
-      <div className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">투자 게임 개요</h1>
-        <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-          AI 스타트업과 학생 팀 간의 매칭을 위한 4단계 투자 게임에 참여해보세요.
-          각 라운드마다 전략적으로 투자하여 최종 매칭 우선권을 획득하세요!
-        </p>
-      </div>
+    <div className="min-h-screen bg-black">
+      <div className="container mx-auto px-4 pt-32 pb-12 max-w-6xl">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">투자 게임 개요</h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            AI 스타트업과 학생 팀 간의 매칭을 위한 4단계 투자 게임에 참여해보세요.
+            각 라운드마다 전략적으로 투자하여 최종 매칭 우선권을 획득하세요!
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-        {rounds.map((round) => (
-          <motion.button
-            key={round.id}
-            onClick={() => setActiveRound(round.id)}
-            className={`p-6 rounded-xl text-left transition-all duration-300 ${
-              activeRound === round.id 
-                ? 'bg-white/10 border border-white/20 shadow-lg' 
-                : 'bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10'
-            }`}
-            whileHover={{ y: -5 }}
-          >
-            <div className="flex items-center mb-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-[#D2D8B2] to-[#4CAF80] text-black mr-3">
-                {round.icon}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+          {rounds.map((round) => (
+            <motion.button
+              key={round.id}
+              onClick={() => setActiveRound(round.id)}
+              className={`p-6 rounded-xl text-left transition-all duration-300 ${
+                activeRound === round.id 
+                  ? 'bg-white/10 border border-white/20 shadow-lg' 
+                  : 'bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10'
+              }`}
+              whileHover={{ y: -5 }}
+            >
+              <div className="flex items-center mb-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-[#D2D8B2] to-[#4CAF80] text-black mr-3">
+                  {round.icon}
+                </div>
+                <h3 className="text-lg font-semibold">{round.name}</h3>
               </div>
-              <h3 className="text-lg font-semibold">{round.name}</h3>
-            </div>
-            <p className="text-sm text-gray-300">{round.description}</p>
-          </motion.button>
-        ))}
-      </div>
+              <p className="text-sm text-gray-300">{round.description}</p>
+            </motion.button>
+          ))}
+        </div>
 
-      <div className="bg-white/5 rounded-2xl p-8 mb-12 border border-white/10">
-        <div className="flex items-center mb-6">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#D2D8B2] to-[#4CAF80] text-black mr-4">
-            {selectedRound.icon}
+        <div className="bg-white/5 rounded-2xl p-8 mb-12 border border-white/10">
+          <div className="flex items-center mb-6">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-[#D2D8B2] to-[#4CAF80] text-black mr-4">
+              {selectedRound.icon}
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">{selectedRound.name}</h2>
+              <p className="text-gray-300">{selectedRound.description}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold">{selectedRound.name}</h2>
-            <p className="text-gray-300">{selectedRound.description}</p>
+          
+          <div className="space-y-4 mt-6">
+            <h3 className="text-lg font-semibold flex items-center">
+              <Clock className="w-5 h-5 mr-2" />
+              주요 피칭 포인트
+            </h3>
+            <ul className="space-y-3 pl-2">
+              {selectedRound.pitchingPoints.map((point, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="text-[#4CAF80] mr-2">•</span>
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-        
-        <div className="space-y-4 mt-6">
-          <h3 className="text-lg font-semibold flex items-center">
-            <Clock className="w-5 h-5 mr-2" />
-            주요 피칭 포인트
-          </h3>
-          <ul className="space-y-3 pl-2">
-            {selectedRound.pitchingPoints.map((point, index) => (
-              <li key={index} className="flex items-start">
-                <span className="text-[#4CAF80] mr-2">•</span>
-                <span>{point}</span>
+
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
+          <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+            <h3 className="text-xl font-bold mb-4 flex items-center">
+              <Award className="w-5 h-5 mr-2 text-[#4CAF80]" />
+              게임 진행 방식
+            </h3>
+            <ol className="space-y-4">
+              <li className="flex">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">1</div>
+                <div>
+                  <h4 className="font-semibold">초기 자금 확보</h4>
+                  <p className="text-sm text-gray-300">VC 에듀세션 퀴즈를 통해 초기 투자금 획득</p>
+                </div>
               </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+              <li className="flex">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">2</div>
+                <div>
+                  <h4 className="font-semibold">포트폴리오 구성</h4>
+                  <p className="text-sm text-gray-300">각 라운드별로 스타트업에 분산 투자</p>
+                </div>
+              </li>
+              <li className="flex">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">3</div>
+                <div>
+                  <h4 className="font-semibold">수익률 결정</h4>
+                  <p className="text-sm text-gray-300">투자 규모에 따른 랜덤 수익률 적용</p>
+                </div>
+              </li>
+            </ol>
+          </div>
 
-      <div className="grid md:grid-cols-2 gap-8 mb-12">
-        <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
-          <h3 className="text-xl font-bold mb-4 flex items-center">
-            <Award className="w-5 h-5 mr-2 text-[#4CAF80]" />
-            게임 진행 방식
-          </h3>
-          <ol className="space-y-4">
-            <li className="flex">
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">1</div>
+          <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+            <h3 className="text-xl font-bold mb-4">투자 전략 가이드</h3>
+            <div className="space-y-4">
               <div>
-                <h4 className="font-semibold">초기 자금 확보</h4>
-                <p className="text-sm text-gray-300">VC 에듀세션 퀴즈를 통해 초기 투자금 획득</p>
+                <h4 className="font-semibold text-[#D2D8B2]">📈 평균 회귀 전략</h4>
+                <p className="text-sm text-gray-300 mt-1">
+                  직전 라운드에서 수익률이 낮았던 스타트업은 다음 라운드에서 회복할 가능성이 높습니다.
+                </p>
               </div>
-            </li>
-            <li className="flex">
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">2</div>
               <div>
-                <h4 className="font-semibold">포트폴리오 구성</h4>
-                <p className="text-sm text-gray-300">각 라운드별로 스타트업에 분산 투자</p>
+                <h4 className="font-semibold text-[#D2D8B2]">⚖️ 리스크 분산</h4>
+                <p className="text-sm text-gray-300 mt-1">
+                  모든 달걀을 한 바구니에 담지 마세요. 여러 스타트업에 분산 투자하세요.
+                </p>
               </div>
-            </li>
-            <li className="flex">
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">3</div>
               <div>
-                <h4 className="font-semibold">수익률 결정</h4>
-                <p className="text-sm text-gray-300">투자 규모에 따른 랜덤 수익률 적용</p>
+                <h4 className="font-semibold text-[#D2D8B2]">📊 투자 규모 고려</h4>
+                <p className="text-sm text-gray-300 mt-1">
+                  큰 규모의 투자는 안정적이지만, 작은 규모의 투자는 높은 수익률을 기대할 수 있습니다.
+                </p>
               </div>
-            </li>
-          </ol>
-        </div>
-
-        <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
-          <h3 className="text-xl font-bold mb-4">투자 전략 가이드</h3>
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-[#D2D8B2]">📈 평균 회귀 전략</h4>
-              <p className="text-sm text-gray-300 mt-1">
-                직전 라운드에서 수익률이 낮았던 스타트업은 다음 라운드에서 회복할 가능성이 높습니다.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-[#D2D8B2]">⚖️ 리스크 분산</h4>
-              <p className="text-sm text-gray-300 mt-1">
-                모든 달걀을 한 바구니에 담지 마세요. 여러 스타트업에 분산 투자하세요.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-[#D2D8B2]">📊 투자 규모 고려</h4>
-              <p className="text-sm text-gray-300 mt-1">
-                큰 규모의 투자는 안정적이지만, 작은 규모의 투자는 높은 수익률을 기대할 수 있습니다.
-              </p>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="text-center">
-        <Link 
-          href="/investment/play" 
-          className="inline-flex items-center px-8 py-3 rounded-full bg-gradient-to-r from-[#D2D8B2] to-[#4CAF80] text-black font-medium hover:opacity-90 transition-opacity"
-        >
-          게임 시작하기 <ArrowRight className="ml-2 w-5 h-5" />
-        </Link>
+        <div className="text-center">
+          <Link 
+            href="/investment/play" 
+            className="inline-flex items-center px-8 py-3 rounded-full bg-gradient-to-r from-[#D2D8B2] to-[#4CAF80] text-black font-medium hover:opacity-90 transition-opacity"
+          >
+            게임 시작하기 <ArrowRight className="ml-2 w-5 h-5" />
+          </Link>
+        </div>
       </div>
     </div>
   );

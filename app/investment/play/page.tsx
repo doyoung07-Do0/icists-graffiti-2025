@@ -224,18 +224,18 @@ export default function InvestmentPlayPage() {
     };
 
     return (
-      <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4">
+      <div className="w-[95vw] max-w-none mx-auto bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-4">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold mb-2">
             <span className="bg-gradient-to-r from-red-400 to-pink-500 bg-clip-text text-transparent">
               Admin Dashboard
             </span>
           </h2>
-          <p className="text-gray-300">투자 게임 포트폴리오 관리</p>
+          <p className="text-gray-300 text-sm">투자 게임 포트폴리오 관리</p>
         </div>
 
         {/* Round Selection Buttons */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex flex-wrap gap-2 justify-center">
             {rounds.map((round) => (
               <button
@@ -265,15 +265,15 @@ export default function InvestmentPlayPage() {
               {/* Header Row */}
               <thead>
                 <tr>
-                  <th className="sticky left-0 bg-gray-800 border border-gray-600 p-2 text-center font-semibold text-gray-200 w-[80px]">
+                  <th className="sticky left-0 bg-gray-800 border border-gray-600 p-1 text-center font-semibold text-gray-200 w-[60px] text-xs">
                     Startup / Team
                   </th>
                   {teams.map((team) => (
-                    <th key={team} className="border border-gray-600 p-1 text-center font-semibold text-blue-400 w-[45px] text-xs">
+                    <th key={team} className="border border-gray-600 p-0.5 text-center font-semibold text-blue-400 w-[35px] text-xs">
                       {team}
                     </th>
                   ))}
-                  <th className="border border-gray-600 p-2 text-center font-semibold text-red-400 w-[80px] text-xs">
+                  <th className="border border-gray-600 p-1 text-center font-semibold text-red-400 w-[60px] text-xs">
                     시가총액
                   </th>
                 </tr>
@@ -283,7 +283,7 @@ export default function InvestmentPlayPage() {
               <tbody>
                 {startups.map((startup) => (
                   <tr key={startup}>
-                    <td className="sticky left-0 bg-gray-800 border border-gray-600 p-2 text-center font-semibold text-green-400 text-sm">
+                    <td className="sticky left-0 bg-gray-800 border border-gray-600 p-1 text-center font-semibold text-green-400 text-xs">
                       {startup}
                     </td>
                     {teams.map((team) => (
@@ -293,14 +293,14 @@ export default function InvestmentPlayPage() {
                           value={portfolioData[currentRound]?.[startup]?.[team] || ''}
                           onChange={(e) => handleCellChange(startup, team, e.target.value)}
                           onWheel={(e) => e.currentTarget.blur()}
-                          className="w-full h-8 bg-gray-700 text-white text-center text-xs rounded border-none focus:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-full h-6 bg-gray-700 text-white text-center text-xs rounded border-none focus:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           placeholder="0"
                           min="0"
                           step="0.01"
                         />
                       </td>
                     ))}
-                    <td className="border border-gray-600 p-2 text-center font-bold text-red-400 bg-gray-800/50 text-xs">
+                    <td className="border border-gray-600 p-1 text-center font-bold text-red-400 bg-gray-800/50 text-xs">
                       ${calculateStartupTotal(startup).toLocaleString()}
                     </td>
                   </tr>
@@ -308,7 +308,7 @@ export default function InvestmentPlayPage() {
 
                 {/* Total Row */}
                 <tr className="bg-gray-800/70">
-                  <td className="sticky left-0 bg-gray-800 border border-gray-600 p-2 text-center font-bold text-purple-400 text-sm">
+                  <td className="sticky left-0 bg-gray-800 border border-gray-600 p-1 text-center font-bold text-purple-400 text-xs">
                     총 자본금
                   </td>
                   {teams.map((team) => (
@@ -318,14 +318,14 @@ export default function InvestmentPlayPage() {
                         value={teamTotalData[currentRound]?.[team] || ''}
                         onChange={(e) => handleTeamTotalChange(team, e.target.value)}
                         onWheel={(e) => e.currentTarget.blur()}
-                        className="w-full h-8 bg-gray-700 text-white text-center text-xs rounded border-none focus:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold text-purple-400"
+                        className="w-full h-6 bg-gray-700 text-white text-center text-xs rounded border-none focus:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold text-purple-400"
                         placeholder="0"
                         min="0"
                         step="0.01"
                       />
                     </td>
                   ))}
-                  <td className="border border-gray-600 p-2 text-center font-bold text-yellow-400 bg-gray-700 text-xs">
+                  <td className="border border-gray-600 p-1 text-center font-bold text-yellow-400 bg-gray-700 text-xs">
                     ${calculateGrandTotal().toLocaleString()}
                   </td>
                 </tr>
@@ -335,20 +335,20 @@ export default function InvestmentPlayPage() {
         </div>
 
         {/* Summary Stats */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gray-800/50 p-4 rounded-xl text-center">
-            <h3 className="text-lg font-medium text-green-400 mb-2">총 투자액</h3>
-            <p className="text-2xl font-bold text-white">${calculateGrandTotal().toLocaleString()}</p>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-gray-800/50 p-3 rounded-xl text-center">
+            <h3 className="text-sm font-medium text-green-400 mb-1">총 투자액</h3>
+            <p className="text-lg font-bold text-white">${calculateGrandTotal().toLocaleString()}</p>
           </div>
-          <div className="bg-gray-800/50 p-4 rounded-xl text-center">
-            <h3 className="text-lg font-medium text-blue-400 mb-2">활성 팀</h3>
-            <p className="text-2xl font-bold text-white">
+          <div className="bg-gray-800/50 p-3 rounded-xl text-center">
+            <h3 className="text-sm font-medium text-blue-400 mb-1">활성 팀</h3>
+            <p className="text-lg font-bold text-white">
               {teams.filter(team => calculateTeamTotal(team) > 0).length}/16
             </p>
           </div>
-          <div className="bg-gray-800/50 p-4 rounded-xl text-center">
-            <h3 className="text-lg font-medium text-purple-400 mb-2">참여 스타트업</h3>
-            <p className="text-2xl font-bold text-white">
+          <div className="bg-gray-800/50 p-3 rounded-xl text-center">
+            <h3 className="text-sm font-medium text-purple-400 mb-1">참여 스타트업</h3>
+            <p className="text-lg font-bold text-white">
               {startups.filter(startup => calculateStartupTotal(startup) > 0).length}/4
             </p>
           </div>

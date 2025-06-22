@@ -4,7 +4,8 @@ import ApplyButton from '@/components/ApplyButton';
 
 export default function AboutPage() {
   return (
-    <div className="container mx-auto px-4 pt-32 pb-16 max-w-6xl">
+    <div className="min-h-screen bg-black">
+      <div className="container mx-auto px-4 pt-32 pb-16 max-w-6xl">
       {/* 헤더 섹션 */}
       <div className="text-center mb-20">
         <h1 className="text-4xl md:text-5xl font-bold mb-6 gradient-text">GRAFFITI 2025</h1>
@@ -170,6 +171,7 @@ export default function AboutPage() {
         </p>
         <ApplyButton />
       </section>
+      </div>
     </div>
   );
 }
