@@ -3,94 +3,383 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function Navigation() {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [isInvestmentDropdownOpen, setIsInvestmentDropdownOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   
+  const isGuest = session?.user?.email ? session.user.email.endsWith('@guest.com') : true;
+  
+  // Inline styles for complete independence
+  const navStyles: React.CSSProperties = {
+    position: 'fixed',
+    top: '16px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 50,
+    width: '100%',
+    maxWidth: '52rem',
+    padding: '0 16px',
+  };
+
+  const containerStyles: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 24px',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(16px)',
+    borderRadius: '16px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+  };
+
+  const logoStyles: React.CSSProperties = {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    fontFamily: 'Roboto, sans-serif',
+    textDecoration: 'none',
+    background: 'linear-gradient(to right, #D2D8B2, #4CAF80)',
+    WebkitBackgroundClip: 'text',
+    backgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    color: 'transparent',
+  };
+
+  const menuContainerStyles: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '24px',
+  };
+
+  const getNavLinkStyles = (isActive: boolean): React.CSSProperties => ({
+    padding: '8px 16px',
+    fontSize: '14px',
+    fontWeight: '500',
+    borderRadius: '9999px',
+    transition: 'all 0.2s',
+    textDecoration: 'none',
+    backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+    color: isActive ? '#ffffff' : '#d1d5db',
+  });
+
+  const dropdownStyles: React.CSSProperties = {
+    position: 'relative',
+    display: 'inline-block',
+  };
+
+  const dropdownButtonStyles: React.CSSProperties = {
+    padding: '8px 16px',
+    fontSize: '14px',
+    fontWeight: '500',
+    borderRadius: '9999px',
+    transition: 'all 0.2s',
+    backgroundColor: pathname.startsWith('/investment') ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+    color: pathname.startsWith('/investment') ? '#ffffff' : '#d1d5db',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+  };
+
+  const userButtonStyles: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: '8px 16px',
+    borderRadius: '9999px',
+    fontSize: '14px',
+    fontWeight: '500',
+    transition: 'all 0.2s',
+    color: '#ffffff',
+    border: 'none',
+    cursor: 'pointer',
+    textDecoration: 'none',
+  };
+
+  const loginButtonStyles: React.CSSProperties = {
+    backgroundColor: '#ffffff',
+    color: '#000000',
+    padding: '8px 16px',
+    borderRadius: '9999px',
+    fontSize: '14px',
+    fontWeight: '500',
+    transition: 'all 0.2s',
+    textDecoration: 'none',
+    border: 'none',
+    cursor: 'pointer',
+  };
+
+  const loadingStyles: React.CSSProperties = {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: '8px 16px',
+    borderRadius: '9999px',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#ffffff',
+  };
+
+  const dropdownContentStyles: React.CSSProperties = {
+    position: 'absolute',
+    top: '100%',
+    left: '0',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '8px',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    padding: '8px',
+    minWidth: '160px',
+    zIndex: 100,
+  };
+
+  const userDropdownContentStyles: React.CSSProperties = {
+    position: 'absolute',
+    top: '100%',
+    right: '0',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '8px',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    padding: '8px',
+    minWidth: '192px',
+    zIndex: 100,
+  };
+
+  const dropdownItemStyles: React.CSSProperties = {
+    display: 'block',
+    padding: '8px',
+    fontSize: '14px',
+    color: '#d1d5db',
+    textDecoration: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    width: '100%',
+    border: 'none',
+    backgroundColor: 'transparent',
+    textAlign: 'left',
+  };
+
   return (
-    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[52rem] px-4">
-      <div className="flex items-center justify-between px-6 py-3 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-lg">
-        <Link href="/" className="text-lg font-bold font-roboto gradient-text">
+    <nav style={navStyles}>
+      <div style={containerStyles}>
+        <Link href="/" style={logoStyles}>
           GRAFFITI 2025
         </Link>
         
-        <div className="flex items-center space-x-6">
-          <NavLink href="/" isActive={pathname === '/'}>
+        <div style={menuContainerStyles}>
+          <Link 
+            href="/" 
+            style={getNavLinkStyles(pathname === '/')}
+            onMouseEnter={(e) => {
+              if (pathname !== '/') {
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (pathname !== '/') {
+                e.currentTarget.style.color = '#d1d5db';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
+          >
             Home
-          </NavLink>
-          <NavLink href="/about" isActive={pathname === '/about'}>
+          </Link>
+          <Link 
+            href="/about" 
+            style={getNavLinkStyles(pathname === '/about')}
+            onMouseEnter={(e) => {
+              if (pathname !== '/about') {
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (pathname !== '/about') {
+                e.currentTarget.style.color = '#d1d5db';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
+          >
             About
-          </NavLink>
-          <NavLink href="/chat" isActive={pathname.startsWith('/chat')}>
+          </Link>
+          <Link 
+            href="/chat" 
+            style={getNavLinkStyles(pathname.startsWith('/chat'))}
+            onMouseEnter={(e) => {
+              if (!pathname.startsWith('/chat')) {
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!pathname.startsWith('/chat')) {
+                e.currentTarget.style.color = '#d1d5db';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
+          >
             Ice Breaking
-          </NavLink>
-          <div className="relative group">
+          </Link>
+          
+          {/* Investment Game Dropdown */}
+          <div 
+            style={dropdownStyles}
+            onMouseEnter={() => setIsInvestmentDropdownOpen(true)}
+            onMouseLeave={() => setIsInvestmentDropdownOpen(false)}
+          >
             <button 
-              className={`px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 ${
-                pathname.startsWith('/investment') 
-                  ? 'bg-white/20 text-white' 
-                  : 'text-gray-300 hover:text-white hover:bg-white/10'
-              }`}
+              style={dropdownButtonStyles}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                if (!pathname.startsWith('/investment')) {
+                  e.currentTarget.style.color = '#d1d5db';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
             >
               Investment Game
-              <span className="ml-1 inline-block text-xs transform group-hover:scale-75 transition-transform">
-                ▼
-              </span>
+              <span style={{ fontSize: '12px', marginLeft: '4px' }}>▼</span>
             </button>
-            <div className="absolute left-0 mt-1 w-40 bg-white/10 backdrop-blur-lg rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <Link 
-                href="/investment/overview" 
-                className={`block px-4 py-2 text-sm ${
-                  pathname === '/investment/overview' 
-                    ? 'bg-white/20 text-white' 
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                Overview
-              </Link>
-              <Link 
-                href="/investment/play" 
-                className={`block px-4 py-2 text-sm rounded-b-lg ${
-                  pathname === '/investment/play' 
-                    ? 'bg-white/20 text-white' 
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                Play
-              </Link>
-            </div>
+            {isInvestmentDropdownOpen && (
+              <div style={dropdownContentStyles}>
+                <Link 
+                  href="/investment/overview" 
+                  style={dropdownItemStyles}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                    e.currentTarget.style.color = '#ffffff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#d1d5db';
+                  }}
+                >
+                  Overview
+                </Link>
+                <Link 
+                  href="/investment/play" 
+                  style={dropdownItemStyles}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                    e.currentTarget.style.color = '#ffffff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#d1d5db';
+                  }}
+                >
+                  Play
+                </Link>
+              </div>
+            )}
           </div>
-          <Link 
-            href="/login" 
-            className="bg-white text-black hover:bg-gray-100 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:shadow-md"
-          >
-            Login
-          </Link>
+          
+          {/* User Authentication Section */}
+          {status === 'loading' ? (
+            <div style={loadingStyles}>
+              Loading...
+            </div>
+          ) : session?.user ? (
+            <div 
+              style={dropdownStyles}
+              onMouseEnter={() => setIsUserDropdownOpen(true)}
+              onMouseLeave={() => setIsUserDropdownOpen(false)}
+            >
+              <button 
+                style={userButtonStyles}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                }}
+              >
+                <Image
+                  src={`https://avatar.vercel.sh/${session.user.email}`}
+                  alt={session.user.email ?? 'User Avatar'}
+                  width={20}
+                  height={20}
+                  style={{ borderRadius: '50%' }}
+                />
+                <span style={{ 
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '96px',
+                  color: '#ffffff'
+                }}>
+                  {isGuest ? 'Guest' : session.user.email?.split('@')[0] || 'User'}
+                </span>
+                <span style={{ fontSize: '12px', color: '#ffffff' }}>▼</span>
+              </button>
+              {isUserDropdownOpen && (
+                <div style={userDropdownContentStyles}>
+                  <div style={{
+                    padding: '8px',
+                    fontSize: '14px',
+                    color: '#d1d5db',
+                    pointerEvents: 'none',
+                  }}>
+                    {isGuest ? 'Guest User' : session.user.email}
+                  </div>
+                  <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.2)', margin: '4px 0' }} />
+                  <button 
+                    style={dropdownItemStyles}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                      e.currentTarget.style.color = '#ffffff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = '#d1d5db';
+                    }}
+                    onClick={() => {
+                      if (isGuest) {
+                        router.push('/login');
+                      } else {
+                        signOut({
+                          redirectTo: '/',
+                        });
+                      }
+                    }}
+                  >
+                    {isGuest ? 'Login to your account' : 'Sign out'}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link 
+              href="/login" 
+              style={loginButtonStyles}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#ffffff';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </nav>
-  );
-}
-
-function NavLink({ 
-  href, 
-  isActive, 
-  children 
-}: { 
-  href: string; 
-  isActive: boolean; 
-  children: React.ReactNode 
-}) {
-  return (
-    <Link 
-      href={href} 
-      className={`px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 ${
-        isActive 
-          ? 'bg-white/20 text-white' 
-          : 'text-gray-300 hover:text-white hover:bg-white/10'
-      }`}
-    >
-      {children}
-    </Link>
   );
 }

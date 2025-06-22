@@ -25,6 +25,15 @@ export default function Home() {
           font-family: 'Roboto', sans-serif;
         }
 
+        /* 그라데이션 텍스트 스타일 */
+        .gradient-text {
+          background: linear-gradient(to right, #D2D8B2, #4CAF80);
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+        }
+
         /* 그라데이션 버튼 스타일 */
         .gradient-button {
           background-image: linear-gradient(to right, #D2D8B2 0%, #4CAF80 50%, #D2D8B2 100%);
