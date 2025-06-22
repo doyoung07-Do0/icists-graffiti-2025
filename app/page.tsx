@@ -66,28 +66,8 @@ export default function Home() {
         }
       `}</style>
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-[#111111]/80 backdrop-blur-sm z-50 shadow-md">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl md:text-2xl font-bold font-roboto gradient-text">GRAFFITI 2025</h1>
-
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <a href="#about" className="text-gray-300 hover:text-white transition-colors duration-300">About</a>
-            <Link href="/chat" className="text-gray-300 hover:text-white transition-colors duration-300">
-              Ice Breaking
-            </Link>
-            <a href="#investment-game" className="text-gray-300 hover:text-white transition-colors duration-300">Investment Game</a>
-          </nav>
-
-          <a href="#" className="gradient-button font-bold py-2 px-6 rounded-lg text-sm md:text-base">
-            Login
-          </a>
-        </div>
-      </header>
-
       {/* Main Content */}
-      <main className="pt-24">
+      <main className="pt-28">
         {/* Hero Section */}
         <section className="min-h-screen flex items-center justify-center text-center px-4 -mt-24">
           <div className="space-y-6">

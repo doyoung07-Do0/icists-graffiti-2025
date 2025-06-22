@@ -2,6 +2,7 @@ import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
+import Navigation from '@/components/Navigation';
 
 import './globals.css';
 import { SessionProvider } from 'next-auth/react';
@@ -70,7 +71,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased">
+      <body className="antialiased bg-[#111111] text-[#E5E7EB] min-h-screen">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -78,7 +79,10 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <Toaster position="top-center" />
-          <SessionProvider>{children}</SessionProvider>
+          <SessionProvider>
+            {children}
+            <Navigation />
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>
