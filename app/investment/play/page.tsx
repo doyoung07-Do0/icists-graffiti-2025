@@ -48,8 +48,14 @@ export default function InvestmentPlayPage() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navigation />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-xl">Loading...</div>
+        <div className="w-[95vw] max-w-none mx-auto bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-4 relative">
+          {/* Loading overlay indicator */}
+          <div className="absolute top-4 right-4 z-10">
+            <div className="inline-flex items-center bg-gray-800/80 px-3 py-1 rounded-full text-blue-400 text-xs backdrop-blur-sm">
+              <div className="animate-spin w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full mr-2"></div>
+              로딩중
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -60,8 +66,14 @@ export default function InvestmentPlayPage() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navigation />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-xl">Redirecting to login...</div>
+        <div className="w-[95vw] max-w-none mx-auto bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-4 relative">
+          {/* Loading overlay indicator */}
+          <div className="absolute top-4 right-4 z-10">
+            <div className="inline-flex items-center bg-gray-800/80 px-3 py-1 rounded-full text-blue-400 text-xs backdrop-blur-sm">
+              <div className="animate-spin w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full mr-2"></div>
+              Redirecting to login...
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -70,6 +82,7 @@ export default function InvestmentPlayPage() {
   // Admin Dashboard
   const AdminDashboard = () => {
     const [currentRound, setCurrentRound] = useState<string>('Pre-seed');
+    const [loading, setLoading] = useState(false);
     const rounds = ['Pre-seed', 'Seed', 'Series A', 'Series B'];
     const startups = ['startup1', 'startup2', 'startup3', 'startup4'];
     const teams = Array.from({ length: 16 }, (_, i) => `team${i + 1}`);
@@ -104,13 +117,19 @@ export default function InvestmentPlayPage() {
     // Load data from database
     const loadData = async (round: string) => {
       try {
+        setLoading(true);
+        console.log(`[AdminDashboard] Loading data for round: ${round}`);
+        
         // Initialize rounds if needed
         await fetch('/api/investment/init', { method: 'POST' });
         
         // Fetch current data
         const response = await fetch(`/api/investment?round=${encodeURIComponent(round)}`);
+        console.log(`[AdminDashboard] API Response status: ${response.status}`);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log(`[AdminDashboard] Received data:`, data);
           
           // Update portfolio data
           if (data.portfolios) {
@@ -127,15 +146,36 @@ export default function InvestmentPlayPage() {
               [round]: data.capitals
             }));
           }
+        } else {
+          console.error(`[AdminDashboard] API request failed with status: ${response.status}`);
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('[AdminDashboard] Error loading data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     // Load data on mount and round change
     useEffect(() => {
+      console.log(`[AdminDashboard] Initial load triggered for round: ${currentRound}`);
       loadData(currentRound);
+    }, [currentRound]);
+
+    // Auto-refresh data every 5 seconds for real-time updates from teams
+    useEffect(() => {
+      console.log(`[AdminDashboard] Setting up auto-refresh for round: ${currentRound}`);
+      
+      const interval = setInterval(() => {
+        console.log(`[AdminDashboard] Auto-refresh triggered for round: ${currentRound}`);
+        loadData(currentRound);
+      }, 5000);
+
+      // Cleanup function
+      return () => {
+        console.log(`[AdminDashboard] Cleaning up auto-refresh interval`);
+        clearInterval(interval);
+      };
     }, [currentRound]);
 
     // Number formatting utility
@@ -248,7 +288,17 @@ export default function InvestmentPlayPage() {
     };
 
     return (
-      <div className="w-[95vw] max-w-none mx-auto bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-4">
+      <div className="w-[95vw] max-w-none mx-auto bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-4 relative">
+        {/* Loading overlay indicator */}
+        {loading && (
+          <div className="absolute top-4 right-4 z-10">
+            <div className="inline-flex items-center bg-gray-800/80 px-3 py-1 rounded-full text-blue-400 text-xs backdrop-blur-sm">
+              <div className="animate-spin w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full mr-2"></div>
+              로딩중
+            </div>
+          </div>
+        )}
+        
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold mb-2">
             <span className="bg-gradient-to-r from-red-400 to-pink-500 bg-clip-text text-transparent">
@@ -381,7 +431,7 @@ export default function InvestmentPlayPage() {
         {/* Action Buttons */}
         <div className="mt-6 flex flex-wrap gap-3 justify-center">
           <button className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold transition-all">
-            전송 차단
+            수정 차단
           </button>
           <button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold transition-all">
             유효성 검사
@@ -499,19 +549,54 @@ export default function InvestmentPlayPage() {
       };
     }, [teamName, currentRound]);
 
-    // Calculate team's total investment in current round
-    const calculateTotalInvestment = () => {
-      return startups.reduce((sum, startup) => {
-        const investment = portfolioData[startup] || 0;
-        const numValue = typeof investment === 'string' ? parseFloat(investment) : investment;
-        return sum + (isNaN(numValue) ? 0 : numValue);
-      }, 0);
+    // Handle portfolio investment change with database sync
+    const handlePortfolioChange = async (startup: string, value: string) => {
+      const numericValue = value === '' ? 0 : parseFloat(value) || 0;
+      
+      // Update local state immediately for responsive UI
+      setPortfolioData(prev => ({
+        ...prev,
+        [startup]: numericValue
+      }));
+
+      // Sync to database
+      try {
+        console.log(`[TeamDashboard] Syncing portfolio data: ${startup} = ${numericValue}`);
+        
+        const response = await fetch('/api/investment', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            roundName: currentRound,
+            teamName: teamName,
+            startup: startup,
+            type: 'portfolio',
+            data: {
+              investment: numericValue
+            }
+          }),
+        });
+
+        if (response.ok) {
+          console.log(`[TeamDashboard] Successfully synced ${startup} investment: ${numericValue}`);
+        } else {
+          console.error(`[TeamDashboard] Failed to sync ${startup} investment:`, response.status);
+        }
+      } catch (error) {
+        console.error('[TeamDashboard] Error syncing portfolio data:', error);
+      }
     };
 
+    // Calculate team's total investment in current round
+    const totalInvested = Object.values(portfolioData).reduce((sum, amount) => {
+      const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+      return sum + (isNaN(numAmount) ? 0 : numAmount);
+    }, 0);
+
     // Calculate remaining capital
-    const calculateRemainingCapital = () => {
-      return teamCapital - calculateTotalInvestment();
-    };
+    const remainingCapital = teamCapital - totalInvested;
 
     if (!teamNumber || teamName === 'teamundefined') {
       return (
@@ -526,7 +611,17 @@ export default function InvestmentPlayPage() {
     }
     
     return (
-      <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6">
+      <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 relative">
+        {/* Loading overlay indicator */}
+        {loading && (
+          <div className="absolute top-4 right-4 z-10">
+            <div className="inline-flex items-center bg-gray-800/80 px-3 py-1 rounded-full text-blue-400 text-xs backdrop-blur-sm">
+              <div className="animate-spin w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full mr-2"></div>
+              로딩중
+            </div>
+          </div>
+        )}
+        
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold mb-2">
             <span className="bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
@@ -534,12 +629,6 @@ export default function InvestmentPlayPage() {
             </span>
           </h2>
           <p className="text-gray-300">팀 {teamNumber} 투자 게임 대시보드</p>
-          {loading && (
-            <div className="inline-flex items-center mt-2 text-blue-400 text-sm">
-              <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full mr-2"></div>
-              데이터 로딩 중...
-            </div>
-          )}
         </div>
 
         {/* Round Selection */}
@@ -559,6 +648,11 @@ export default function InvestmentPlayPage() {
               </button>
             ))}
           </div>
+          <div className="text-center mt-3">
+            <span className="text-lg font-medium text-blue-400">
+              현재 라운드: {currentRound}
+            </span>
+          </div>
         </div>
 
         {/* Capital Overview */}
@@ -569,12 +663,12 @@ export default function InvestmentPlayPage() {
           </div>
           <div className="bg-gray-800/50 p-4 rounded-xl text-center">
             <h3 className="text-sm font-medium text-blue-400 mb-1">총 투자액</h3>
-            <p className="text-xl font-bold text-white">{formatCurrency(calculateTotalInvestment())}</p>
+            <p className="text-xl font-bold text-white">{formatCurrency(totalInvested)}</p>
           </div>
           <div className="bg-gray-800/50 p-4 rounded-xl text-center">
             <h3 className="text-sm font-medium text-purple-400 mb-1">잔여 자본</h3>
-            <p className={`text-xl font-bold ${calculateRemainingCapital() >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {formatCurrency(calculateRemainingCapital())}
+            <p className={`text-xl font-bold ${remainingCapital >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {formatCurrency(remainingCapital)}
             </p>
           </div>
         </div>
@@ -595,9 +689,16 @@ export default function InvestmentPlayPage() {
                     <span className="font-medium text-gray-200 capitalize">
                       {startup.replace('startup', 'Startup ')}
                     </span>
-                    <span className="text-lg font-bold text-white">
-                      {formatCurrency(safeValue)}
-                    </span>
+                    <input
+                      type="number"
+                      value={safeValue}
+                      onChange={(e) => handlePortfolioChange(startup, e.target.value)}
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="w-full h-6 bg-gray-700 text-white text-center text-xs rounded border-none focus:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      min="0"
+                      step="0.01"
+                    />
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-400">투자 비율</span>

@@ -200,3 +200,80 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// PUT: Update team portfolio data (for team dashboard)
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { roundName, teamName, startup, type, data } = body;
+
+    console.log(`[API] PUT request - Round: ${roundName}, Team: ${teamName}, Startup: ${startup}, Type: ${type}, Data:`, data);
+
+    // Get current round
+    const round = await db
+      .select()
+      .from(investmentRound)
+      .where(eq(investmentRound.name, roundName))
+      .limit(1);
+
+    if (round.length === 0) {
+      return NextResponse.json({ error: 'Round not found' }, { status: 404 });
+    }
+
+    const roundId = round[0].id;
+
+    if (type === 'portfolio') {
+      // Update team portfolio
+      const { investment } = data;
+      
+      console.log(`[API] Updating portfolio - Startup: ${startup}, Investment: ${investment}`);
+      
+      // Check if record exists
+      const existing = await db
+        .select()
+        .from(teamPortfolio)
+        .where(
+          and(
+            eq(teamPortfolio.roundId, roundId),
+            eq(teamPortfolio.teamName, teamName),
+            eq(teamPortfolio.startup, startup)
+          )
+        );
+
+      if (existing.length === 0) {
+        // Create new record
+        await db.insert(teamPortfolio).values({
+          roundId,
+          teamName,
+          startup,
+          investmentAmount: investment.toString(),
+        });
+        console.log(`[API] Created new portfolio record for ${teamName}-${startup}: ${investment}`);
+      } else {
+        // Update existing record
+        await db
+          .update(teamPortfolio)
+          .set({
+            investmentAmount: investment.toString(),
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(teamPortfolio.roundId, roundId),
+              eq(teamPortfolio.teamName, teamName),
+              eq(teamPortfolio.startup, startup)
+            )
+          );
+        console.log(`[API] Updated existing portfolio record for ${teamName}-${startup}: ${investment}`);
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error updating portfolio data:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
