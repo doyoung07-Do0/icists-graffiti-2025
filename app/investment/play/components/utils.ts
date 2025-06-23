@@ -1,15 +1,21 @@
 // Utility functions for investment play components
 
-export const formatCurrency = (value: number | string): string => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(num)) return '₩0';
-  
-  return new Intl.NumberFormat('ko-KR', {
+export const formatCurrency = (value: number | string, currency: 'KRW' | 'USD' = 'USD'): string => {
+  const num = typeof value === 'string' ? parseInt(value, 10) : value;
+  if (isNaN(num)) {
+    return currency === 'KRW' ? '₩0' : '$0';
+  }
+
+  const options: Intl.NumberFormatOptions = {
     style: 'currency',
-    currency: 'KRW',
+    currency: currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(num);
+    maximumFractionDigits: 0, 
+  };
+
+  const locale = currency === 'KRW' ? 'ko-KR' : 'en-US';
+
+  return new Intl.NumberFormat(locale, options).format(num);
 };
 
 export const getUserRole = (email: string | null | undefined): 'admin' | 'team' | 'unauthorized' => {

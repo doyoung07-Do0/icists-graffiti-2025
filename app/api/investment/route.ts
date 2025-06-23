@@ -56,13 +56,13 @@ export async function GET(request: NextRequest) {
       ]);
 
       return NextResponse.json({
-        capitals: { [teamName]: capital[0]?.totalCapital || 0 },
-        portfolios: portfolio.reduce((acc: Record<string, Record<string, number>>, item: TeamPortfolio) => {
+        capitals: { [teamName]: capital[0]?.totalCapital || '0' },
+        portfolios: portfolio.reduce((acc: Record<string, Record<string, string>>, item: TeamPortfolio) => {
           if (!acc[item.startup]) acc[item.startup] = {};
-          acc[item.startup][teamName] = parseFloat(item.investmentAmount) || 0;
+          acc[item.startup][teamName] = item.investmentAmount || '0';
           return acc;
-        }, {} as Record<string, Record<string, number>>),
-        marketCaps: { [teamName]: marketCap[0]?.marketCap || 0 },
+        }, {} as Record<string, Record<string, string>>),
+        marketCaps: { [teamName]: marketCap[0]?.marketCap || '0' },
       });
     } else {
       // Get all teams' data for admin dashboard
@@ -119,7 +119,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { roundName, teamName, type, data } = body;
 
-    // Get current round
+    if (!roundName || !teamName || !type || !data) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
     const round = await db
       .select()
       .from(investmentRound)
@@ -132,75 +135,16 @@ export async function POST(request: NextRequest) {
 
     const roundId = round[0].id;
 
-    if (type === 'capital') {
-      // Update team capital
-      const { capital } = data;
-      
-      // Check if record exists
-      const existing = await db
-        .select()
-        .from(teamCapital)
-        .where(
-          and(
-            eq(teamCapital.roundId, roundId),
-            eq(teamCapital.teamName, teamName)
-          )
-        );
+    switch (type) {
+      case 'portfolio': {
+        const { startup, amount } = data;
+        if (!startup || typeof amount !== 'number') {
+          return NextResponse.json({ error: 'Invalid portfolio data' }, { status: 400 });
+        }
 
-      if (existing.length === 0) {
-        // Create new record
-        await db.insert(teamCapital).values({
-          roundId,
-          teamName,
-          totalCapital: capital.toString(),
-        });
-      } else {
-        // Update existing record
-        await db
-          .update(teamCapital)
-          .set({
-            totalCapital: capital.toString(),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(teamCapital.roundId, roundId),
-              eq(teamCapital.teamName, teamName)
-            )
-          );
-      }
-    } else if (type === 'portfolio') {
-      // Update team portfolio
-      const { startup, amount } = data;
-      
-      // Check if record exists
-      const existing = await db
-        .select()
-        .from(teamPortfolio)
-        .where(
-          and(
-            eq(teamPortfolio.roundId, roundId),
-            eq(teamPortfolio.teamName, teamName),
-            eq(teamPortfolio.startup, startup)
-          )
-        );
-
-      if (existing.length === 0) {
-        // Create new record
-        await db.insert(teamPortfolio).values({
-          roundId,
-          teamName,
-          startup,
-          investmentAmount: amount.toString(),
-        });
-      } else {
-        // Update existing record
-        await db
-          .update(teamPortfolio)
-          .set({
-            investmentAmount: amount.toString(),
-            updatedAt: new Date(),
-          })
+        const existing = await db
+          .select()
+          .from(teamPortfolio)
           .where(
             and(
               eq(teamPortfolio.roundId, roundId),
@@ -208,49 +152,92 @@ export async function POST(request: NextRequest) {
               eq(teamPortfolio.startup, startup)
             )
           );
-      }
-    } else if (type === 'marketCap') {
-      // Update team market cap
-      const { marketCap } = data;
-      
-      // Check if record exists
-      const existing = await db
-        .select()
-        .from(teamMarketCap)
-        .where(
-          and(
-            eq(teamMarketCap.roundId, roundId),
-            eq(teamMarketCap.teamName, teamName)
-          )
-        );
 
-      if (existing.length === 0) {
-        // Create new record
-        await db.insert(teamMarketCap).values({
-          roundId,
-          teamName,
-          marketCap: marketCap.toString(),
-        });
-      } else {
-        // Update existing record
-        await db
-          .update(teamMarketCap)
-          .set({
-            marketCap: marketCap.toString(),
-            updatedAt: new Date(),
-          })
+        if (existing.length > 0) {
+          await db
+            .update(teamPortfolio)
+            .set({ investmentAmount: amount.toString(), updatedAt: new Date() })
+            .where(eq(teamPortfolio.id, existing[0].id));
+        } else {
+          await db.insert(teamPortfolio).values({
+            roundId,
+            teamName,
+            startup,
+            investmentAmount: amount.toString(),
+          });
+        }
+        break;
+      }
+
+      case 'capital': {
+        const { total } = data;
+        if (typeof total !== 'number') {
+          return NextResponse.json({ error: 'Invalid capital data' }, { status: 400 });
+        }
+
+        const existing = await db
+          .select()
+          .from(teamCapital)
+          .where(
+            and(
+              eq(teamCapital.roundId, roundId),
+              eq(teamCapital.teamName, teamName)
+            )
+          );
+
+        if (existing.length > 0) {
+          await db
+            .update(teamCapital)
+            .set({ totalCapital: total.toString(), updatedAt: new Date() })
+            .where(eq(teamCapital.id, existing[0].id));
+        } else {
+          await db.insert(teamCapital).values({
+            roundId,
+            teamName,
+            totalCapital: total.toString(),
+          });
+        }
+        break;
+      }
+
+      case 'marketCap': {
+        const { marketCap } = data;
+        if (typeof marketCap !== 'number') {
+          return NextResponse.json({ error: 'Invalid marketCap data' }, { status: 400 });
+        }
+
+        const existing = await db
+          .select()
+          .from(teamMarketCap)
           .where(
             and(
               eq(teamMarketCap.roundId, roundId),
               eq(teamMarketCap.teamName, teamName)
             )
           );
+
+        if (existing.length > 0) {
+          await db
+            .update(teamMarketCap)
+            .set({ marketCap: marketCap.toString(), updatedAt: new Date() })
+            .where(eq(teamMarketCap.id, existing[0].id));
+        } else {
+          await db.insert(teamMarketCap).values({
+            roundId,
+            teamName,
+            marketCap: marketCap.toString(),
+          });
+        }
+        break;
       }
+
+      default:
+        return NextResponse.json({ error: 'Invalid investment type' }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: `${type} updated successfully` });
   } catch (error) {
-    console.error('Error updating investment data:', error);
+    console.error(`Error updating investment data:`, error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

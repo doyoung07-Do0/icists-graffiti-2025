@@ -57,6 +57,13 @@
       "when": 1750628472741,
       "tag": "0007_wakeful_greymalkin",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1750638315635,
+      "tag": "0008_jittery_lake",
+      "breakpoints": true
     }
   ]
 }
