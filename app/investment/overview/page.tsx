@@ -26,7 +26,7 @@ export default function InvestmentOverview() {
         '초기 투자금을 분산 투자 형태로 제출',
         '모든 팀의 투자 후 랜덤 수익률 결정'
       ],
-      icon: <BarChart2 className="w-6 h-6" />
+      icon: <BarChart2 className="size-6" />
     },
     {
       id: 'seed',
@@ -38,7 +38,7 @@ export default function InvestmentOverview() {
         '사업 모델 및 수익 구조',
         '미래 비전 제시'
       ],
-      icon: <TrendingUp className="w-6 h-6" />
+      icon: <TrendingUp className="size-6" />
     },
     {
       id: 'series-a',
@@ -50,7 +50,7 @@ export default function InvestmentOverview() {
         '현실적인 문제점과 해결 방향',
         '사회 문제 해결 생태계에서의 역할'
       ],
-      icon: <Users className="w-6 h-6" />
+      icon: <Users className="size-6" />
     },
     {
       id: 'series-b',
@@ -62,7 +62,7 @@ export default function InvestmentOverview() {
         '최종 포트폴리오 리밸런싱',
         '최종 수익률 결정'
       ],
-      icon: <Target className="w-6 h-6" />
+      icon: <Target className="size-6" />
     }
   ];
 
@@ -115,7 +115,7 @@ export default function InvestmentOverview() {
           
           <div className="space-y-4 mt-6">
             <h3 className="text-lg font-semibold flex items-center">
-              <Clock className="w-5 h-5 mr-2" />
+              <Clock className="size-6 shrink-0 text-[#4CAF80]" />
               주요 피칭 포인트
             </h3>
             <ul className="space-y-3 pl-2">
@@ -132,26 +132,26 @@ export default function InvestmentOverview() {
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
             <h3 className="text-xl font-bold mb-4 flex items-center">
-              <Award className="w-5 h-5 mr-2 text-[#4CAF80]" />
+              <Award className="size-5 mr-2 text-[#4CAF80]" />
               게임 진행 방식
             </h3>
             <ol className="space-y-4">
               <li className="flex">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">1</div>
+                <div className="shrink-0 size-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">1</div>
                 <div>
                   <h4 className="font-semibold">초기 자금 확보</h4>
                   <p className="text-sm text-gray-300">VC 에듀세션 퀴즈를 통해 초기 투자금 획득</p>
                 </div>
               </li>
               <li className="flex">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">2</div>
+                <div className="shrink-0 size-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">2</div>
                 <div>
                   <h4 className="font-semibold">포트폴리오 구성</h4>
                   <p className="text-sm text-gray-300">각 라운드별로 스타트업에 분산 투자</p>
                 </div>
               </li>
               <li className="flex">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">3</div>
+                <div className="shrink-0 size-6 rounded-full bg-[#4CAF80] flex items-center justify-center text-xs font-bold mr-3">3</div>
                 <div>
                   <h4 className="font-semibold">수익률 결정</h4>
                   <p className="text-sm text-gray-300">투자 규모에 따른 랜덤 수익률 적용</p>
@@ -190,7 +190,7 @@ export default function InvestmentOverview() {
             href="/investment/play" 
             className="inline-flex items-center px-8 py-3 rounded-full bg-gradient-to-r from-[#D2D8B2] to-[#4CAF80] text-black font-medium hover:opacity-90 transition-opacity"
           >
-            게임 시작하기 <ArrowRight className="ml-2 w-5 h-5" />
+            게임 시작하기 <ArrowRight className="ml-2 size-5" />
           </Link>
         </div>
       </div>

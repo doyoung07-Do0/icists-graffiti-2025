@@ -9,7 +9,7 @@ export default function AboutPage() {
       {/* 헤더 섹션 */}
       <div className="text-center mb-20">
         <h1 className="text-4xl md:text-5xl font-bold mb-6 gradient-text">GRAFFITI 2025</h1>
-        <p className="text-2xl md:text-3xl font-medium mb-6">"One Idea can Paint the Future"</p>
+        <p className="text-2xl md:text-3xl font-medium mb-6">&ldquo;One Idea can Paint the Future&rdquo;</p>
         <p className="text-xl text-gray-300 max-w-4xl mx-auto">
           여름의 정점, 당신의 아이디어를 세상에 낙서하듯 그릴 시간!
         </p>
@@ -20,20 +20,20 @@ export default function AboutPage() {
         <div className="flex flex-col md:flex-row items-center gap-10 mb-12">
           <div className="md:w-1/2">
             <h2 className="text-3xl font-bold mb-6 flex items-center">
-              <Rocket className="w-8 h-8 mr-3 text-[#4CAF80]" />
+              <Rocket className="size-8 mr-3 text-[#4CAF80]" />
               GRAFFITI 2025
             </h2>
             <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-              "One Idea can Paint the Future"이라는 주제로 열리는 GRAFFITI 2025는
+              &ldquo;One Idea can Paint the Future&rdquo;이라는 주제로 열리는 GRAFFITI 2025는
               AI를 활용한 창업 아이디어를 자유롭게 구현하고, 실제로 기업과 전문가 앞에서 선보일 수 있는 컨퍼런스입니다.
             </p>
             <div className="mb-6 p-6 bg-white/5 rounded-xl border border-white/10">
               <h3 className="text-xl font-semibold mb-4 flex items-center">
-                <Lightbulb className="w-5 h-5 mr-2 text-[#D2D8B2]" />
-                왜 'GRAFFITI'인가요?
+                <Lightbulb className="size-5 mr-2 text-[#D2D8B2]" />
+                왜 &lsquo;GRAFFITI&rsquo;인가요?
               </h3>
               <p className="text-gray-300">
-                20대 청년 창업가가 'AI를 활용해 세상을 바꿀 색다른 해결책'을 그려 나가자는 메시지를 담고 있습니다.
+                20대 청년 창업가가 &lsquo;AI를 활용해 세상을 바꿀 색다른 해결책&rsquo;을 그려 나가자는 메시지를 담고 있습니다.
                 AI는 이제 과제를 돕는 도구를 넘어, 환경, 교육, 금융 등 사회문제를 해결하는 핵심 기술로 자리 잡았습니다.
               </p>
             </div>
@@ -48,7 +48,7 @@ export default function AboutPage() {
               </p>
               <p className="text-gray-300">
                 기술을 처음부터 만드는 것이 아니라, 기술이 주어진 상태에서
-                "무엇을 바꿀 수 있을까?"를 고민하는 과정이 GRAFFITI 2025의 핵심입니다.
+                &ldquo;무엇을 바꿀 수 있을까?&rdquo;를 고민하는 과정이 GRAFFITI 2025의 핵심입니다.
               </p>
             </div>
           </div>
@@ -114,12 +114,12 @@ export default function AboutPage() {
         <div className="flex flex-col md:flex-row items-center gap-10 mb-12">
           <div className="md:w-1/2">
             <h2 className="text-3xl font-bold mb-6 flex items-center">
-              <Users className="w-8 h-8 mr-3 text-[#4CAF80]" />
+              <Users className="size-8 mr-3 text-[#4CAF80]" />
               ICISTS 소개
             </h2>
             <p className="text-lg text-gray-300 mb-6 leading-relaxed">
               ICISTS(아이시스츠)는 KAIST의 대표적인 학술 동아리로, 과학기술과 사회의 융합을 꿈꾸는 학생들이 모인 단체입니다.
-              'International Challengers for the Integration of Science, Technology and Society'의 약자로,
+              &lsquo;International Challengers for the Integration of Science, Technology and Society&rsquo;의 약자로,
               과학기술이 사회에 미치는 영향과 가능성에 대해 탐구하고 논의하는 장을 마련하고 있습니다.
             </p>
             <p className="text-lg text-gray-300 leading-relaxed">
@@ -140,7 +140,7 @@ export default function AboutPage() {
         <div className="flex flex-col md:flex-row-reverse items-center gap-10 mb-12">
           <div className="md:w-1/2">
             <h2 className="text-3xl font-bold mb-6 flex items-center">
-              <GraduationCap className="w-8 h-8 mr-3 text-[#4CAF80]" />
+              <GraduationCap className="size-8 mr-3 text-[#4CAF80]" />
               KAIST 소개
             </h2>
             <p className="text-lg text-gray-300 mb-6 leading-relaxed">

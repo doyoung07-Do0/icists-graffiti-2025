@@ -2,10 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 
 export default function Navigation() {
   const pathname = usePathname();

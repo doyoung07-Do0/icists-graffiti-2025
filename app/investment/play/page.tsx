@@ -27,7 +27,7 @@ export default function InvestmentPlayPage() {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8">
           <div className="text-center">
-            <div className="animate-spin w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <div className="animate-spin size-8 border-4 border-blue-400 border-t-transparent rounded-full mx-auto mb-4"></div>
             <p className="text-gray-300">로딩 중...</p>
           </div>
         </div>

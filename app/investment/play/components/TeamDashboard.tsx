@@ -95,7 +95,7 @@ export default function TeamDashboard({ userEmail }: TeamDashboardProps) {
             <div className="flex items-center space-x-2">
               {loading && (
                 <div className="flex items-center space-x-1.5 text-sm text-gray-300 bg-gray-800/50 px-3 py-1.5 rounded-lg">
-                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-[#4CAF80]"></div>
+                  <div className="animate-spin rounded-full size-3.5 border-t-2 border-[#4CAF80]"></div>
                   <span>로딩 중...</span>
                 </div>
               )}
@@ -127,7 +127,7 @@ export default function TeamDashboard({ userEmail }: TeamDashboardProps) {
                 <div className="stat-card p-5 rounded-xl group hover:scale-[1.02] transition-transform duration-300">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center">
+                      <div className="size-10 rounded-full gradient-bg flex items-center justify-center">
                         <span className="text-black text-lg font-bold">$</span>
                       </div>
                       <span className="text-gray-300">총 자본금</span>
@@ -141,7 +141,7 @@ export default function TeamDashboard({ userEmail }: TeamDashboardProps) {
                 <div className="stat-card p-5 rounded-xl group hover:scale-[1.02] transition-transform duration-300">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center">
+                      <div className="size-10 rounded-full gradient-bg flex items-center justify-center">
                         <span className="text-black text-lg">💸</span>
                       </div>
                       <span className="text-gray-300">총 투자액</span>
@@ -155,7 +155,7 @@ export default function TeamDashboard({ userEmail }: TeamDashboardProps) {
                 <div className="stat-card p-5 rounded-xl group hover:scale-[1.02] transition-transform duration-300">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center">
+                      <div className="size-10 rounded-full gradient-bg flex items-center justify-center">
                         <span className="text-black text-lg">💎</span>
                       </div>
                       <span className="text-gray-300">잔여 자본</span>

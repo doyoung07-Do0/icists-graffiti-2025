@@ -88,7 +88,7 @@ export default function Home() {
               onClick={() => {
                 document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="inline-block gradient-button font-bold py-3 px-8 rounded-full text-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#4CAF80]/20"
+              className="inline-block gradient-button font-bold py-3 px-8 rounded-full text-lg shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#4CAF80]/20"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(76, 175, 128, 0.4)' }}
@@ -156,7 +156,7 @@ export default function Home() {
             <div className="relative pl-8 border-l-2 border-gray-600 space-y-12">
               {/* Step 1 */}
               <div className="relative">
-                <div className="absolute -left-[42px] top-0 h-full flex items-center">
+                <div className="absolute left-[calc(-42px)] top-1/2 -translate-y-1/2 z-10">
                   <div className="h-5 w-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900"></div>
                 </div>
                 <h4 className="text-2xl font-bold mb-2 gradient-text">📈 투자게임 (Investment Game)</h4>
@@ -164,7 +164,7 @@ export default function Home() {
               </div>
               {/* Step 2 */}
               <div className="relative">
-                <div className="absolute -left-[42px] top-0 h-full flex items-center">
+                <div className="absolute left-[calc(-42px)] top-1/2 -translate-y-1/2 z-10">
                   <div className="h-5 w-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900"></div>
                 </div>
                 <h4 className="text-2xl font-bold mb-2 gradient-text">🎤 전문가 강연</h4>
@@ -172,7 +172,7 @@ export default function Home() {
               </div>
               {/* Step 3 */}
               <div className="relative">
-                <div className="absolute -left-[42px] top-0 h-full flex items-center">
+                <div className="absolute left-[calc(-42px)] top-1/2 -translate-y-1/2 z-10">
                   <div className="h-5 w-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900"></div>
                 </div>
                 <h4 className="text-2xl font-bold mb-2 gradient-text">🚀 팀프로젝트</h4>
@@ -227,7 +227,7 @@ export default function Home() {
           <div className="container mx-auto">
             <h3 className="text-3xl md:text-4xl font-bold mb-4">당신의 아이디어로 미래를 그릴 준비가 되셨나요?</h3>
             <p className="text-gray-400 mb-8 max-w-2xl mx-auto">망설이지 마세요. GRAFFITI 2025는 당신의 아이디어가 현실이 되는 무대입니다.</p>
-            <a href="https://www.instagram.com/icistskaist/" target="_blank" rel="noopener noreferrer" className="inline-block gradient-button font-bold py-4 px-10 rounded-full text-xl shadow-lg transform hover:scale-105 transition-transform">
+            <a href="https://www.instagram.com/icistskaist/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gradient-button font-bold py-3 px-8 rounded-full text-lg shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#4CAF80]/20">
               ICISTS 인스타에서 신청하기
             </a>
           </div>
