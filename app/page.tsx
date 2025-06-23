@@ -84,9 +84,19 @@ export default function Home() {
               여름의 정점, 당신의 아이디어를 세상에 낙서하듯 그릴 시간!<br />
               AI 스타트업의 기술로 사회 문제를 해결하는 새로운 방식의 해커톤에 당신을 초대합니다
             </motion.p>
-            <motion.a href="#" className="inline-block gradient-button font-bold py-3 px-8 rounded-full text-lg shadow-lg transform hover:scale-105 transition-transform" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-              해커톤 참여하기
-            </motion.a>
+            <motion.button
+              onClick={() => {
+                document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-block gradient-button font-bold py-3 px-8 rounded-full text-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#4CAF80]/20"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(76, 175, 128, 0.4)' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ delay: 0.6, type: 'spring', stiffness: 400, damping: 10 }}
+            >
+              자세히 알아보기
+            </motion.button>
           </motion.div>
         </motion.section>
 
