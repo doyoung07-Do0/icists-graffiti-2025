@@ -39,7 +39,7 @@ export default function AboutPage() {
             </div>
             <div className="p-6 bg-white/5 rounded-xl border border-white/10">
               <h3 className="text-xl font-semibold mb-4 flex items-center">
-                <Brain className="w-5 h-5 mr-2 text-[#D2D8B2]" />
+                <Brain className="size-5 mr-2 text-[#D2D8B2]" />
                 GRAFFITI 2025의 차별점
               </h3>
               <p className="text-gray-300 mb-3">

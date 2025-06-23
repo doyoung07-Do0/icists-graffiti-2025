@@ -157,7 +157,7 @@ export default function Home() {
               {/* Step 1 */}
               <div className="relative">
                 <div className="absolute left-[calc(-42px)] top-1/2 -translate-y-1/2 z-10">
-                  <div className="h-5 w-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900"></div>
+                  <div className="size-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900"></div>
                 </div>
                 <h4 className="text-2xl font-bold mb-2 gradient-text">📈 투자게임 (Investment Game)</h4>
                 <p className="text-gray-300">참가자들이 직접 스타트업의 가치를 평가하고 투자자의 관점을 기릅니다. 이 과정을 통해 팀프로젝트를 함께할 스타트업과 매칭됩니다.</p>
@@ -165,7 +165,7 @@ export default function Home() {
               {/* Step 2 */}
               <div className="relative">
                 <div className="absolute left-[calc(-42px)] top-1/2 -translate-y-1/2 z-10">
-                  <div className="h-5 w-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900"></div>
+                  <div className="size-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900"></div>
                 </div>
                 <h4 className="text-2xl font-bold mb-2 gradient-text">🎤 전문가 강연</h4>
                 <p className="text-gray-300">VC, AI, 창업 분야 전문가들의 강연을 통해 AI 창업 인사이트를 얻고 팀프로젝트 아이디어를 구체화하는 데 도움을 받습니다.</p>
@@ -173,7 +173,7 @@ export default function Home() {
               {/* Step 3 */}
               <div className="relative">
                 <div className="absolute left-[calc(-42px)] top-1/2 -translate-y-1/2 z-10">
-                  <div className="h-5 w-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900"></div>
+                  <div className="size-5 bg-gradient-to-r from-yellow-200 to-green-500 rounded-full ring-4 ring-gray-900"></div>
                 </div>
                 <h4 className="text-2xl font-bold mb-2 gradient-text">🚀 팀프로젝트</h4>
                 <p className="text-gray-300">4~6인으로 팀을 이뤄 매칭된 스타트업의 AI 기술을 이용, 새로운 문제를 정의하고 시장 조사를 통해 AI 기반 서비스/제품을 구체화하는 핵심 프로그램입니다.</p>

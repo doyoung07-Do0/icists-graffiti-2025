@@ -84,7 +84,7 @@ export default function AdminDashboard() {
             <div className="flex items-center space-x-4">
               {loading && (
                 <div className="flex items-center space-x-1.5 text-sm text-gray-300 bg-gray-800/50 px-3 py-1.5 rounded-lg">
-                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-[#4CAF80]"></div>
+                  <div className="animate-spin rounded-full size-3.5 border-t-2 border-[#4CAF80]"></div>
                   <span>로딩 중...</span>
                 </div>
               )}
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
         {/* Summary Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="stat-card rounded-lg p-4 text-center group hover:scale-105 transition-transform duration-300">
-            <div className="w-6 h-6 gradient-bg rounded-full flex items-center justify-center mx-auto mb-2">
+            <div className="size-6 gradient-bg rounded-full flex items-center justify-center mx-auto mb-2">
               <span className="text-black text-xs font-bold">₩</span>
             </div>
             <p className="text-sm font-medium text-gray-400">
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
           </div>
           
           <div className="stat-card rounded-lg p-4 text-center group hover:scale-105 transition-transform duration-300">
-            <div className="w-6 h-6 gradient-bg rounded-full flex items-center justify-center mx-auto mb-2">
+            <div className="size-6 gradient-bg rounded-full flex items-center justify-center mx-auto mb-2">
               <span className="text-black text-xs font-bold">👥</span>
             </div>
             <p className="text-sm font-medium text-gray-400">
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
           </div>
           
           <div className="stat-card rounded-lg p-4 text-center group hover:scale-105 transition-transform duration-300">
-            <div className="w-6 h-6 gradient-bg rounded-full flex items-center justify-center mx-auto mb-2">
+            <div className="size-6 gradient-bg rounded-full flex items-center justify-center mx-auto mb-2">
               <span className="text-black text-xs font-bold">🚀</span>
             </div>
             <p className="text-sm font-medium text-gray-400">
