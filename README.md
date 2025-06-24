@@ -97,5 +97,4 @@ For any questions or support, please contact the ICISTS team at [icists@icists.o
 
 <div align="center">
   <p>Made by ICISTS</p>
-  <p>© 2025 ICISTS. All rights reserved.</p>
 </div>
