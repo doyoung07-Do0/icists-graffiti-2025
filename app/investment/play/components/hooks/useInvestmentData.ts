@@ -218,7 +218,7 @@ export const useInvestmentData = (initialRound = 'Pre-seed', teamName: string | 
   };
 
   const resetPortfolio = async () => {
-    if (!confirm('Are you sure you want to reset all portfolio data for this round? This cannot be undone.')) {
+    if (!confirm('모든 팀의 투자금액을 0으로 초기화하시겠습니까? (총 자본금은 유지됩니다)')) {
       return;
     }
 
@@ -231,13 +231,28 @@ export const useInvestmentData = (initialRound = 'Pre-seed', teamName: string | 
       });
 
       if (response.ok) {
-        // Reload the data after reset
-        await loadData(currentRound);
+        // Update local state to reflect the reset
+        const resetPortfolioData = { ...portfolioData };
+        
+        // Reset all investment amounts to 0 for the current round
+        Object.keys(resetPortfolioData[currentRound] || {}).forEach(startup => {
+          Object.keys(resetPortfolioData[currentRound][startup]).forEach(team => {
+            resetPortfolioData[currentRound][startup][team] = 0;
+          });
+        });
+        
+        setPortfolioData(resetPortfolioData);
+        
+        // Show success message
+        alert('모든 팀의 투자금액이 초기화되었습니다.');
       } else {
-        console.error('Failed to reset portfolio data:', await response.text());
+        const errorData = await response.json();
+        console.error('Failed to reset portfolio data:', errorData);
+        alert(`초기화에 실패했습니다: ${errorData.error || '알 수 없는 오류'}`);
       }
     } catch (error) {
       console.error('Error resetting portfolio data:', error);
+      alert('초기화 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
