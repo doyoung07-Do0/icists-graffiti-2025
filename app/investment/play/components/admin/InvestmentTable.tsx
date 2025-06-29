@@ -102,6 +102,35 @@ export const InvestmentTable = ({
             </tr>
           ))}
           
+          {/* Remaining Capital Row */}
+          <tr className="border-t border-emerald-900/30 bg-emerald-900/5 hover:bg-emerald-900/10">
+            <td className="p-3 text-sm font-medium text-emerald-100 sticky left-0 z-10 bg-emerald-900/20 backdrop-blur-sm border-b border-emerald-900/30">
+              잔여 자본
+            </td>
+            {TEAMS.map(team => {
+              const totalCapital = teamTotalData[currentRound]?.[team] || 0;
+              const totalInvested = STARTUPS.reduce((sum, startup) => {
+                return sum + (portfolioData[currentRound]?.[startup]?.[team] || 0);
+              }, 0);
+              const remainingCapital = totalCapital - totalInvested;
+              
+              return (
+                <td key={team} className="p-3 text-sm font-medium text-center text-emerald-100 bg-emerald-900/20 border-b border-emerald-900/30">
+                  {Math.round(remainingCapital).toLocaleString()}
+                </td>
+              );
+            })}
+            <td className="p-3 text-sm font-bold text-center text-emerald-100 bg-emerald-900/30 border-b border-emerald-900/30">
+              {TEAMS.reduce((grandTotal, team) => {
+                const totalCapital = teamTotalData[currentRound]?.[team] || 0;
+                const totalInvested = STARTUPS.reduce((sum, startup) => {
+                  return sum + (portfolioData[currentRound]?.[startup]?.[team] || 0);
+                }, 0);
+                return grandTotal + (totalCapital - totalInvested);
+              }, 0).toLocaleString()}
+            </td>
+          </tr>
+          
           {/* Total Capital Row */}
           <tr className="border-t border-amber-900/30 bg-amber-900/5 hover:bg-amber-900/10">
             <td className="p-3 text-sm font-medium text-amber-100 sticky left-0 z-10 bg-amber-900/20 backdrop-blur-sm rounded-bl-lg border-b border-amber-900/30">
