@@ -19,7 +19,8 @@ export default function AdminDashboard() {
     saveTeamTotalChange,
     saveMarketCapChange,
     calculateStartupTotal,
-    calculateGrandTotal
+    calculateGrandTotal,
+    resetPortfolio
   } = useInvestmentData();
 
   return (
@@ -80,7 +81,17 @@ export default function AdminDashboard() {
         {/* Investment Table */}
         <div className="mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-medium text-white">Portfolio Overview</h2>
+            <div className="flex items-center space-x-4">
+              <h2 className="text-2xl font-medium text-white">Portfolio Overview</h2>
+              <button
+                onClick={resetPortfolio}
+                disabled={loading}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center space-x-1.5"
+              >
+                <span>초기화</span>
+                {loading && <div className="animate-spin rounded-full size-3.5 border-t-2 border-white"></div>}
+              </button>
+            </div>
             <div className="flex items-center space-x-4">
               {loading && (
                 <div className="flex items-center space-x-1.5 text-sm text-gray-300 bg-gray-800/50 px-3 py-1.5 rounded-lg">

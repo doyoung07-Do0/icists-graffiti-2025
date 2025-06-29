@@ -217,6 +217,32 @@ export const useInvestmentData = (initialRound = 'Pre-seed', teamName: string | 
     return STARTUPS.reduce((sum, startup) => sum + calculateStartupTotal(startup), 0);
   };
 
+  const resetPortfolio = async () => {
+    if (!confirm('Are you sure you want to reset all portfolio data for this round? This cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch('/api/investment/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roundName: currentRound })
+      });
+
+      if (response.ok) {
+        // Reload the data after reset
+        await loadData(currentRound);
+      } else {
+        console.error('Failed to reset portfolio data:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error resetting portfolio data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     currentRound,
     setCurrentRound,
@@ -231,6 +257,7 @@ export const useInvestmentData = (initialRound = 'Pre-seed', teamName: string | 
     saveTeamTotalChange,
     saveMarketCapChange,
     calculateStartupTotal,
-    calculateGrandTotal
+    calculateGrandTotal,
+    resetPortfolio
   };
 };
