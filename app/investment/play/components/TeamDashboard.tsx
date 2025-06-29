@@ -242,32 +242,36 @@ export default function TeamDashboard({ userEmail }: TeamDashboardProps) {
             </div>
           </div>
 
+          {/* Total Investment Card */}
           <div className="stat-card rounded-2xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-300">총 투자액</h3>
               <div className="text-2xl font-bold text-yellow-400">
-                {loading ? '...' : formatCurrency(totalInvested)}
+                {loading ? '...' : formatCurrency(currentInputTotal)}
               </div>
             </div>
             <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-yellow-400 to-amber-500"
-                style={{ width: `${totalCapital > 0 ? Math.min(100, (totalInvested / totalCapital) * 100) : 0}%` }}
+                style={{ width: `${totalCapital > 0 ? Math.min(100, (currentInputTotal / totalCapital) * 100) : 0}%` }}
               />
             </div>
           </div>
           
+          {/* Remaining Capital Card */}
           <div className="stat-card rounded-2xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-300">잔여 자본</h3>
-              <div className="text-2xl font-bold text-blue-400">
-                {loading ? '...' : formatCurrency(remainingCapital)}
+              <div className={`text-2xl font-bold ${
+                inputRemainingCapital < 0 ? 'text-red-400' : 'text-blue-400'
+              }`}>
+                {loading ? '...' : formatCurrency(inputRemainingCapital)}
               </div>
             </div>
             <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-blue-400 to-cyan-500"
-                style={{ width: `${totalCapital > 0 ? (remainingCapital / totalCapital) * 100 : 0}%` }}
+                style={{ width: `${totalCapital > 0 ? Math.max(0, (inputRemainingCapital / totalCapital) * 100) : 0}%` }}
               />
             </div>
           </div>
