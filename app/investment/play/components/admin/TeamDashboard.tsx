@@ -8,7 +8,9 @@ const STARTUP_KEYS = ['s1', 's2', 's3', 's4'] as const;
 
 export function TeamDashboard() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showResetAllConfirm, setShowResetAllConfirm] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
   
   const {
     currentRound,
@@ -22,6 +24,7 @@ export function TeamDashboard() {
     saveChanges,
     resetTeamChanges,
     resetAllChanges,
+    resetAllTeams,
     getValue,
     reloadData,
     teamData,
@@ -40,29 +43,37 @@ export function TeamDashboard() {
   const handleSaveAll = useCallback(async () => {
     setSaveStatus(null);
     
-    // Calculate remain for all teams with changes
-    const updatedChanges = { ...changes };
-    Object.keys(changes).forEach(teamNum => {
-      const teamNumber = parseInt(teamNum) as TeamNumber;
-      const remain = calculateRemain(teamNumber);
-      updatedChanges[teamNumber] = {
-        ...changes[teamNumber],
-        remain
-      };
-    });
-    
-    // Update local changes with calculated remains
-    setChanges(updatedChanges);
-    
-    // Save all changes
-    const result = await saveChanges();
-    
-    if (result.success) {
-      setSaveStatus({ type: 'success', message: 'All changes saved successfully!' });
-    } else {
-      setSaveStatus({ 
-        type: 'error', 
-        message: result.error || 'Failed to save changes. Please try again.' 
+    try {
+      // Calculate remain for all teams with changes
+      const updatedChanges = { ...changes };
+      Object.keys(changes).forEach(teamNum => {
+        const teamNumber = parseInt(teamNum) as TeamNumber;
+        const remain = calculateRemain(teamNumber);
+        updatedChanges[teamNumber] = {
+          ...changes[teamNumber],
+          remain
+        };
+      });
+      
+      // Update local changes with calculated remains
+      setChanges(updatedChanges);
+      
+      // Save all changes
+      const result = await saveChanges();
+      
+      if (result.success) {
+        setSaveStatus({ type: 'success', message: 'All changes saved successfully!' });
+      } else {
+        setSaveStatus({ 
+          type: 'error', 
+          message: result.error || 'Failed to save changes. Please try again.' 
+        });
+      }
+    } catch (error) {
+      console.error('Error saving all changes:', error);
+      setSaveStatus({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to save changes. Please try again.'
       });
     }
     
@@ -91,7 +102,13 @@ export function TeamDashboard() {
         }])
       });
       
+      const responseData = await response.json();
+      
       if (!response.ok) {
+        // Check if this is a validation error
+        if (response.status === 400 && responseData.message) {
+          throw new Error(responseData.message);
+        }
         throw new Error('Failed to save changes');
       }
       
@@ -131,6 +148,47 @@ export function TeamDashboard() {
     setShowResetConfirm(false);
   }, [resetAllChanges]);
   
+  // Handle reset all confirm
+  const handleResetAllConfirm = useCallback(async () => {
+    setShowResetConfirm(false);
+    setSaveStatus(null);
+    
+    try {
+      await resetAllChanges();
+      setSaveStatus({ type: 'success', message: 'All changes have been reset.' });
+    } catch (error) {
+      console.error('Error resetting all changes:', error);
+      setSaveStatus({ 
+        type: 'error', 
+        message: error instanceof Error ? error.message : 'Failed to reset changes' 
+      });
+    }
+  }, [resetAllChanges]);
+
+  // Handle reset all teams to default values
+  const handleResetAllTeams = useCallback(async () => {
+    setShowResetAllConfirm(false);
+    setSaveStatus(null);
+    setIsResetting(true);
+    
+    try {
+      const result = await resetAllTeams();
+      if (result.success) {
+        setSaveStatus({ type: 'success', message: 'All teams have been reset to default values.' });
+      } else {
+        throw new Error(result.error || 'Failed to reset teams');
+      }
+    } catch (error) {
+      console.error('Error resetting all teams:', error);
+      setSaveStatus({ 
+        type: 'error', 
+        message: error instanceof Error ? error.message : 'Failed to reset teams' 
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  }, [resetAllTeams]);
+
   // Calculate column totals
   const calculateColumnTotal = useCallback((field: string) => {
     return TEAM_NUMBERS.reduce((sum, teamNum) => {
@@ -226,11 +284,17 @@ export function TeamDashboard() {
                   {STARTUP_KEYS.map((key) => (
                     <td key={`${teamNum}-${key}`} className="p-2">
                       <input
-                        type="number"
-                        min="0"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={getValue(teamNum, key) === 0 ? 0 : getValue(teamNum, key) || ''}
-                        onChange={(e) => handleCellChange(teamNum, key, e.target.value)}
-                        className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-center"
+                        onChange={(e) => {
+                          // Only allow numbers
+                          const value = e.target.value.replace(/\D/g, '');
+                          handleCellChange(teamNum, key, value);
+                        }}
+                        onWheel={(e) => e.currentTarget.blur()} // Prevent scroll changes
+                        className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </td>
                   ))}
@@ -242,15 +306,18 @@ export function TeamDashboard() {
                   </td>
                   <td className="p-2">
                     <input
-                      type="number"
-                      min="0"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={getValue(teamNum, 'total') !== undefined ? getValue(teamNum, 'total') : ''}
                       onChange={(e) => {
-                        const newTotal = parseInt(e.target.value) || 0;
+                        // Only allow numbers
+                        const value = e.target.value.replace(/\D/g, '');
+                        const newTotal = parseInt(value) || 0;
                         handleCellChange(teamNum, 'total', newTotal.toString());
-                        // The remain will be automatically updated by the effect in useTeamData
                       }}
-                      className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-center font-bold"
+                      onWheel={(e) => e.currentTarget.blur()} // Prevent scroll changes
+                      className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </td>
                   <td className="p-2 text-center">
@@ -296,21 +363,28 @@ export function TeamDashboard() {
       {/* Action Buttons */}
       <div className="flex justify-end space-x-4">
         <button
+          onClick={() => setShowResetAllConfirm(true)}
+          disabled={isResetting}
+          className={`px-4 py-2 rounded-md ${isResetting ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+        >
+          {isResetting ? 'Resetting...' : 'Reset All Teams'}
+        </button>
+        <button
           onClick={handleSaveAll}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
           disabled={loading || !hasChanges}
         >
-          Save All
+          {loading ? 'Saving...' : 'Save All'}
         </button>
       </div>
 
-      {/* Save Confirmation Modal */}
+      {/* Reset All Changes Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4">Confirm Save</h3>
-            <p className="mb-6">Are you sure you want to save all changes?</p>
-            <div className="flex justify-end space-x-4">
+            <h3 className="text-xl font-bold mb-4">Confirm Reset</h3>
+            <p className="mb-6">Are you sure you want to reset all unsaved changes? This cannot be undone.</p>
+            <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowResetConfirm(false)}
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500"
@@ -318,10 +392,39 @@ export function TeamDashboard() {
                 Cancel
               </button>
               <button
-                onClick={handleSaveAll}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                onClick={handleResetAllConfirm}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
               >
-                Save All
+                Reset All Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset All Teams Confirmation Modal */}
+      {showResetAllConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Reset All Teams</h3>
+            <p className="mb-6">
+              This will reset all teams to their default values (Total=1000, s1-s4=0). 
+              This action cannot be undone. Are you sure you want to continue?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowResetAllConfirm(false)}
+                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500"
+                disabled={isResetting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetAllTeams}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                disabled={isResetting}
+              >
+                {isResetting ? 'Resetting...' : 'Reset All Teams'}
               </button>
             </div>
           </div>

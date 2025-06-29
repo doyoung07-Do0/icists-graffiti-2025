@@ -35,6 +35,7 @@ export interface UseTeamDataReturn {
   saveChanges: () => Promise<{ success: boolean; error?: string }>;
   resetTeamChanges: (teamNumber: TeamNumber) => void;
   resetAllChanges: () => Promise<void>;
+  resetAllTeams: () => Promise<{ success: boolean; error?: string }>;
   getValue: (teamNumber: TeamNumber, field: keyof TeamData) => number;
   reloadData: () => Promise<void>;
   setTeamData: React.Dispatch<React.SetStateAction<Record<TeamNumber, TeamData>>>;
@@ -240,66 +241,60 @@ export const useTeamData = ({
     }
   }, [changes, teamData, calculateRemain]);
 
-  // Reset all teams to default values (s1-s4=0, total=1000, remain=1000)
+  // Reset all changes for all teams
   const resetAllChanges = useCallback(async () => {
-    const resetData = {} as Record<TeamNumber, TeamData>;
-    const resetChanges = {} as Record<TeamNumber, Partial<TeamData>>;
-    
-    // Prepare the reset data for all teams
-    for (let i = 1; i <= 16; i++) {
-      const teamNum = i as TeamNumber;
-      resetData[teamNum] = {
-        s1: 0,
-        s2: 0,
-        s3: 0,
-        s4: 0,
-        remain: 1000,
-        total: 1000
-      };
-      
-      resetChanges[teamNum] = {
-        s1: 0,
-        s2: 0,
-        s3: 0,
-        s4: 0,
-        remain: 1000,
-        total: 1000
-      };
-    }
-    
-    // Update local state
-    setTeamData(resetData);
-    setChanges(resetChanges);
-    
-    // Save to database
+    setChanges({} as Record<TeamNumber, Partial<TeamData>>);
+    await loadTeamData(currentRound);
+  }, [currentRound, loadTeamData]);
+
+    // Reset all teams to default values (Total=1000, s1-s4=0, remain=1000)
+  const resetAllTeams = useCallback(async () => {
+    setLoading(true);
     try {
+      // Create the reset data for all teams
+      const resetData = Array.from({ length: 16 }, (_, i) => (i + 1) as TeamNumber).map(teamNumber => ({
+        teamNumber,
+        roundName: currentRound,
+        s1: 0,
+        s2: 0,
+        s3: 0,
+        s4: 0,
+        total: 1000,
+        remain: 1000
+      }));
+
+      // Send reset request to the server
       const response = await fetch('/api/teams/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          Object.entries(resetChanges).map(([teamNum, data]) => ({
-            teamNumber: parseInt(teamNum) as TeamNumber,
-            roundName: currentRound,
-            ...data
-          }))
-        )
+        body: JSON.stringify(resetData)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to reset teams');
+      }
+
+      // Update local state
+      const resetTeamData = {} as Record<TeamNumber, TeamData>;
+      resetData.forEach(({ teamNumber, ...data }) => {
+        resetTeamData[teamNumber] = data as TeamData;
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to reset team data');
-      }
+      setTeamData(resetTeamData);
+      setChanges({} as Record<TeamNumber, Partial<TeamData>>);
       
-      // Reload data to ensure consistency
-      
+      return { success: true };
     } catch (error) {
-      console.error('Error resetting team data:', error);
-      // Reload the current data if reset fails
-      await loadTeamData(currentRound);
-      throw error;
+      console.error('Error resetting teams:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to reset teams' 
+      };
     } finally {
       setLoading(false);
     }
-  }, [currentRound, loadTeamData]);
+  }, [currentRound, setTeamData, setChanges, setLoading]);
 
   // Initialize with empty data
   useEffect(() => {
@@ -334,24 +329,21 @@ export const useTeamData = ({
   }, [changes]);
 
   return {
-    // State
     currentRound,
     setCurrentRound,
     loading,
     teamData,
     changes,
-    hasChanges: Object.keys(changes).length > 0,
+    hasChanges,
     changedTeams,
     roundNames,
-    
-    // Methods
     handleCellChange,
     saveChanges,
     resetTeamChanges,
     resetAllChanges,
+    resetAllTeams,
     getValue,
     reloadData: () => loadTeamData(currentRound),
     setTeamData,
     setChanges,
   };
-};
