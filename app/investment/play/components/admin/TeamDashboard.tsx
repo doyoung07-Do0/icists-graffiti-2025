@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useTeamData } from '../hooks/useTeamData';
-
-type TeamNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
+import { useTeamData, type TeamData, type TeamNumber } from '../hooks/useTeamData';
 
 const TEAM_NUMBERS: TeamNumber[] = Array.from({ length: 16 }, (_, i) => i + 1) as TeamNumber[];
 const STARTUP_KEYS = ['s1', 's2', 's3', 's4'] as const;
@@ -25,16 +23,19 @@ export function TeamDashboard() {
     resetTeamChanges,
     resetAllChanges,
     getValue,
-    reloadData
+    reloadData,
+    teamData,
+    setTeamData,
+    setChanges
   } = useTeamData({ initialRound: 'r1' });
 
-  // Handle save button click
-  const handleSave = useCallback(async () => {
+  // Handle save all button click
+  const handleSaveAll = useCallback(async () => {
     setSaveStatus(null);
     const result = await saveChanges();
     
     if (result.success) {
-      setSaveStatus({ type: 'success', message: 'Changes saved successfully!' });
+      setSaveStatus({ type: 'success', message: 'All changes saved successfully!' });
     } else {
       setSaveStatus({ 
         type: 'error', 
@@ -45,13 +46,63 @@ export function TeamDashboard() {
     // Clear status after 3 seconds
     setTimeout(() => setSaveStatus(null), 3000);
   }, [saveChanges]);
+  
+  // Handle save single row
+  const handleSaveRow = useCallback(async (teamNumber: TeamNumber) => {
+    setSaveStatus(null);
+    try {
+      const teamChanges = changes[teamNumber];
+      if (!teamChanges) return;
+      
+      const response = await fetch('/api/teams/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([{
+          teamNumber,
+          roundName: currentRound,
+          ...teamChanges
+        }])
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save changes');
+      }
+      
+      // Update local state
+      setTeamData(prev => ({
+        ...prev,
+        [teamNumber]: {
+          ...prev[teamNumber],
+          ...teamChanges
+        }
+      }));
+      
+      // Clear changes for this team
+      setChanges(prev => {
+        const newChanges = { ...prev };
+        delete newChanges[teamNumber];
+        return newChanges;
+      });
+      
+      setSaveStatus({ type: 'success', message: 'Changes saved successfully!' });
+    } catch (error) {
+      console.error('Error saving row:', error);
+      setSaveStatus({ 
+        type: 'error', 
+        message: 'Failed to save changes. Please try again.' 
+      });
+    }
+    
+    // Clear status after 3 seconds
+    setTimeout(() => setSaveStatus(null), 3000);
+  }, [changes, currentRound, setTeamData, setChanges]);
 
   // Handle reset button click
   const handleReset = useCallback(() => {
     resetAllChanges();
     setShowResetConfirm(false);
   }, [resetAllChanges]);
-
+  
   // Calculate column totals
   const calculateColumnTotal = useCallback((field: string) => {
     return TEAM_NUMBERS.reduce((sum, teamNum) => {
@@ -175,14 +226,20 @@ export function TeamDashboard() {
                     />
                   </td>
                   <td className="p-2 text-center">
-                    {hasChanges && (
-                      <button
-                        onClick={() => resetTeamChanges(teamNum)}
-                        className="text-xs px-2 py-1 bg-gray-700 rounded hover:bg-gray-600 mr-1"
-                      >
-                        Reset
-                      </button>
-                    )}
+                    <button
+                      onClick={() => hasChanges 
+                        ? handleSaveRow(teamNum)
+                        : resetTeamChanges(teamNum)
+                      }
+                      className={`text-xs px-3 py-1 rounded ${
+                        hasChanges 
+                          ? 'bg-blue-600 hover:bg-blue-700' 
+                          : 'bg-gray-700 hover:bg-gray-600'
+                      }`}
+                      disabled={loading}
+                    >
+                      {hasChanges ? 'Save' : 'Reset'}
+                    </button>
                   </td>
                 </tr>
               );
@@ -216,14 +273,6 @@ export function TeamDashboard() {
           disabled={loading}
         >
           Reset All
-        </button>
-        
-        <button
-          onClick={handleSave}
-          disabled={!hasChanges || loading}
-          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-        >
-          {loading ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
 

@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-type RoundName = 'r1' | 'r2' | 'r3' | 'r4';
-type TeamNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
+export type RoundName = 'r1' | 'r2' | 'r3' | 'r4';
+export type TeamNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
 
-interface TeamData {
+export interface TeamData {
   s1: number;
   s2: number;
   s3: number;
@@ -22,10 +22,29 @@ interface UseTeamDataProps {
   teamNumber?: TeamNumber | null;
 }
 
-export const useTeamData = ({ 
+export interface UseTeamDataReturn {
+  currentRound: RoundName;
+  setCurrentRound: (round: RoundName) => void;
+  loading: boolean;
+  teamData: Record<TeamNumber, TeamData>;
+  changes: Record<TeamNumber, Partial<TeamData>>;
+  hasChanges: boolean;
+  changedTeams: TeamNumber[];
+  roundNames: Record<RoundName, string>;
+  handleCellChange: (teamNumber: TeamNumber, field: keyof TeamData, value: string) => void;
+  saveChanges: () => Promise<{ success: boolean; error?: string }>;
+  resetTeamChanges: (teamNumber: TeamNumber) => void;
+  resetAllChanges: () => Promise<void>;
+  getValue: (teamNumber: TeamNumber, field: keyof TeamData) => number;
+  reloadData: () => Promise<void>;
+  setTeamData: React.Dispatch<React.SetStateAction<Record<TeamNumber, TeamData>>>;
+  setChanges: React.Dispatch<React.SetStateAction<Record<TeamNumber, Partial<TeamData>>>>;
+}
+
+export const useTeamData = ({
   initialRound = 'r1',
   teamNumber = null 
-}: UseTeamDataProps = {}) => {
+}: UseTeamDataProps = {}): UseTeamDataReturn => {
   const [currentRound, setCurrentRound] = useState<RoundName>(initialRound);
   const [loading, setLoading] = useState(false);
   const [teamData, setTeamData] = useState<Record<TeamNumber, TeamData>>({} as Record<TeamNumber, TeamData>);
@@ -154,7 +173,7 @@ export const useTeamData = ({
       if (response.ok) {
         // Refresh data after successful update
         await loadTeamData(currentRound);
-        setChanges({});
+        setChanges({} as Record<TeamNumber, Partial<TeamData>>);
         return { success: true };
       } else {
         const error = await response.json();
@@ -238,7 +257,6 @@ export const useTeamData = ({
         total: 1000
       };
       
-      // Only include fields that are different from current data
       resetChanges[teamNum] = {
         s1: 0,
         s2: 0,
@@ -249,29 +267,29 @@ export const useTeamData = ({
       };
     }
     
+    // Update local state
+    setTeamData(resetData);
+    setChanges(resetChanges);
+    
+    // Save to database
     try {
-      setLoading(true);
-      
-      // Update the server
-      const updates = Object.entries(resetData).map(([teamNum, data]) => ({
-        teamNumber: parseInt(teamNum, 10) as TeamNumber,
-        roundName: currentRound,
-        ...data
-      }));
-      
       const response = await fetch('/api/teams/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
+        body: JSON.stringify(
+          Object.entries(resetChanges).map(([teamNum, data]) => ({
+            teamNumber: parseInt(teamNum) as TeamNumber,
+            roundName: currentRound,
+            ...data
+          }))
+        )
       });
       
       if (!response.ok) {
         throw new Error('Failed to reset team data');
       }
       
-      // Update local state
-      setTeamData(resetData);
-      setChanges({} as Record<TeamNumber, Partial<TeamData>>);
+      // Reload data to ensure consistency
       
     } catch (error) {
       console.error('Error resetting team data:', error);
@@ -322,7 +340,7 @@ export const useTeamData = ({
     loading,
     teamData,
     changes,
-    hasChanges,
+    hasChanges: Object.keys(changes).length > 0,
     changedTeams,
     roundNames,
     
@@ -332,6 +350,8 @@ export const useTeamData = ({
     resetTeamChanges,
     resetAllChanges,
     getValue,
-    reloadData: () => loadTeamData(currentRound)
+    reloadData: () => loadTeamData(currentRound),
+    setTeamData,
+    setChanges,
   };
 };
