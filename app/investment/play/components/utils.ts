@@ -34,9 +34,9 @@ export const getUserRole = (email: string | null | undefined): 'admin' | 'team' 
   return 'unauthorized';
 };
 
-export const extractTeamNumber = (email: string | null | undefined): string | null => {
+export const extractTeamNumber = (email: string | null | undefined): number | null => {
   if (!email) return null;
   const teamPattern = /^team([1-9]|1[0-6])@icists\.com$/;
   const match = email.match(teamPattern);
-  return match ? match[1] : null;
+  return match ? parseInt(match[1], 10) : null;
 };

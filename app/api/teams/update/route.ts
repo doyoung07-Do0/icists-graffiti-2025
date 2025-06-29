@@ -56,14 +56,6 @@ export async function POST(request: Request) {
         if (!(teamNumber in TEAM_TABLES)) {
           throw new Error(`Invalid team number: ${teamNumber}`);
         }
-        
-        // Calculate sum of s1-s4
-        const sumOfInvestments = (data.s1 || 0) + (data.s2 || 0) + (data.s3 || 0) + (data.s4 || 0);
-        
-        // Validate that total is not less than sum of s1-s4
-        if (data.total < sumOfInvestments) {
-          throw new Error(`Total (${data.total}) cannot be less than the sum of investments (${sumOfInvestments})`);
-        }
 
         // Get the team table
         const teamTable = TEAM_TABLES[teamNumber as TeamNumber];
@@ -101,11 +93,10 @@ export async function POST(request: Request) {
 
     if (failedUpdates.length > 0) {
       console.error('Failed updates:', failedUpdates);
-      const errorMessage = failedUpdates[0]?.reason?.message || 'Some updates failed';
       return NextResponse.json(
         {
           success: false,
-          message: errorMessage,
+          message: 'Some updates failed',
           failedCount: failedUpdates.length,
           errors: failedUpdates.map((f) => f.reason?.message || 'Unknown error'),
         },
