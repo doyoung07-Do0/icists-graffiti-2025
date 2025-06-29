@@ -29,9 +29,32 @@ export function TeamDashboard() {
     setChanges
   } = useTeamData({ initialRound: 'r1' });
 
+  // Calculate remain based on total and sum of s1-s4
+  const calculateRemain = useCallback((teamNumber: TeamNumber) => {
+    const total = getValue(teamNumber, 'total');
+    const sum = STARTUP_KEYS.reduce((sum, key) => sum + (getValue(teamNumber, key) || 0), 0);
+    return Math.max(0, total - sum);
+  }, [getValue]);
+
   // Handle save all button click
   const handleSaveAll = useCallback(async () => {
     setSaveStatus(null);
+    
+    // Calculate remain for all teams with changes
+    const updatedChanges = { ...changes };
+    Object.keys(changes).forEach(teamNum => {
+      const teamNumber = parseInt(teamNum) as TeamNumber;
+      const remain = calculateRemain(teamNumber);
+      updatedChanges[teamNumber] = {
+        ...changes[teamNumber],
+        remain
+      };
+    });
+    
+    // Update local changes with calculated remains
+    setChanges(updatedChanges);
+    
+    // Save all changes
     const result = await saveChanges();
     
     if (result.success) {
@@ -45,14 +68,18 @@ export function TeamDashboard() {
     
     // Clear status after 3 seconds
     setTimeout(() => setSaveStatus(null), 3000);
-  }, [saveChanges]);
+  }, [changes, saveChanges, setChanges, calculateRemain]);
   
   // Handle save single row
   const handleSaveRow = useCallback(async (teamNumber: TeamNumber) => {
     setSaveStatus(null);
     try {
-      const teamChanges = changes[teamNumber];
+      const teamChanges = { ...changes[teamNumber] };
       if (!teamChanges) return;
+      
+      // Calculate and update remain before saving
+      const remain = calculateRemain(teamNumber);
+      teamChanges.remain = remain;
       
       const response = await fetch('/api/teams/update', {
         method: 'POST',
@@ -68,12 +95,13 @@ export function TeamDashboard() {
         throw new Error('Failed to save changes');
       }
       
-      // Update local state
+      // Update local state with the saved changes including calculated remain
       setTeamData(prev => ({
         ...prev,
         [teamNumber]: {
           ...prev[teamNumber],
-          ...teamChanges
+          ...teamChanges,
+          remain // Ensure remain is included
         }
       }));
       
@@ -95,7 +123,7 @@ export function TeamDashboard() {
     
     // Clear status after 3 seconds
     setTimeout(() => setSaveStatus(null), 3000);
-  }, [changes, currentRound, setTeamData, setChanges]);
+  }, [changes, currentRound, setTeamData, setChanges, calculateRemain]);
 
   // Handle reset button click
   const handleReset = useCallback(() => {
