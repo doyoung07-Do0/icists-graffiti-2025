@@ -200,7 +200,7 @@ export function TeamDashboard() {
                       <input
                         type="number"
                         min="0"
-                        value={getValue(teamNum, key) || ''}
+                        value={getValue(teamNum, key) === 0 ? 0 : getValue(teamNum, key) || ''}
                         onChange={(e) => handleCellChange(teamNum, key, e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-center"
                       />
@@ -209,14 +209,14 @@ export function TeamDashboard() {
                   
                   <td className="p-2 text-center">
                     <div className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1">
-                      {formatNumber(getValue(teamNum, 'remain') || 0)}
+                      {formatNumber(getValue(teamNum, 'remain') !== undefined ? getValue(teamNum, 'remain') : 0)}
                     </div>
                   </td>
                   <td className="p-2">
                     <input
                       type="number"
                       min="0"
-                      value={getValue(teamNum, 'total') || ''}
+                      value={getValue(teamNum, 'total') !== undefined ? getValue(teamNum, 'total') : ''}
                       onChange={(e) => {
                         const newTotal = parseInt(e.target.value) || 0;
                         handleCellChange(teamNum, 'total', newTotal.toString());
@@ -238,7 +238,7 @@ export function TeamDashboard() {
                       }`}
                       disabled={loading}
                     >
-                      {hasChanges ? 'Save' : 'Reset'}
+                      Save
                     </button>
                   </td>
                 </tr>
@@ -268,20 +268,20 @@ export function TeamDashboard() {
       {/* Action Buttons */}
       <div className="flex justify-end space-x-4">
         <button
-          onClick={() => setShowResetConfirm(true)}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-          disabled={loading}
+          onClick={handleSaveAll}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          disabled={loading || !hasChanges}
         >
-          Reset All
+          Save All
         </button>
       </div>
 
-      {/* Reset Confirmation Modal */}
+      {/* Save Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4">Confirm Reset</h3>
-            <p className="mb-6">Are you sure you want to reset all changes? This cannot be undone.</p>
+            <h3 className="text-xl font-bold mb-4">Confirm Save</h3>
+            <p className="mb-6">Are you sure you want to save all changes?</p>
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setShowResetConfirm(false)}
@@ -290,10 +290,10 @@ export function TeamDashboard() {
                 Cancel
               </button>
               <button
-                onClick={handleReset}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                onClick={handleSaveAll}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                Reset All
+                Save All
               </button>
             </div>
           </div>
