@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/queries';
 import { team1, team2, team3, team4, team5, team6, team7, team8, team9, team10, team11, team12, team13, team14, team15, team16 } from '@/lib/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
+import { notifyUpdate } from '../updates/route';
 
 // Map team numbers to their respective tables
 const TEAM_TABLES = {
@@ -35,6 +36,15 @@ interface TeamDataResponse {
   remain: number;
   total: number;
   updatedAt: string;
+}
+
+interface TeamPortfolioUpdate {
+  teamNumber: number;
+  round: 'r1' | 'r2' | 'r3' | 'r4';
+  s1: number;
+  s2: number;
+  s3: number;
+  s4: number;
 }
 
 export async function GET(request: Request) {
@@ -107,6 +117,103 @@ export async function GET(request: Request) {
     console.error('Error fetching team data:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body: TeamPortfolioUpdate = await request.json();
+    const { teamNumber, round, s1, s2, s3, s4 } = body;
+
+    // Validate team number
+    if (!teamNumber || !(teamNumber in TEAM_TABLES)) {
+      return NextResponse.json(
+        { error: 'Invalid team number. Must be between 1 and 16' },
+        { status: 400 }
+      );
+    }
+
+    // Validate round
+    if (!['r1', 'r2', 'r3', 'r4'].includes(round)) {
+      return NextResponse.json(
+        { error: 'Invalid round. Must be one of: r1, r2, r3, r4' },
+        { status: 400 }
+      );
+    }
+
+    // Validate investment amounts (must be non-negative)
+    if ([s1, s2, s3, s4].some(amt => amt < 0)) {
+      return NextResponse.json(
+        { error: 'Investment amounts cannot be negative' },
+        { status: 400 }
+      );
+    }
+
+    const teamTable = TEAM_TABLES[teamNumber as TeamNumber];
+    const total = s1 + s2 + s3 + s4;
+    const now = new Date();
+
+    // Check if a record already exists for this team and round
+    const existingRecord = await db
+      .select()
+      .from(teamTable)
+      .where(eq(teamTable.roundName, round))
+      .limit(1);
+
+    if (existingRecord.length > 0) {
+      // Update existing record
+      await db
+        .update(teamTable)
+        .set({
+          s1,
+          s2,
+          s3,
+          s4,
+          remain: existingRecord[0].total - total,
+          updatedAt: now,
+        })
+        .where(eq(teamTable.id, existingRecord[0].id));
+    } else {
+      // Create new record
+      await db.insert(teamTable).values({
+        roundName: round,
+        s1,
+        s2,
+        s3,
+        s4,
+        remain: 0, // Will be set in the database trigger
+        total: 0,  // Will be set in the database trigger
+        updatedAt: now,
+      });
+    }
+
+    // Return the updated data
+    const updatedRecord = await db
+      .select()
+      .from(teamTable)
+      .where(eq(teamTable.roundName, round));
+
+    // Notify all connected clients of the update
+    notifyUpdate();
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        teamNumber,
+        ...(updatedRecord[0] || {})
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating team portfolio:', error);
+    return NextResponse.json(
+      { 
+        success: false,
+        error: 'Failed to update portfolio',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

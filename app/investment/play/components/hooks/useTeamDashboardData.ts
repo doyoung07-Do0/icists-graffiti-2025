@@ -64,14 +64,11 @@ export const useTeamDashboardData = (teamNumber: number, round: string = 'r1') =
     fetchTeamData();
   }, [fetchTeamData]);
 
-  // Auto-refresh every 5 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTeamData();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [fetchTeamData]);
+  // Removed auto-refresh to prevent form reset
+  // Data will be refreshed when:
+  // 1. Component mounts
+  // 2. refresh() is called manually (e.g., after form submission)
+  // 3. teamNumber or round changes
 
   const totalInvested = teamData 
     ? (teamData.s1 || 0) + (teamData.s2 || 0) + (teamData.s3 || 0) + (teamData.s4 || 0)

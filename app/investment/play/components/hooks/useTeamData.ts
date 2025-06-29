@@ -307,15 +307,48 @@ export const useTeamData = ({
   }, [getEmptyTeamData]);
 
   // Load data when round changes
+  // Set up SSE connection for real-time updates
   useEffect(() => {
+    // Only set up the event source in the admin context (when no specific team is selected)
+    if (teamNumber !== null) {
+      return;
+    }
+
+    const eventSource = new EventSource('/api/updates');
+
+    eventSource.onmessage = (event) => {
+      // When we receive an update, refresh the data
+      console.log('Received update event, refreshing data...');
+      loadTeamData(currentRound);
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('EventSource failed:', error);
+      eventSource.close();
+    };
+
+    // Initial fetch
     loadTeamData(currentRound);
-  }, [currentRound, loadTeamData]);
+
+    // Clean up the event source when the component unmounts
+    return () => {
+      eventSource.close();
+    };
+  }, [currentRound, teamNumber, loadTeamData]);
+
+  // Initial data fetch (only if not already set up by the SSE effect)
+  useEffect(() => {
+    if (teamData && Object.keys(teamData).length === 0) {
+      loadTeamData(currentRound);
+    }
+  }, [loadTeamData, teamData]);
 
   // Initial load
   useEffect(() => {
     loadTeamData(currentRound);
   }, [loadTeamData, currentRound]);
 
+// ...
   // Get the effective value (changed or original)
   const getValue = useCallback((teamNumber: TeamNumber, field: keyof TeamData) => {
     return changes[teamNumber]?.[field] !== undefined
