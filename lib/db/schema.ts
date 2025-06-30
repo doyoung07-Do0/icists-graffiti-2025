@@ -221,6 +221,21 @@ export const teamMarketCap = pgTable('TeamMarketCap', {
 
 export type TeamMarketCap = InferSelectModel<typeof teamMarketCap>;
 
+// Startup Returns Table
+export const startupReturns = pgTable('startup_returns', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  roundName: varchar('round_name', { length: 20, enum: ['r1', 'r2', 'r3', 'r4'] }).notNull(),
+  s1_return: integer('s1_return').notNull().default(0), // Stored as percentage (e.g., 30 for 30%)
+  s2_return: integer('s2_return').notNull().default(0),
+  s3_return: integer('s3_return').notNull().default(0),
+  s4_return: integer('s4_return').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  unq: unique().on(table.roundName), // Only one set of returns per round
+}));
+
+export type StartupReturns = InferSelectModel<typeof startupReturns>;
+
 // New Team Tables Schema
 
 // Function to create team table schema

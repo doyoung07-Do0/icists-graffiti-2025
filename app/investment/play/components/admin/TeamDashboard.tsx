@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useTeamData, type TeamData, type TeamNumber } from '../hooks/useTeamData';
+import { ReturnsSection } from './ReturnsSection';
 
 const TEAM_NUMBERS: TeamNumber[] = Array.from({ length: 16 }, (_, i) => i + 1) as TeamNumber[];
 const STARTUP_KEYS = ['s1', 's2', 's3', 's4'] as const;
@@ -160,30 +161,34 @@ export function TeamDashboard() {
   return (
     <div className="bg-black text-[#E5E7EB] min-h-screen p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold gradient-text">Admin Dashboard</h1>
-        
-        <div className="flex items-center space-x-4">
-          <select
-            value={currentRound}
-            onChange={(e) => setCurrentRound(e.target.value as any)}
-            className="bg-gray-800 text-white px-4 py-2 rounded-md border border-gray-700"
-          >
-            {Object.entries(roundNames).map(([key, value]) => (
-              <option key={key} value={key}>
-                {value}
-              </option>
-            ))}
-          </select>
-          
-          <button
-            onClick={reloadData}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-          >
-            {loading ? 'Loading...' : 'Refresh'}
-          </button>
+      <div className="flex flex-col space-y-6 mb-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold gradient-text">Admin Dashboard</h1>
+          <div className="flex space-x-4">
+            <select
+              value={currentRound}
+              onChange={(e) => setCurrentRound(e.target.value as any)}
+              className="bg-gray-800 text-white px-4 py-2 rounded-md border border-gray-700"
+            >
+              {Object.entries(roundNames).map(([key, value]) => (
+                <option key={key} value={key}>
+                  {value}
+                </option>
+              ))}
+            </select>
+            
+            <button
+              onClick={reloadData}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+            >
+              {loading ? 'Loading...' : 'Refresh'}
+            </button>
+          </div>
         </div>
+        
+        {/* Returns Section */}
+        <ReturnsSection />
       </div>
 
       {/* Status Message */}

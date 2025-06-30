@@ -4,7 +4,7 @@ import { generateId } from 'ai';
 function getBcryptFunctions() {
   try {
     // Only import bcrypt-ts in Node.js runtime, not Edge Runtime
-    if (typeof process !== 'undefined' && process.versions?.node) {
+    if (typeof process !== 'undefined' && process.env.NEXT_RUNTIME !== 'edge') {
       const bcrypt = require('bcrypt-ts');
       return {
         genSaltSync: bcrypt.genSaltSync,

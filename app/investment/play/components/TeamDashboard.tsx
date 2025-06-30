@@ -252,6 +252,7 @@ export default function TeamDashboard({ userEmail }: TeamDashboardProps) {
             </div>
             <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
               <div 
+              
                 className="h-full bg-gradient-to-r from-yellow-400 to-amber-500"
                 style={{ width: `${totalCapital > 0 ? Math.min(100, (currentInputTotal / totalCapital) * 100) : 0}%` }}
               />

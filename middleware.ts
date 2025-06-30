@@ -13,7 +13,12 @@ export async function middleware(request: NextRequest) {
     return new Response('pong', { status: 200 });
   }
 
-  if (pathname.startsWith('/api/auth')) {
+  // Allow unauthenticated access to specific API routes
+  if (
+    pathname.startsWith('/api/auth') || 
+    pathname.startsWith('/api/test-db') ||
+    pathname.startsWith('/api/returns')
+  ) {
     return NextResponse.next();
   }
 
