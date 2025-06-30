@@ -59,12 +59,40 @@ export function useReturns() {
     return returns.find(r => r.roundName === roundName);
   }, [returns]);
 
+  const resetReturns = useCallback(async (roundName?: string) => {
+    try {
+      setGenerating(true);
+      const url = roundName 
+        ? `/api/returns?round=${encodeURIComponent(roundName)}`
+        : '/api/returns';
+      
+      const response = await fetch(url, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to reset returns');
+      }
+
+      // Refresh the returns data
+      await fetchReturns();
+      return { success: true };
+    } catch (err) {
+      console.error('Error resetting returns:', err);
+      throw err;
+    } finally {
+      setGenerating(false);
+    }
+  }, [fetchReturns]);
+
   return {
     returns,
     loading,
     error,
     generating,
     generateReturns,
+    resetReturns,
     getReturnsForRound,
     refreshReturns: fetchReturns,
   };

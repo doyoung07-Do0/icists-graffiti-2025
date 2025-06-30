@@ -21,7 +21,7 @@ const STARTUP_NAMES: Record<string, string> = {
 };
 
 export function ReturnsSection() {
-  const { returns, loading, error, generating, generateReturns, getReturnsForRound } = useReturns();
+  const { returns, loading, error, generating, generateReturns, resetReturns, getReturnsForRound } = useReturns();
 
   const handleGenerate = async (round: string) => {
     try {
@@ -29,6 +29,32 @@ export function ReturnsSection() {
       toast.success(`Returns generated for ${ROUND_NAMES[round]}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to generate returns');
+    }
+  };
+
+  const handleReset = async (round: string) => {
+    if (!confirm(`Are you sure you want to reset returns for ${ROUND_NAMES[round]}? This cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      await resetReturns(round);
+      toast.success(`Returns for ${ROUND_NAMES[round]} have been reset`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to reset returns');
+    }
+  };
+  
+  const handleResetAll = async () => {
+    if (!confirm('Are you sure you want to reset ALL returns? This cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await resetReturns();
+      toast.success('All returns have been reset');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to reset returns');
     }
   };
 
@@ -52,7 +78,24 @@ export function ReturnsSection() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Startup Returns</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Startup Returns</h2>
+        <Button 
+          variant="destructive" 
+          size="sm" 
+          onClick={handleResetAll}
+          disabled={returns.length === 0 || generating}
+        >
+          {generating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Resetting...
+            </>
+          ) : (
+            'Reset All Returns'
+          )}
+        </Button>
+      </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Object.entries(ROUND_NAMES).map(([roundKey, roundName]) => {
@@ -64,22 +107,38 @@ export function ReturnsSection() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{roundName}</CardTitle>
-                  <Button
-                    size="sm"
-                    onClick={() => handleGenerate(roundKey)}
-                    disabled={!!roundReturns || isGenerating}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : roundReturns ? (
-                      'Generated'
-                    ) : (
-                      '수익률 뽑기'
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleGenerate(roundKey)}
+                      disabled={!!roundReturns || isGenerating}
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : roundReturns ? (
+                        'Regenerate'
+                      ) : (
+                        '수익률 뽑기'
+                      )}
+                    </Button>
+                    {roundReturns && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReset(roundKey)}
+                        disabled={isGenerating}
+                      >
+                        {isGenerating ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Reset'
+                        )}
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
