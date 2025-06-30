@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { sql } from 'drizzle-orm';
 import { startupReturns } from '@/lib/db/schema';
 
 async function checkAndCreateTables() {
@@ -7,14 +8,15 @@ async function checkAndCreateTables() {
     
     // Check if the table exists
     const result = await db.execute(
-      `SELECT EXISTS (
+      sql`SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
         AND table_name = 'startup_returns'
-      )`
+      ) as exists`
     );
 
-    const tableExists = result.rows[0]?.exists || false;
+    // Drizzle ORM returns an array of rows
+    const tableExists = result[0]?.exists || false;
     
     if (tableExists) {
       console.log('startup_returns table already exists');
