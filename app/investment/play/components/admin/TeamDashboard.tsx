@@ -177,13 +177,29 @@ export function TeamDashboard() {
               ))}
             </select>
             
-            <button
-              onClick={reloadData}
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-            >
-              {loading ? 'Loading...' : 'Refresh'}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={reloadData}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+              >
+                {loading ? 'Loading...' : 'Refresh'}
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to reset ALL returns? This cannot be undone.')) {
+                    fetch('/api/returns', { method: 'DELETE' })
+                      .then(response => response.json())
+                      .then(() => window.location.reload())
+                      .catch(error => console.error('Error resetting returns:', error));
+                  }
+                }}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white rounded-md disabled:opacity-50"
+              >
+                Reset All Returns
+              </button>
+            </div>
           </div>
         </div>
         

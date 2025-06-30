@@ -78,24 +78,6 @@ export function ReturnsSection() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Startup Returns</h2>
-        <Button 
-          variant="destructive" 
-          size="sm" 
-          onClick={handleResetAll}
-          disabled={returns.length === 0 || generating}
-        >
-          {generating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Resetting...
-            </>
-          ) : (
-            'Reset All Returns'
-          )}
-        </Button>
-      </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Object.entries(ROUND_NAMES).map(([roundKey, roundName]) => {
