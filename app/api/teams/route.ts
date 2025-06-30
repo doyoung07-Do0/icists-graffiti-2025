@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/queries';
 import { team1, team2, team3, team4, team5, team6, team7, team8, team9, team10, team11, team12, team13, team14, team15, team16 } from '@/lib/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
-import { notifyUpdate } from '../updates/route';
+import { notifyUpdate } from '@/lib/sse';
 
 // Map team numbers to their respective tables
 const TEAM_TABLES = {
