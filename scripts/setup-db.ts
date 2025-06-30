@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { config } from 'dotenv';
 import { join } from 'path';
+import { sql } from 'drizzle-orm';
 
 // Load environment variables
 config({ path: join(__dirname, '../.env.local') });
@@ -20,20 +21,20 @@ async function setupDatabase() {
     
     // Test the database connection
     console.log('Testing database connection...');
-    const result = await db.execute('SELECT version()');
+    const versionResult = await db.execute(sql`SELECT version() as version`);
     console.log('✅ Database connection successful!');
-    console.log('PostgreSQL Version:', result.rows[0]?.version || 'Unknown');
+    console.log('PostgreSQL Version:', versionResult[0]?.version || 'Unknown');
     
     // Check if the startup_returns table exists
     const tableCheck = await db.execute(
-      `SELECT EXISTS (
+      sql`SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
         AND table_name = 'startup_returns'
-      )`
+      ) as exists`
     );
     
-    const tableExists = tableCheck.rows[0]?.exists || false;
+    const tableExists = tableCheck[0]?.exists || false;
     
     if (!tableExists) {
       console.log('Creating startup_returns table...');
