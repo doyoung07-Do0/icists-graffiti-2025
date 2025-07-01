@@ -1,14 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
-import { TeamData, RoundName, TeamNumber } from '../../types/investment.types';
+import { TeamData, RoundName, TeamNumber, RoundKey, ROUND_NAMES, isRoundKey } from '../../types/investment.types';
 import { investmentApi } from '../../utils/api';
 
 interface UseTeamDataProps {
   teamNumber?: TeamNumber;
-  initialRound?: RoundName;
+  initialRound?: RoundKey | RoundName;
 }
 
+// Convert RoundKey to RoundName
+const getRoundName = (round: RoundKey | RoundName): RoundName => {
+  if (isRoundKey(round)) {
+    return ROUND_NAMES[round];
+  }
+  return round as RoundName;
+};
+
 export const useTeamData = ({ teamNumber, initialRound = 'r1' }: UseTeamDataProps = {}) => {
-  const [currentRound, setCurrentRound] = useState<RoundName>(initialRound);
+  const [currentRound, setCurrentRound] = useState<RoundName>(
+    initialRound ? getRoundName(initialRound) : ROUND_NAMES['r1']
+  );
   const [teamData, setTeamData] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

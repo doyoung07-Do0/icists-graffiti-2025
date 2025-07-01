@@ -1,10 +1,20 @@
 // ===== CORE TYPES =====
 
-export type RoundName = 'r1' | 'r2' | 'r3' | 'r4';
+// Core domain types
+export type RoundKey = 'r1' | 'r2' | 'r3' | 'r4';
+export type RoundName = 'Pre-seed' | 'Seed' | 'Series A' | 'Series B';
 export type TeamNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
-
+export type TeamName = `team${TeamNumber}`;
 export type StartupKey = 's1' | 's2' | 's3' | 's4';
 
+// Type guards
+export const isRoundKey = (value: string): value is RoundKey => 
+  ['r1', 'r2', 'r3', 'r4'].includes(value);
+
+export const isStartupKey = (value: string): value is StartupKey =>
+  ['s1', 's2', 's3', 's4'].includes(value);
+
+// Constants
 export const STARTUP_KEYS: StartupKey[] = ['s1', 's2', 's3', 's4'];
 
 export const STARTUP_NAMES: Record<StartupKey, string> = {
@@ -12,7 +22,16 @@ export const STARTUP_NAMES: Record<StartupKey, string> = {
   s2: 'Startup 2',
   s3: 'Startup 3',
   s4: 'Startup 4'
-};
+} as const;
+
+export const ROUND_KEYS: RoundKey[] = ['r1', 'r2', 'r3', 'r4'];
+
+export const ROUND_NAMES: Record<RoundKey, RoundName> = {
+  r1: 'Pre-seed',
+  r2: 'Seed',
+  r3: 'Series A',
+  r4: 'Series B'
+} as const;
 
 export interface TeamData {
   s1: number;
@@ -22,8 +41,13 @@ export interface TeamData {
   remain: number;
   total: number;
   teamNumber: TeamNumber;
-  roundName: string;
+  roundName: RoundName;
   updatedAt: string;
+}
+
+export interface TeamPortfolio extends Omit<TeamData, 'teamNumber' | 'roundName' | 'updatedAt'> {
+  teamNumber: TeamNumber;
+  roundName: RoundName;
 }
 
 export interface PortfolioData {
@@ -36,43 +60,56 @@ export interface TeamTotalData {
   [team: string]: number;
 }
 
-export interface MarketCapData {
-  [round: string]: {
-    [startup: string]: number;
-  };
+export interface MarketCaps {
+  s1: number;
+  s2: number;
+  s3: number;
+  s4: number;
 }
 
+export interface MarketCapData {
+  [round: string]: MarketCaps;
+}
+
+// Returns data structure with type safety
 export interface ReturnsData {
-  [round: string]: {
-    [startup: string]: number; // multiplier (e.g., 1.5 for 50% return)
+  [round in RoundKey]: {
+    [startup in StartupKey]: number; // multiplier (e.g., 1.5 for 50% return)
   };
 }
 
 // ===== COMPONENT PROPS =====
 
 export interface InvestmentTableProps {
-  currentRound: string;
-  investments: Record<string, Record<StartupKey, number>>;
-  teamTotals: Record<string, number>;
-  marketCaps: Record<string, number>;
+  currentRound: RoundKey;
+  investments: Record<TeamName, Record<StartupKey, number>>;
+  teamTotals: Record<TeamName, number>;
+  marketCaps: MarketCaps;
   loading?: boolean;
-  onCellClick: (team: string, startup: string, value: number) => void;
-  onSave: (team: string, startup: string, value: number) => Promise<void>;
+  onCellClick: (team: TeamName, startup: StartupKey, value: number) => void;
+  onSave: (team: TeamName, startup: StartupKey, value: number) => Promise<void>;
   onCancel: () => void;
   editingCell: {
-    team: string;
-    startup: string;
+    team: TeamName;
+    startup: StartupKey;
     value: number;
   } | null;
 }
 
 export interface ReturnsSectionProps {
-  currentRound: string;
+  currentRound: RoundKey;
   returns: ReturnsData;
   loading?: boolean;
   onGenerateReturns: (multiplier: number) => Promise<void>;
   onResetReturns: () => Promise<void>;
 }
+
+// Utility types
+export type ValueOf<T> = T[keyof T];
+
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
 
 // ===== FORM TYPES =====
 

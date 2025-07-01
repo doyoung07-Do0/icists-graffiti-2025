@@ -1,18 +1,28 @@
 'client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { ROUND_VALUES, ROUND_NAMES, TeamNumber, TEAM_NUMBERS, STARTUP_KEYS, StartupKey } from '../../types/investment.types';
-import { investmentApi } from '../utils/api';
+import { 
+  RoundKey, 
+  RoundName, 
+  TeamNumber, 
+  TeamName, 
+  TEAM_NUMBERS, 
+  STARTUP_KEYS, 
+  StartupKey, 
+  ROUND_KEYS,
+  ROUND_NAMES,
+  MarketCaps,
+  ReturnsData
+} from '@/app/investment/types/investment.types';
+import { investmentApi } from '@/app/investment/utils/api';
 
 interface InvestmentContextType {
-  currentRound: typeof ROUND_VALUES[number];
-  setCurrentRound: (round: typeof ROUND_VALUES[number]) => void;
-  investments: {
-    [key: string]: { [key in StartupKey]: number };
-  };
-  teamTotals: { [key: string]: number };
-  marketCaps: { [key: string]: number };
-  returns: { [key: string]: { [key: string]: number } };
+  currentRound: RoundKey;
+  setCurrentRound: (round: RoundKey) => void;
+  investments: Record<TeamName, Record<StartupKey, number>>;
+  teamTotals: Record<TeamName, number>;
+  marketCaps: MarketCaps;
+  returns: ReturnsData;
   loading: boolean;
   error: string | null;
   refreshData: () => Promise<void>;
@@ -27,13 +37,42 @@ interface InvestmentContextType {
   resetReturns: () => Promise<void>;
 }
 
+// Helper function to create default investments
+const createDefaultInvestments = (): Record<TeamName, Record<StartupKey, number>> => {
+  return TEAM_NUMBERS.reduce<Record<TeamName, Record<StartupKey, number>>>((acc, teamNum) => {
+    const teamName = `team${teamNum}` as TeamName;
+    acc[teamName] = { s1: 0, s2: 0, s3: 0, s4: 0 };
+    return acc;
+  }, {} as Record<TeamName, Record<StartupKey, number>>);
+};
+
+// Helper function to create default team totals
+const createDefaultTeamTotals = (): Record<TeamName, number> => {
+  return TEAM_NUMBERS.reduce<Record<TeamName, number>>((acc, teamNum) => {
+    const teamName = `team${teamNum}` as TeamName;
+    acc[teamName] = 0;
+    return acc;
+  }, {} as Record<TeamName, number>);
+};
+
+// Helper function to create default returns data
+const createDefaultReturns = (): ReturnsData => {
+  const defaultReturns: ReturnsData = {
+    r1: { s1: 1, s2: 1, s3: 1, s4: 1 },
+    r2: { s1: 1, s2: 1, s3: 1, s4: 1 },
+    r3: { s1: 1, s2: 1, s3: 1, s4: 1 },
+    r4: { s1: 1, s2: 1, s3: 1, s4: 1 },
+  };
+  return defaultReturns;
+};
+
 const defaultContext: InvestmentContextType = {
-  currentRound: ROUND_VALUES[0],
+  currentRound: 'r1',
   setCurrentRound: () => {},
-  investments: {},
-  teamTotals: {},
-  marketCaps: {},
-  returns: {},
+  investments: createDefaultInvestments(),
+  teamTotals: createDefaultTeamTotals(),
+  marketCaps: { s1: 0, s2: 0, s3: 0, s4: 0 },
+  returns: createDefaultReturns(),
   loading: false,
   error: null,
   refreshData: async () => {},
@@ -46,14 +85,35 @@ const defaultContext: InvestmentContextType = {
 
 const InvestmentContext = createContext<InvestmentContextType>(defaultContext);
 
-export const InvestmentProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentRound, setCurrentRound] = useState<typeof ROUND_VALUES[number]>(ROUND_VALUES[0]);
-  const [investments, setInvestments] = useState<{
-    [key: string]: { [key in StartupKey]: number };
-  }>({});
-  const [teamTotals, setTeamTotals] = useState<{ [key: string]: number }>({});
-  const [marketCaps, setMarketCaps] = useState<{ [key: string]: number }>({});
-  const [returns, setReturns] = useState<{ [key: string]: { [key: string]: number } }>({});
+interface InvestmentProviderProps {
+  children: ReactNode;
+}
+
+export const InvestmentProvider: React.FC<InvestmentProviderProps> = ({ children }) => {
+  const [currentRound, setCurrentRound] = useState<RoundKey>('r1');
+  // Initialize state with proper types
+  const [investments, setInvestments] = useState<Record<TeamName, Record<StartupKey, number>>>(() => 
+    TEAM_NUMBERS.reduce((acc, teamNum) => {
+      const teamName = `team${teamNum}` as TeamName;
+      acc[teamName] = { s1: 0, s2: 0, s3: 0, s4: 0 };
+      return acc;
+    }, {} as Record<TeamName, Record<StartupKey, number>>)
+  );
+
+  const [teamTotals, setTeamTotals] = useState<Record<TeamName, number>>(() =>
+    TEAM_NUMBERS.reduce((acc, teamNum) => {
+      const teamName = `team${teamNum}` as TeamName;
+      acc[teamName] = 0;
+      return acc;
+    }, {} as Record<TeamName, number>)
+  );
+  const [marketCaps, setMarketCaps] = useState<MarketCaps>({ s1: 0, s2: 0, s3: 0, s4: 0 });
+  const [returns, setReturns] = useState<ReturnsData>({
+    r1: { s1: 1, s2: 1, s3: 1, s4: 1 },
+    r2: { s1: 1, s2: 1, s3: 1, s4: 1 },
+    r3: { s1: 1, s2: 1, s3: 1, s4: 1 },
+    r4: { s1: 1, s2: 1, s3: 1, s4: 1 }
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,39 +126,60 @@ export const InvestmentProvider: React.FC<{ children: ReactNode }> = ({ children
       // In a real app, we would fetch this data from the API
       // For now, we'll use mock data
       
-      // Mock investments data
-      const mockInvestments = TEAM_NUMBERS.reduce((acc, teamNum) => {
-        acc[`team${teamNum}`] = {
+      // Mock investments data with proper typing
+      const mockInvestments = TEAM_NUMBERS.reduce<Record<TeamName, Record<StartupKey, number>>>((acc, teamNum) => {
+        const teamName = `team${teamNum}` as TeamName;
+        acc[teamName] = {
           s1: Math.floor(Math.random() * 10000),
           s2: Math.floor(Math.random() * 10000),
           s3: Math.floor(Math.random() * 10000),
           s4: Math.floor(Math.random() * 10000),
         };
         return acc;
-      }, {} as { [key: string]: { [key in StartupKey]: number } });
+      }, {} as Record<TeamName, Record<StartupKey, number>>);
       
-      // Mock team totals
-      const mockTeamTotals = TEAM_NUMBERS.reduce((acc, teamNum) => {
-        acc[`team${teamNum}`] = 100000; // Default total per team
+      // Mock team totals with proper typing
+      const mockTeamTotals = TEAM_NUMBERS.reduce<Record<TeamName, number>>((acc, teamNum) => {
+        const teamName = `team${teamNum}` as TeamName;
+        acc[teamName] = 100000; // Default total per team
         return acc;
-      }, {} as { [key: string]: number });
+      }, {} as Record<TeamName, number>);
       
-      // Mock market caps
-      const mockMarketCaps = STARTUP_KEYS.reduce((acc, key) => {
-        acc[key] = Math.floor(Math.random() * 1000000);
-        return acc;
-      }, {} as { [key: string]: number });
+      // Mock market caps with proper MarketCaps type
+      const mockMarketCaps: MarketCaps = {
+        s1: Math.floor(Math.random() * 1000000),
+        s2: Math.floor(Math.random() * 1000000),
+        s3: Math.floor(Math.random() * 1000000),
+        s4: Math.floor(Math.random() * 1000000)
+      };
       
       // Mock returns data
-      const mockReturns = ROUND_VALUES.reduce((roundAcc, round) => {
-        roundAcc[round] = {
+      const mockReturns: ReturnsData = {
+        r1: {
           s1: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
           s2: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
           s3: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
           s4: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
-        };
-        return roundAcc;
-      }, {} as { [key: string]: { [key: string]: number } });
+        },
+        r2: {
+          s1: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+          s2: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+          s3: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+          s4: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+        },
+        r3: {
+          s1: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+          s2: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+          s3: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+          s4: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+        },
+        r4: {
+          s1: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+          s2: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+          s3: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+          s4: parseFloat((Math.random() * 2 + 0.5).toFixed(2)),
+        },
+      };
       
       setInvestments(mockInvestments);
       setTeamTotals(mockTeamTotals);
@@ -137,11 +218,12 @@ export const InvestmentProvider: React.FC<{ children: ReactNode }> = ({ children
       //   [startup]: amount
       // });
       
-      // For now, just update the local state
+      // For now, just update the local state with proper typing
+      const teamName = `team${teamNumber}` as TeamName;
       setInvestments(prev => ({
         ...prev,
-        [`team${teamNumber}`]: {
-          ...prev[`team${teamNumber}`],
+        [teamName]: {
+          ...prev[teamName],
           [startup]: amount,
         },
       }));
@@ -158,10 +240,11 @@ export const InvestmentProvider: React.FC<{ children: ReactNode }> = ({ children
       // In a real app, we would call the API to update the team total
       // await investmentApi.updateTeamTotal(teamNumber, amount);
       
-      // For now, just update the local state
+      // For now, just update the local state with proper typing
+      const teamName = `team${teamNumber}` as TeamName;
       setTeamTotals(prev => ({
         ...prev,
-        [`team${teamNumber}`]: amount,
+        [teamName]: amount,
       }));
       
     } catch (err) {
@@ -176,11 +259,11 @@ export const InvestmentProvider: React.FC<{ children: ReactNode }> = ({ children
       // In a real app, we would call the API to update the market cap
       // await investmentApi.updateMarketCap(startup, amount);
       
-      // For now, just update the local state
+      // For now, just update the local state with proper typing
       setMarketCaps(prev => ({
         ...prev,
         [startup]: amount,
-      }));
+      } as MarketCaps));
       
     } catch (err) {
       console.error('Error updating market cap:', err);
@@ -195,14 +278,16 @@ export const InvestmentProvider: React.FC<{ children: ReactNode }> = ({ children
       // const result = await investmentApi.generateReturns(currentRound, multiplier);
       
       // For now, just update the local state with mock returns
+      const roundData = {
+        s1: parseFloat((Math.random() * 2 * multiplier + 0.5).toFixed(2)),
+        s2: parseFloat((Math.random() * 2 * multiplier + 0.5).toFixed(2)),
+        s3: parseFloat((Math.random() * 2 * multiplier + 0.5).toFixed(2)),
+        s4: parseFloat((Math.random() * 2 * multiplier + 0.5).toFixed(2)),
+      };
+      
       setReturns(prev => ({
         ...prev,
-        [currentRound]: {
-          s1: parseFloat((Math.random() * 2 * multiplier + 0.5).toFixed(2)),
-          s2: parseFloat((Math.random() * 2 * multiplier + 0.5).toFixed(2)),
-          s3: parseFloat((Math.random() * 2 * multiplier + 0.5).toFixed(2)),
-          s4: parseFloat((Math.random() * 2 * multiplier + 0.5).toFixed(2)),
-        },
+        [currentRound]: roundData
       }));
       
     } catch (err) {
@@ -217,12 +302,11 @@ export const InvestmentProvider: React.FC<{ children: ReactNode }> = ({ children
       // In a real app, we would call the API to reset returns
       // await investmentApi.resetReturns(currentRound);
       
-      // For now, just update the local state
-      setReturns(prev => {
-        const newReturns = { ...prev };
-        delete newReturns[currentRound];
-        return newReturns;
-      });
+      // For now, just update the local state with default values
+      setReturns(prev => ({
+        ...prev,
+        [currentRound]: { s1: 1, s2: 1, s3: 1, s4: 1 }
+      }));
       
     } catch (err) {
       console.error('Error resetting returns:', err);
