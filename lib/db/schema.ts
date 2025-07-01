@@ -1,5 +1,4 @@
 import type { InferSelectModel } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
 import {
   pgTable,
   varchar,
@@ -10,9 +9,6 @@ import {
   primaryKey,
   foreignKey,
   boolean,
-  decimal,
-  integer,
-  unique,
 } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('User', {
@@ -172,123 +168,3 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
-
-// Investment Game Schema
-export const investmentRound = pgTable('InvestmentRound', {
-  id: uuid('id').primaryKey().notNull().defaultRandom(),
-  name: varchar('name', { length: 50 }).notNull(), // Pre-seed, Seed, Series A, Series B
-  isActive: boolean('isActive').notNull().default(false),
-  createdAt: timestamp('createdAt').notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
-});
-
-export type InvestmentRound = InferSelectModel<typeof investmentRound>;
-
-export const teamPortfolio = pgTable('TeamPortfolio', {
-  id: uuid('id').primaryKey().notNull().defaultRandom(),
-  roundId: uuid('roundId')
-    .notNull()
-    .references(() => investmentRound.id),
-  teamName: varchar('teamName', { length: 20 }).notNull(), // team1, team2, etc.
-  startup: varchar('startup', { length: 50 }).notNull(), // startup1, startup2, etc.
-  investmentAmount: decimal('investmentAmount', { precision: 15, scale: 2 }).notNull().default('0'),
-  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
-});
-
-export type TeamPortfolio = InferSelectModel<typeof teamPortfolio>;
-
-export const teamCapital = pgTable('TeamCapital', {
-  id: uuid('id').primaryKey().notNull().defaultRandom(),
-  roundId: uuid('roundId')
-    .notNull()
-    .references(() => investmentRound.id),
-  teamName: varchar('teamName', { length: 20 }).notNull(), // team1, team2, etc.
-  totalCapital: decimal('totalCapital', { precision: 15, scale: 2 }).notNull().default('0'),
-  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
-});
-
-export type TeamCapital = InferSelectModel<typeof teamCapital>;
-
-export const teamMarketCap = pgTable('TeamMarketCap', {
-  id: uuid('id').primaryKey().notNull().defaultRandom(),
-  roundId: uuid('roundId')
-    .notNull()
-    .references(() => investmentRound.id),
-  teamName: varchar('teamName', { length: 50 }).notNull(),
-  marketCap: decimal('marketCap', { precision: 20, scale: 2 }).notNull(),
-  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
-});
-
-export type TeamMarketCap = InferSelectModel<typeof teamMarketCap>;
-
-// Startup Returns Table
-export const startupReturns = pgTable('startup_returns', {
-  id: uuid('id').primaryKey().notNull().defaultRandom(),
-  roundName: varchar('round_name', { length: 20, enum: ['r1', 'r2', 'r3', 'r4'] }).notNull(),
-  s1_return: integer('s1_return').notNull().default(0), // Stored as percentage (e.g., 30 for 30%)
-  s2_return: integer('s2_return').notNull().default(0),
-  s3_return: integer('s3_return').notNull().default(0),
-  s4_return: integer('s4_return').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, (table) => ({
-  unq: unique().on(table.roundName), // Only one set of returns per round
-}));
-
-export type StartupReturns = InferSelectModel<typeof startupReturns>;
-
-// New Team Tables Schema
-
-// Function to create team table schema
-export const createTeamTable = (teamNumber: number) => {
-  const tableName = `team${teamNumber}` as const;
-  
-  return pgTable(tableName, {
-    id: uuid('id').primaryKey().notNull().defaultRandom(),
-    roundName: varchar('round_name', { length: 20, enum: ['r1', 'r2', 'r3', 'r4'] })
-      .notNull(),
-    s1: integer('s1').notNull().default(0),
-    s2: integer('s2').notNull().default(0),
-    s3: integer('s3').notNull().default(0),
-    s4: integer('s4').notNull().default(0),
-    remain: integer('remain').notNull().default(0),
-    total: integer('total').notNull().default(0),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-  }, (table) => ({
-    unq: unique().on(table.roundName),
-  }));
-};
-
-// Create team table types
-export const team1 = createTeamTable(1);
-export const team2 = createTeamTable(2);
-export const team3 = createTeamTable(3);
-export const team4 = createTeamTable(4);
-export const team5 = createTeamTable(5);
-export const team6 = createTeamTable(6);
-export const team7 = createTeamTable(7);
-export const team8 = createTeamTable(8);
-export const team9 = createTeamTable(9);
-export const team10 = createTeamTable(10);
-export const team11 = createTeamTable(11);
-export const team12 = createTeamTable(12);
-export const team13 = createTeamTable(13);
-export const team14 = createTeamTable(14);
-export const team15 = createTeamTable(15);
-export const team16 = createTeamTable(16);
-
-// Team table type
-export type TeamTable = ReturnType<typeof createTeamTable>;
-export type TeamRecord = {
-  id: string;
-  roundName: 'r1' | 'r2' | 'r3' | 'r4';
-  s1: number;
-  s2: number;
-  s3: number;
-  s4: number;
-  remain: number;
-  total: number;
-  updatedAt: Date;
-};
-
-// Union type of all team table names
-export type TeamTableName = `team${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16}`;
