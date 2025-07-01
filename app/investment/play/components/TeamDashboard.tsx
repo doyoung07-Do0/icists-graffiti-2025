@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { extractTeamNumber, formatCurrency } from './utils';
 import { Inter } from 'next/font/google';
-import { useTeamDashboardData } from './hooks/useTeamDashboardData';
+import { useTeamDashboardData } from '../hooks/useTeamDashboardData';
 
 // Initialize Inter font with Korean support
 const inter = Inter({ 

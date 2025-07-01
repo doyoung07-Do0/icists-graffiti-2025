@@ -16,10 +16,13 @@ export default function InvestmentPlayPage() {
   if (!session) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8">
+        <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
           <div className="text-center">
-            <div className="animate-spin size-8 border-4 border-blue-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-300">로딩 중...</p>
+            <svg className="mx-auto h-12 w-12 text-blue-600 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-gray-300">Initializing...</p>
           </div>
         </div>
       </div>
@@ -28,8 +31,6 @@ export default function InvestmentPlayPage() {
   
   // Determine user role and render appropriate component
   const userRole = getUserRole(session.user?.email);
-
-  console.log(userRole)
 
   return (
     <div className="min-h-screen bg-black pt-20">
