@@ -510,7 +510,12 @@ export async function createStreamId({
   try {
     await db
       .insert(stream)
-      .values({ id: streamId, chatId, createdAt: new Date() });
+      .values({ 
+        id: crypto.randomUUID(),
+        streamId, 
+        chatId, 
+        createdAt: new Date() 
+      });
   } catch (error) {
     throw new ChatSDKError(
       'bad_request:database',

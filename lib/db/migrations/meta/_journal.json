@@ -71,6 +71,27 @@
       "when": 1751245653646,
       "tag": "0009_sharp_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1751407619227,
+      "tag": "0010_condemned_post",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1751407764952,
+      "tag": "0011_dusty_sharon_ventura",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1751407851859,
+      "tag": "0012_slow_mauler",
+      "breakpoints": true
     }
   ]
 }

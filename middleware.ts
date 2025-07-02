@@ -17,7 +17,9 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/api/auth') || 
     pathname.startsWith('/api/test-db') ||
-    pathname.startsWith('/api/returns')
+    pathname.startsWith('/api/returns') ||
+    // In development, allow access to investment API without authentication
+    (process.env.NODE_ENV === 'development' && pathname.startsWith('/api/investment'))
   ) {
     return NextResponse.next();
   }
