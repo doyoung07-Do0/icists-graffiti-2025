@@ -539,7 +539,7 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
 }
 
 /**
- * Resets all rounds to their initial state with 'locked' status and NULL yields
+ * Resets all rounds to their initial state with 'locked' status
  * @returns The updated round states
  */
 export async function resetRoundState() {

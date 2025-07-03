@@ -173,10 +173,6 @@ export type Stream = InferSelectModel<typeof stream>;
 export const round_state = pgTable('round_state', {
   round: varchar('round', { enum: ['r1', 'r2', 'r3', 'r4'] }).primaryKey().notNull(),
   status: varchar('status', { enum: ['locked', 'open', 'closed'] }).notNull(),
-  yield_s1: integer('yield_s1'),
-  yield_s2: integer('yield_s2'),
-  yield_s3: integer('yield_s3'),
-  yield_s4: integer('yield_s4'),
 });
 
 export type RoundState = InferSelectModel<typeof round_state>;
