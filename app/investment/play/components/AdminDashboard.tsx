@@ -7,26 +7,37 @@ export default function AdminDashboard() {
   const [resetStatus, setResetStatus] = useState<string | null>(null);
 
   const handleResetRounds = async () => {
-    if (window.confirm('Are you sure you want to reset all rounds? This will set all rounds to locked status and clear all yields.')) {
+    if (window.confirm('Are you sure you want to reset all rounds? This will set all rounds to locked status and reset all team data.')) {
       try {
         setIsResetting(true);
         setResetStatus(null);
         
-        const response = await fetch('/api/admin/reset-rounds', {
+        // Reset rounds status first
+        const roundsResponse = await fetch('/api/admin/reset-rounds', {
           method: 'POST',
         });
         
-        const data = await response.json();
+        if (!roundsResponse.ok) {
+          const errorData = await roundsResponse.json();
+          throw new Error(errorData.error || 'Failed to reset rounds status');
+        }
         
-        if (response.ok) {
-          console.log('Rounds reset successfully:', data.data);
-          setResetStatus(data.message);
+        // Reset team data
+        const teamsResponse = await fetch('/api/admin/reset-teams', {
+          method: 'POST',
+        });
+        
+        const teamsData = await teamsResponse.json();
+        
+        if (teamsResponse.ok) {
+          console.log('Rounds and team data reset successfully');
+          setResetStatus('Successfully reset all rounds and team data!');
         } else {
-          throw new Error(data.error || 'Failed to reset rounds');
+          throw new Error(teamsData.error || 'Failed to reset team data');
         }
       } catch (error) {
-        console.error('Failed to reset rounds:', error);
-        setResetStatus(error instanceof Error ? error.message : 'Failed to reset rounds');
+        console.error('Reset failed:', error);
+        setResetStatus(error instanceof Error ? error.message : 'Failed to reset data');
       } finally {
         setIsResetting(false);
       }
@@ -62,7 +73,12 @@ export default function AdminDashboard() {
           )}
           
           <p className="mt-2 text-sm text-gray-400">
-            This will reset all rounds to 'locked' status and clear all yields.
+            This will:
+            <ul className="list-disc pl-5 mt-1 space-y-1">
+              <li>Set all rounds to 'locked' status</li>
+              <li>Reset all team data (s1-s4 to 0, pre_fund to 1000, post_fund to NULL, submitted to false)</li>
+              <li>Initialize teams 1-16 in all round tables</li>
+            </ul>
           </p>
         </div>
       </div>

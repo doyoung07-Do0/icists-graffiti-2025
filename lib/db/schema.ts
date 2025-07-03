@@ -176,3 +176,25 @@ export const round_state = pgTable('round_state', {
 });
 
 export type RoundState = InferSelectModel<typeof round_state>;
+
+// Function to create team table for a specific round
+const createTeamTable = (round: 'r1' | 'r2' | 'r3' | 'r4') => {
+  return pgTable(`team_${round}`, {
+    team: varchar('team', { length: 10 }).primaryKey(), // team1-team16
+    s1: integer('s1').default(0).notNull(),
+    s2: integer('s2').default(0).notNull(),
+    s3: integer('s3').default(0).notNull(),
+    s4: integer('s4').default(0).notNull(),
+    pre_fund: integer('pre_fund'),
+    post_fund: integer('post_fund'),
+    submitted: boolean('submitted').default(false).notNull(),
+  });
+};
+
+// Create team tables for each round
+export const team_r1 = createTeamTable('r1');
+export const team_r2 = createTeamTable('r2');
+export const team_r3 = createTeamTable('r3');
+export const team_r4 = createTeamTable('r4');
+
+export type TeamRound = InferSelectModel<typeof team_r1>;
