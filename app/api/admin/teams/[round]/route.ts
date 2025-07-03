@@ -43,20 +43,12 @@ export async function POST(
   { params }: { params: { round: string } }
 ) {
   try {
-    // Log the incoming request
-    console.log('=== TEAMS API POST REQUEST ===');
-    console.log('URL:', request.url);
-    console.log('Method:', request.method);
-    console.log('Headers:', Object.fromEntries(request.headers.entries()));
-    
     // Ensure params is properly awaited
     const { round } = await Promise.resolve(params);
-    console.log('Round from params:', round);
     
     // Validate round parameter
     if (!isValidRound(round)) {
       const errorMsg = `Invalid round parameter: ${round}. Must be one of: ${['r1', 'r2', 'r3', 'r4'].join(', ')}`;
-      console.error(errorMsg);
       return NextResponse.json(
         { success: false, error: errorMsg },
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -67,12 +59,9 @@ export async function POST(
     let body;
     try {
       body = await request.json();
-      console.log('Request body:', JSON.stringify(body, null, 2));
     } catch (error) {
-      const errorMsg = 'Invalid JSON payload';
-      console.error(errorMsg, error);
       return NextResponse.json(
-        { success: false, error: errorMsg },
+        { success: false, error: 'Invalid JSON payload' },
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -92,10 +81,8 @@ export async function POST(
     // Handle different actions
     if (action === 'toggle-submission') {
       if (!team || data?.currentStatus === undefined) {
-        const errorMsg = 'Missing required fields for toggle-submission: team and data.currentStatus are required';
-        console.error(errorMsg);
         return NextResponse.json(
-          { success: false, error: errorMsg },
+          { success: false, error: 'Missing required fields for toggle-submission: team and data.currentStatus are required' },
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
       }
@@ -120,10 +107,8 @@ export async function POST(
 
     if (action === 'update') {
       if (!team || !data) {
-        const errorMsg = 'Missing required fields for update: team and data are required';
-        console.error(errorMsg);
         return NextResponse.json(
-          { success: false, error: errorMsg },
+          { success: false, error: 'Missing required fields for update: team and data are required' },
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
       }
@@ -146,28 +131,19 @@ export async function POST(
     }
 
     // Unknown action
-    const errorMsg = `Unknown action: ${action}. Supported actions: toggle-submission, update`;
-    console.error(errorMsg);
     return NextResponse.json(
       { 
         success: false, 
-        error: errorMsg,
+        error: `Unknown action: ${action}. Supported actions: toggle-submission, update`,
         supportedActions: ['toggle-submission', 'update']
       },
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'An unknown error occurred';
-    console.error('Error in teams API:', error);
-    
     return NextResponse.json(
       { 
         success: false, 
-        error: errorMsg,
-        ...(process.env.NODE_ENV === 'development' && {
-          stack: error instanceof Error ? error.stack : undefined,
-          message: error instanceof Error ? error.message : undefined
-        })
+        error: 'An error occurred while processing your request'
       },
       { 
         status: 500, 

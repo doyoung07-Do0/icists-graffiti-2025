@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import RoundTabs from './admin/RoundTabs';
 import TeamTable from './admin/TeamTable';
-import TestAPIButton from './admin/TestAPIButton';
 import { TeamData, Round } from './admin/types';
 
 export default function AdminDashboard() {
@@ -222,11 +221,10 @@ export default function AdminDashboard() {
       {/* Debug Tools */}
       <div className="bg-gray-900 p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold mb-4">Debug Tools</h2>
-        <TestAPIButton />
       </div>
 
       {/* Reset Button */}
-      <div className="bg-gray-900 p-6 rounded-lg shadow-md">
+      <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Reset All Rounds</h2>
           <button
