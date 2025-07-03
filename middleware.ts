@@ -15,7 +15,9 @@ export async function middleware(request: NextRequest) {
 
   // Allow unauthenticated access to specific API routes
   if (
-    pathname.startsWith('/api/auth')) {
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/admin')
+  ) {
     return NextResponse.next();
   }
 

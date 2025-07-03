@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import RoundTabs from './admin/RoundTabs';
 import TeamTable from './admin/TeamTable';
-import { TeamData } from './admin/types';
+import TestAPIButton from './admin/TestAPIButton';
+import { TeamData, Round } from './admin/types';
 
 export default function AdminDashboard() {
   const [activeRound, setActiveRound] = useState<'r1' | 'r2' | 'r3' | 'r4'>('r1');
@@ -13,41 +14,59 @@ export default function AdminDashboard() {
   const [isResetting, setIsResetting] = useState(false);
   const [resetStatus, setResetStatus] = useState<string | null>(null);
 
-  // Mock round status - replace with actual data from your database
-  const [roundStatus, setRoundStatus] = useState({
-    r1: { status: 'locked' as const },
-    r2: { status: 'locked' as const },
-    r3: { status: 'locked' as const },
-    r4: { status: 'locked' as const },
+  const [roundStatus, setRoundStatus] = useState<Record<Round, { status: 'locked' | 'open' | 'closed' }>>({
+    r1: { status: 'locked' },
+    r2: { status: 'locked' },
+    r3: { status: 'locked' },
+    r4: { status: 'locked' },
   });
 
-  // Fetch team data when active round changes
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // TODO: Replace with actual API call
-        const mockData = Array.from({ length: 16 }, (_, i) => ({
-          team: `team${i + 1}`,
-          s1: 0,
-          s2: 0,
-          s3: 0,
-          s4: 0,
-          pre_fund: 1000,
-          post_fund: null,
-          submitted: false,
-        }));
-        setTeamData(mockData);
-      } catch (error) {
-        console.error('Failed to fetch team data:', error);
-        setResetStatus('Failed to load team data');
-      } finally {
-        setIsLoading(false);
+  // Fetch round status
+  const fetchRoundStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/round-status');
+      const result = await response.json();
+      if (result.success) {
+        const statusMap = result.data.reduce((acc: any, item: any) => {
+          acc[item.round] = { status: item.status };
+          return acc;
+        }, {});
+        setRoundStatus(prev => ({ ...prev, ...statusMap }));
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch round status:', error);
+      setResetStatus('Failed to load round status');
+    }
+  }, []);
 
-    fetchData();
+  // Fetch team data when active round changes
+  const fetchTeamData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/admin/teams/${activeRound}`);
+      const result = await response.json();
+      if (result.success) {
+        setTeamData(result.data);
+      } else {
+        throw new Error(result.error || 'Failed to fetch team data');
+      }
+    } catch (error) {
+      console.error('Failed to fetch team data:', error);
+      setResetStatus('Failed to load team data');
+    } finally {
+      setIsLoading(false);
+    }
   }, [activeRound]);
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchRoundStatus();
+  }, [fetchRoundStatus]);
+
+  // Fetch team data when round changes
+  useEffect(() => {
+    fetchTeamData();
+  }, [fetchTeamData]);
 
   const handleInputChange = (team: string, field: keyof TeamData, value: any) => {
     setTeamData(prev => 
@@ -58,16 +77,66 @@ export default function AdminDashboard() {
   };
 
   const toggleSubmitted = async (team: string, currentStatus: boolean) => {
-    // TODO: Implement API call to update submission status
-    handleInputChange(team, 'submitted', !currentStatus);
+    try {
+      console.log('Sending toggle request for team:', team, 'currentStatus:', currentStatus);
+      const requestBody = {
+        team,
+        action: 'toggle-submission',
+        data: { currentStatus }
+      };
+      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      
+      const response = await fetch(`/api/admin/teams/${activeRound}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+      
+      console.log('Response status:', response.status);
+      const result = await response.json();
+      console.log('Response data:', result);
+      
+      if (result.success) {
+        handleInputChange(team, 'submitted', !currentStatus);
+      } else {
+        throw new Error(result.error || 'Failed to toggle submission status');
+      }
+    } catch (error) {
+      console.error('Failed to toggle submission status:', error);
+      setResetStatus('Failed to update submission status');
+    }
   };
 
   const handleSubmit = async (team: string) => {
     try {
-      // TODO: Implement API call to save changes
-      // await updateTeamData(activeRound, teamData.find(t => t.team === team));
-      setEditingTeam(null);
-      setResetStatus(`Successfully updated ${team} data`);
+      const teamToUpdate = teamData.find(t => t.team === team);
+      if (!teamToUpdate) return;
+
+      const { team: teamName, ...updateData } = teamToUpdate;
+      
+      const response = await fetch(`/api/admin/teams/${activeRound}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          team: teamName,
+          action: 'update',
+          data: updateData
+        }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        setEditingTeam(null);
+        setResetStatus(`Successfully updated ${team} data`);
+        // Refresh data to ensure consistency
+        fetchTeamData();
+      } else {
+        throw new Error(result.error || 'Failed to update team data');
+      }
     } catch (error) {
       console.error('Failed to update team data:', error);
       setResetStatus(`Failed to update ${team} data`);
@@ -110,8 +179,12 @@ export default function AdminDashboard() {
           throw new Error(errorData.error || 'Failed to reset startup data');
         }
         
-        // Refresh the data
-        setTeamData(prev => [...prev]);
+        // Refresh all data
+        await Promise.all([
+          fetchRoundStatus(),
+          fetchTeamData(),
+        ]);
+        
         setResetStatus('Successfully reset all rounds, team data, and startup data!');
       } catch (error) {
         console.error('Reset failed:', error);
@@ -146,6 +219,12 @@ export default function AdminDashboard() {
         />
       </div>
 
+      {/* Debug Tools */}
+      <div className="bg-gray-900 p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-xl font-semibold mb-4">Debug Tools</h2>
+        <TestAPIButton />
+      </div>
+
       {/* Reset Button */}
       <div className="bg-gray-900 p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center">
@@ -153,21 +232,16 @@ export default function AdminDashboard() {
           <button
             onClick={handleResetRounds}
             disabled={isResetting}
-            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              isResetting 
-                ? 'bg-gray-600 cursor-not-allowed' 
-                : 'bg-red-600 hover:bg-red-700'
-            }`}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isResetting ? 'Resetting...' : 'Reset All Rounds'}
+            {isResetting ? 'Resetting...' : 'Reset All Data'}
           </button>
-          
-          {resetStatus && (
-            <p className={`ml-4 ${resetStatus.includes('Success') ? 'text-green-400' : 'text-red-400'}`}>
-              {resetStatus}
-            </p>
-          )}
         </div>
+        {resetStatus && (
+          <p className={`mt-2 ${resetStatus.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>
+            {resetStatus}
+          </p>
+        )}
       </div>
     </div>
   );
