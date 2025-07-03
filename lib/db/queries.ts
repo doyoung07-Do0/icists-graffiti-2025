@@ -15,6 +15,7 @@ import {
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
+import { round_state } from './schema';
 import {
   user,
   chat,
@@ -533,6 +534,35 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get stream ids by chat id',
+    );
+  }
+}
+
+/**
+ * Resets all rounds to their initial state with 'locked' status and NULL yields
+ * @returns The updated round states
+ */
+export async function resetRoundState() {
+  try {
+    // First, delete all existing round states
+    await db.delete(round_state).execute();
+    
+    // Then insert the initial round states
+    const rounds = await db
+      .insert(round_state)
+      .values([
+        { round: 'r1', status: 'locked' },
+        { round: 'r2', status: 'locked' },
+        { round: 'r3', status: 'locked' },
+        { round: 'r4', status: 'locked' },
+      ])
+      .returning();
+      
+    return rounds;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to reset round states',
     );
   }
 }
