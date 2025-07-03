@@ -1,13 +1,81 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import RoundTabs from './admin/RoundTabs';
+import TeamTable from './admin/TeamTable';
+import { TeamData } from './admin/types';
 
 export default function AdminDashboard() {
+  const [activeRound, setActiveRound] = useState<'r1' | 'r2' | 'r3' | 'r4'>('r1');
+  const [teamData, setTeamData] = useState<TeamData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
   const [resetStatus, setResetStatus] = useState<string | null>(null);
 
+  // Mock round status - replace with actual data from your database
+  const [roundStatus, setRoundStatus] = useState({
+    r1: { status: 'locked' as const },
+    r2: { status: 'locked' as const },
+    r3: { status: 'locked' as const },
+    r4: { status: 'locked' as const },
+  });
+
+  // Fetch team data when active round changes
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // TODO: Replace with actual API call
+        const mockData = Array.from({ length: 16 }, (_, i) => ({
+          team: `team${i + 1}`,
+          s1: 0,
+          s2: 0,
+          s3: 0,
+          s4: 0,
+          pre_fund: 1000,
+          post_fund: null,
+          submitted: false,
+        }));
+        setTeamData(mockData);
+      } catch (error) {
+        console.error('Failed to fetch team data:', error);
+        setResetStatus('Failed to load team data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [activeRound]);
+
+  const handleInputChange = (team: string, field: keyof TeamData, value: any) => {
+    setTeamData(prev => 
+      prev.map(t => 
+        t.team === team ? { ...t, [field]: value } : t
+      )
+    );
+  };
+
+  const toggleSubmitted = async (team: string, currentStatus: boolean) => {
+    // TODO: Implement API call to update submission status
+    handleInputChange(team, 'submitted', !currentStatus);
+  };
+
+  const handleSubmit = async (team: string) => {
+    try {
+      // TODO: Implement API call to save changes
+      // await updateTeamData(activeRound, teamData.find(t => t.team === team));
+      setEditingTeam(null);
+      setResetStatus(`Successfully updated ${team} data`);
+    } catch (error) {
+      console.error('Failed to update team data:', error);
+      setResetStatus(`Failed to update ${team} data`);
+    }
+  };
+
   const handleResetRounds = async () => {
-    if (window.confirm('Are you sure you want to reset all rounds? This will set all rounds to locked status, reset all team data, and clear all startup data.')) {
+    if (window.confirm('Are you sure you want to reset all rounds? This will reset all data.')) {
       try {
         setIsResetting(true);
         setResetStatus(null);
@@ -37,17 +105,17 @@ export default function AdminDashboard() {
           method: 'POST',
         });
         
-        const startupsData = await startupsResponse.json();
-        
-        if (startupsResponse.ok) {
-          console.log('Rounds, team data, and startup data reset successfully');
-          setResetStatus('Successfully reset all rounds, team data, and startup data!');
-        } else {
-          throw new Error(startupsData.error || 'Failed to reset startup data');
+        if (!startupsResponse.ok) {
+          const errorData = await startupsResponse.json();
+          throw new Error(errorData.error || 'Failed to reset startup data');
         }
+        
+        // Refresh the data
+        setTeamData(prev => [...prev]);
+        setResetStatus('Successfully reset all rounds, team data, and startup data!');
       } catch (error) {
         console.error('Reset failed:', error);
-        setResetStatus(error instanceof Error ? error.message : 'Failed to reset data');
+        setResetStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setIsResetting(false);
       }
@@ -55,15 +123,33 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-          Admin Dashboard
-        </h1>
-        
-        <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
-          <h2 className="text-xl font-semibold mb-4">Round Management</h2>
-          
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      
+      {/* Round Tabs */}
+      <RoundTabs 
+        activeRound={activeRound} 
+        onRoundChange={setActiveRound}
+        roundStatus={roundStatus}
+      />
+
+      {/* Team Table */}
+      <div className="mb-8">
+        <TeamTable
+          data={teamData}
+          isLoading={isLoading}
+          editingTeam={editingTeam}
+          onToggleSubmitted={toggleSubmitted}
+          onInputChange={handleInputChange}
+          setEditingTeam={setEditingTeam}
+          onSubmit={handleSubmit}
+        />
+      </div>
+
+      {/* Reset Button */}
+      <div className="bg-gray-900 p-6 rounded-lg shadow-md">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Reset All Rounds</h2>
           <button
             onClick={handleResetRounds}
             disabled={isResetting}
@@ -77,20 +163,10 @@ export default function AdminDashboard() {
           </button>
           
           {resetStatus && (
-            <p className={`mt-3 ${resetStatus.includes('Success') ? 'text-green-400' : 'text-red-400'}`}>
+            <p className={`ml-4 ${resetStatus.includes('Success') ? 'text-green-400' : 'text-red-400'}`}>
               {resetStatus}
             </p>
           )}
-          
-          <p className="mt-2 text-sm text-gray-400">
-            This will:
-            <ul className="list-disc pl-5 mt-1 space-y-1">
-              <li>Set all rounds to 'locked' status</li>
-              <li>Reset all team data (s1-s4 to 0, pre_fund to 1000, post_fund to NULL, submitted to false)</li>
-              <li>Initialize teams 1-16 in all round tables</li>
-              <li>Reset all startup data (pre_cap, yield, post_cap to NULL for s1-s4)</li>
-            </ul>
-          </p>
         </div>
       </div>
     </div>
