@@ -7,7 +7,7 @@ export default function AdminDashboard() {
   const [resetStatus, setResetStatus] = useState<string | null>(null);
 
   const handleResetRounds = async () => {
-    if (window.confirm('Are you sure you want to reset all rounds? This will set all rounds to locked status and reset all team data.')) {
+    if (window.confirm('Are you sure you want to reset all rounds? This will set all rounds to locked status, reset all team data, and clear all startup data.')) {
       try {
         setIsResetting(true);
         setResetStatus(null);
@@ -27,13 +27,23 @@ export default function AdminDashboard() {
           method: 'POST',
         });
         
-        const teamsData = await teamsResponse.json();
+        if (!teamsResponse.ok) {
+          const errorData = await teamsResponse.json();
+          throw new Error(errorData.error || 'Failed to reset team data');
+        }
         
-        if (teamsResponse.ok) {
-          console.log('Rounds and team data reset successfully');
-          setResetStatus('Successfully reset all rounds and team data!');
+        // Reset startup data
+        const startupsResponse = await fetch('/api/admin/reset-startups', {
+          method: 'POST',
+        });
+        
+        const startupsData = await startupsResponse.json();
+        
+        if (startupsResponse.ok) {
+          console.log('Rounds, team data, and startup data reset successfully');
+          setResetStatus('Successfully reset all rounds, team data, and startup data!');
         } else {
-          throw new Error(teamsData.error || 'Failed to reset team data');
+          throw new Error(startupsData.error || 'Failed to reset startup data');
         }
       } catch (error) {
         console.error('Reset failed:', error);
@@ -78,6 +88,7 @@ export default function AdminDashboard() {
               <li>Set all rounds to 'locked' status</li>
               <li>Reset all team data (s1-s4 to 0, pre_fund to 1000, post_fund to NULL, submitted to false)</li>
               <li>Initialize teams 1-16 in all round tables</li>
+              <li>Reset all startup data (pre_cap, yield, post_cap to NULL for s1-s4)</li>
             </ul>
           </p>
         </div>

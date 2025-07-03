@@ -198,3 +198,21 @@ export const team_r3 = createTeamTable('r3');
 export const team_r4 = createTeamTable('r4');
 
 export type TeamRound = InferSelectModel<typeof team_r1>;
+
+// Function to create startup table for a specific round
+const createStartupTable = (round: 'r1' | 'r2' | 'r3' | 'r4') => {
+  return pgTable(`startup_${round}`, {
+    startup: varchar('startup', { enum: ['s1', 's2', 's3', 's4'] }).primaryKey(),
+    pre_cap: integer('pre_cap'),
+    yield: integer('yield'),
+    post_cap: integer('post_cap')
+  });
+};
+
+// Create startup tables for each round
+export const startup_r1 = createStartupTable('r1');
+export const startup_r2 = createStartupTable('r2');
+export const startup_r3 = createStartupTable('r3');
+export const startup_r4 = createStartupTable('r4');
+
+export type StartupRound = InferSelectModel<typeof startup_r1>;
