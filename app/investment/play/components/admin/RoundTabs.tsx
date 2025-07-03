@@ -1,4 +1,4 @@
-import { Round, RoundTabProps } from './types';
+import { Round} from './types';
 
 const RoundTabs = ({ 
   activeRound, 

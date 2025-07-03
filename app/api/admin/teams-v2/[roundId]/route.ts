@@ -10,8 +10,9 @@ function isValidRound(round: string): round is 'r1' | 'r2' | 'r3' | 'r4' {
 // Handle GET request
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roundId: string } }
+  context: { params: { roundId: string } }
 ) {
+  const { params } = context;
   try {
     // Properly await params before destructuring
     const { roundId } = await Promise.resolve(params);
@@ -48,8 +49,9 @@ export async function GET(
 // Handle POST request
 export async function POST(
   request: NextRequest,
-  { params }: { params: { roundId: string } }
+  context: { params: { roundId: string } }
 ) {
+  const { params } = context;
   try {
     console.log('=== TEAMS-V2 API POST REQUEST ===');
     console.log('URL:', request.url);

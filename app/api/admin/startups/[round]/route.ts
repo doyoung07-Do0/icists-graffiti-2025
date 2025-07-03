@@ -6,8 +6,9 @@ type Round = 'r1' | 'r2' | 'r3' | 'r4';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { round: string } }
+  context: { params: { round: string } }
 ) {
+  const { params } = context;
   try {
     // Ensure params is properly awaited and validate the round
     const { round } = await Promise.resolve(params);

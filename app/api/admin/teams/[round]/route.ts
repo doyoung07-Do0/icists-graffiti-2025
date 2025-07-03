@@ -12,8 +12,9 @@ function isValidRound(round: string): round is Round {
 // Handle GET request
 export async function GET(
   request: NextRequest,
-  { params }: { params: { round: string } }
+  context: { params: { round: string } }
 ) {
+  const { params } = context;
   try {
     // Ensure params is properly awaited
     const { round } = await Promise.resolve(params);
@@ -40,8 +41,9 @@ export async function GET(
 // Handle POST request
 export async function POST(
   request: NextRequest,
-  { params }: { params: { round: string } }
+  context: { params: { round: string } }
 ) {
+  const { params } = context;
   try {
     // Ensure params is properly awaited
     const { round } = await Promise.resolve(params);
