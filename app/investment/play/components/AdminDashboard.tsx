@@ -38,6 +38,16 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  // Sort teams from team1 to team16
+  const sortTeamData = (teams: TeamData[]): TeamData[] => {
+    return [...teams].sort((a, b) => {
+      // Extract team numbers (e.g., 'team1' -> 1, 'team2' -> 2, etc.)
+      const numA = parseInt(a.team.replace('team', ''), 10);
+      const numB = parseInt(b.team.replace('team', ''), 10);
+      return numA - numB;
+    });
+  };
+
   // Fetch team data when active round changes
   const fetchTeamData = useCallback(async () => {
     setIsLoading(true);
@@ -45,7 +55,9 @@ export default function AdminDashboard() {
       const response = await fetch(`/api/admin/teams/${activeRound}`);
       const result = await response.json();
       if (result.success) {
-        setTeamData(result.data);
+        // Sort the team data before setting it
+        const sortedData = sortTeamData(result.data);
+        setTeamData(sortedData);
       } else {
         throw new Error(result.error || 'Failed to fetch team data');
       }
@@ -196,14 +208,45 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <button
+          onClick={handleResetRounds}
+          disabled={isResetting}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isResetting ? 'Resetting...' : 'Reset All Data'}
+        </button>
+      </div>
       
-      {/* Round Tabs */}
-      <RoundTabs 
-        activeRound={activeRound} 
-        onRoundChange={setActiveRound}
-        roundStatus={roundStatus}
-      />
+      <div className="flex items-center justify-between mb-6">
+        {/* Round Tabs */}
+        <div className="flex-1">
+          <RoundTabs 
+            activeRound={activeRound} 
+            onRoundChange={setActiveRound}
+            roundStatus={roundStatus}
+          />
+        </div>
+        
+        {/* Action Buttons */}
+        <div className="flex space-x-2 ml-4">
+          {activeRound === 'r1' && (
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={() => console.log('Game start clicked')}
+            >
+              Game Start
+            </button>
+          )}
+          <button
+            className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+            onClick={() => console.log('Close round clicked for', activeRound)}
+          >
+            Close the round
+          </button>
+        </div>
+      </div>
 
       {/* Team Table */}
       <div className="mb-8">
@@ -218,29 +261,14 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* Debug Tools */}
-      <div className="bg-gray-900 p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-xl font-semibold mb-4">Debug Tools</h2>
-      </div>
-
-      {/* Reset Button */}
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Reset All Rounds</h2>
-          <button
-            onClick={handleResetRounds}
-            disabled={isResetting}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isResetting ? 'Resetting...' : 'Reset All Data'}
-          </button>
-        </div>
-        {resetStatus && (
-          <p className={`mt-2 ${resetStatus.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>
+      {/* Status Message */}
+      {resetStatus && (
+        <div className="mb-6">
+          <p className={`${resetStatus.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>
             {resetStatus}
           </p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

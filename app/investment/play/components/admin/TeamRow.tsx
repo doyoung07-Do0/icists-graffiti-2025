@@ -21,9 +21,11 @@ function TeamRow({
   };
 
   return (
-    <tr className={team.submitted ? 'bg-green-50' : ''}>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        {team.team}
+    <tr>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="text-sm font-semibold text-white">
+          {team.team}
+        </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         {isEditing ? (
@@ -73,10 +75,10 @@ function TeamRow({
       <td className="px-6 py-4 whitespace-nowrap">
         <button
           onClick={() => onToggleSubmitted(team.team, team.submitted)}
-          className={`px-2 py-1 rounded text-xs font-medium ${
+          className={`px-2 py-1 rounded text-xs font-medium border ${
             team.submitted
-              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              ? 'bg-green-600 text-white hover:bg-green-700 border-green-700'
+              : 'bg-gray-700 text-gray-200 hover:bg-gray-600 border-gray-600'
           }`}
         >
           {team.submitted ? 'Submitted' : 'Not Submitted'}
