@@ -1,14 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getStartupData, updateStartupData } from '@/lib/db/queries/admin';
-import { NextRequest } from 'next/server';
 
 type Round = 'r1' | 'r2' | 'r3' | 'r4';
 
+interface Context {
+  params: {
+    round: string;
+  };
+}
+
 export async function GET(
   request: NextRequest,
-  context: { params: { round: string } }
-) {
-  const { params } = context;
+  { params }: Context
+): Promise<NextResponse> {
   try {
     // Ensure params is properly awaited and validate the round
     const { round } = await Promise.resolve(params);
@@ -34,8 +38,8 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { round: string } }
-) {
+  { params }: Context
+): Promise<NextResponse> {
   try {
     // Ensure params is properly awaited and validate the round
     const { round } = await Promise.resolve(params);
