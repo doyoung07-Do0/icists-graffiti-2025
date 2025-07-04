@@ -10,14 +10,12 @@ function isValidRound(round: string): round is Round {
 }
 
 // Handle GET request
-export async function GET(
-  request: NextRequest,
-  context: { params: { round: string } }
-) {
-  const { params } = context;
+export async function GET(request: Request) {
   try {
-    // Ensure params is properly awaited
-    const { round } = await Promise.resolve(params);
+    // Extract round from URL
+    const url = new URL(request.url);
+    const roundMatch = url.pathname.match(/\/api\/admin\/teams\/([^/]+)/);
+    const round = roundMatch ? roundMatch[1] : '';
     
     // Validate round parameter
     if (!isValidRound(round)) {
@@ -39,14 +37,12 @@ export async function GET(
 }
 
 // Handle POST request
-export async function POST(
-  request: NextRequest,
-  context: { params: { round: string } }
-) {
-  const { params } = context;
+export async function POST(request: Request) {
   try {
-    // Ensure params is properly awaited
-    const { round } = await Promise.resolve(params);
+    // Extract round from URL
+    const url = new URL(request.url);
+    const roundMatch = url.pathname.match(/\/api\/admin\/teams\/([^/]+)/);
+    const round = roundMatch ? roundMatch[1] : '';
     
     // Validate round parameter
     if (!isValidRound(round)) {

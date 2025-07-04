@@ -1,21 +1,16 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getStartupData, updateStartupData } from '@/lib/db/queries/admin';
 
+// Type for the round parameter
 type Round = 'r1' | 'r2' | 'r3' | 'r4';
 
-interface Context {
-  params: {
-    round: string;
-  };
-}
-
-export async function GET(
-  request: NextRequest,
-  { params }: Context
-): Promise<NextResponse> {
+// GET handler
+export async function GET(request: Request) {
   try {
-    // Ensure params is properly awaited and validate the round
-    const { round } = await Promise.resolve(params);
+    // Extract round from URL
+    const url = new URL(request.url);
+    const roundMatch = url.pathname.match(/\/api\/admin\/startups\/([^/]+)/);
+    const round = roundMatch ? roundMatch[1] : '';
     
     // Validate round parameter
     if (!['r1', 'r2', 'r3', 'r4'].includes(round)) {
@@ -36,13 +31,13 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: Context
-): Promise<NextResponse> {
+// POST handler
+export async function POST(request: Request) {
   try {
-    // Ensure params is properly awaited and validate the round
-    const { round } = await Promise.resolve(params);
+    // Extract round from URL
+    const url = new URL(request.url);
+    const roundMatch = url.pathname.match(/\/api\/admin\/startups\/([^/]+)/);
+    const round = roundMatch ? roundMatch[1] : '';
     
     // Validate round parameter
     if (!['r1', 'r2', 'r3', 'r4'].includes(round)) {
@@ -54,20 +49,21 @@ export async function POST(
 
     const { startup, data } = await request.json();
     
-    // Validate startup parameter
-    if (!['s1', 's2', 's3', 's4'].includes(startup)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid startup parameter' },
-        { status: 400 }
-      );
-    }
-    
+    // Update startup data
     const result = await updateStartupData(round as Round, startup, data);
-    return NextResponse.json({ success: true, data: result });
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Startup data updated successfully',
+      data: result
+    });
   } catch (error) {
     console.error('Error updating startup data:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to update startup data' },
+      { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to update startup data' 
+      },
       { status: 500 }
     );
   }
@@ -78,8 +74,10 @@ export async function POST(
 export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 
+export const revalidate = 0; // Disable caching for this route
+
 // Generate static params at build time
-export function generateStaticParams() {
+export async function generateStaticParams() {
   return [
     { round: 'r1' },
     { round: 'r2' },

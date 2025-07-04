@@ -31,6 +31,14 @@ export async function getRoundStatus() {
   return await db.select().from(round_state);
 }
 
+// Update round status
+export async function updateRoundStatus(round: Round, status: 'locked' | 'open' | 'closed') {
+  return await db
+    .update(round_state)
+    .set({ status })
+    .where(eq(round_state.round, round));
+}
+
 // Get all teams for a round
 export async function getTeamsForRound(round: Round) {
   const table = getTeamTable(round);

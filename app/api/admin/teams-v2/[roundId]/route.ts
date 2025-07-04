@@ -8,14 +8,12 @@ function isValidRound(round: string): round is 'r1' | 'r2' | 'r3' | 'r4' {
 }
 
 // Handle GET request
-export async function GET(
-  request: NextRequest,
-  context: { params: { roundId: string } }
-) {
-  const { params } = context;
+export async function GET(request: Request) {
   try {
-    // Properly await params before destructuring
-    const { roundId } = await Promise.resolve(params);
+    // Extract roundId from URL
+    const url = new URL(request.url);
+    const roundMatch = url.pathname.match(/\/api\/admin\/teams-v2\/([^/]+)/);
+    const roundId = roundMatch ? roundMatch[1] : '';
     
     if (!isValidRound(roundId)) {
       return NextResponse.json(
@@ -47,19 +45,17 @@ export async function GET(
 }
 
 // Handle POST request
-export async function POST(
-  request: NextRequest,
-  context: { params: { roundId: string } }
-) {
-  const { params } = context;
+export async function POST(request: Request) {
   try {
     console.log('=== TEAMS-V2 API POST REQUEST ===');
     console.log('URL:', request.url);
     console.log('Method:', request.method);
     
-    // Properly await params before destructuring
-    const { roundId } = await Promise.resolve(params);
-    console.log('Round from params:', roundId);
+    // Extract roundId from URL
+    const url = new URL(request.url);
+    const roundMatch = url.pathname.match(/\/api\/admin\/teams-v2\/([^/]+)/);
+    const roundId = roundMatch ? roundMatch[1] : '';
+    console.log('Round from URL:', roundId);
     
     // Validate round parameter
     if (!isValidRound(roundId)) {

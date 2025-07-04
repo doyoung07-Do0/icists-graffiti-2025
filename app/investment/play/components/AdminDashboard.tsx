@@ -12,6 +12,7 @@ export default function AdminDashboard() {
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
   const [resetStatus, setResetStatus] = useState<string | null>(null);
+  const [isStartingGame, setIsStartingGame] = useState(false);
 
   const [roundStatus, setRoundStatus] = useState<Record<Round, { status: 'locked' | 'open' | 'closed' }>>({
     r1: { status: 'locked' },
@@ -32,9 +33,11 @@ export default function AdminDashboard() {
         }, {});
         setRoundStatus(prev => ({ ...prev, ...statusMap }));
       }
+      return result.success;
     } catch (error) {
       console.error('Failed to fetch round status:', error);
       setResetStatus('Failed to load round status');
+      return false;
     }
   }, []);
 
@@ -68,6 +71,43 @@ export default function AdminDashboard() {
       setIsLoading(false);
     }
   }, [activeRound]);
+
+  const handleStartGame = async () => {
+    if (window.confirm('Are you sure you want to start the game? This will open Round 1 for all teams.')) {
+      setIsStartingGame(true);
+      try {
+        const response = await fetch('/api/admin/round-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            round: 'r1',
+            status: 'open'
+          }),
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          // Update the local state with the new status
+          const statusMap = result.data.reduce((acc: any, item: any) => {
+            acc[item.round] = { status: item.status };
+            return acc;
+          }, {});
+          setRoundStatus(prev => ({ ...prev, ...statusMap }));
+          setResetStatus('Game started successfully! Round 1 is now open.');
+        } else {
+          throw new Error(result.error || 'Failed to start the game');
+        }
+      } catch (error) {
+        console.error('Failed to start the game:', error);
+        setResetStatus(`Error: ${error instanceof Error ? error.message : 'Failed to start the game'}`);
+      } finally {
+        setIsStartingGame(false);
+      }
+    }
+  };
 
   // Initial data fetch
   useEffect(() => {
@@ -235,10 +275,15 @@ export default function AdminDashboard() {
         <div className="flex space-x-2 ml-4">
           {activeRound === 'r1' && (
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              onClick={() => console.log('Game start clicked')}
+              className={`px-4 py-2 text-white rounded ${
+                isStartingGame 
+                  ? 'bg-blue-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+              onClick={handleStartGame}
+              disabled={isStartingGame}
             >
-              Game Start
+              {isStartingGame ? 'Starting...' : 'Game Start'}
             </button>
           )}
           <button
