@@ -10,6 +10,7 @@ import {
   foreignKey,
   boolean,
   integer,
+  decimal,
 } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('User', {
@@ -204,7 +205,7 @@ const createStartupTable = (round: 'r1' | 'r2' | 'r3' | 'r4') => {
   return pgTable(`startup_${round}`, {
     startup: varchar('startup', { enum: ['s1', 's2', 's3', 's4'] }).primaryKey(),
     pre_cap: integer('pre_cap'),
-    yield: integer('yield'),
+    yield: decimal('yield', { precision: 10, scale: 4 }),
     post_cap: integer('post_cap')
   });
 };

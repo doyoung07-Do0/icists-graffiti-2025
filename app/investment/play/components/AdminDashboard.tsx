@@ -13,6 +13,9 @@ export default function AdminDashboard() {
   const [isResetting, setIsResetting] = useState(false);
   const [resetStatus, setResetStatus] = useState<string | null>(null);
   const [isStartingGame, setIsStartingGame] = useState(false);
+  const [isOpeningRound, setIsOpeningRound] = useState(false);
+  const [isClosingRound, setIsClosingRound] = useState(false);
+  const [allTeamsSubmitted, setAllTeamsSubmitted] = useState(false);
 
   const [roundStatus, setRoundStatus] = useState<Record<Round, { status: 'locked' | 'open' | 'closed' }>>({
     r1: { status: 'locked' },
@@ -72,6 +75,41 @@ export default function AdminDashboard() {
     }
   }, [activeRound]);
 
+  const handleCloseRound = async () => {
+    if (!window.confirm(`Are you sure you want to close ${activeRound.toUpperCase()}? This will calculate final valuations and cannot be undone.`)) {
+      return;
+    }
+
+    setIsClosingRound(true);
+    try {
+      const response = await fetch('/api/admin/close-round', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          round: activeRound
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Refresh the round status and team data
+        await fetchRoundStatus();
+        await fetchTeamData();
+        setResetStatus(`Successfully closed ${activeRound.toUpperCase()}. Startup valuations have been calculated.`);
+      } else {
+        throw new Error(result.error || 'Failed to close the round');
+      }
+    } catch (error) {
+      console.error('Failed to close the round:', error);
+      setResetStatus(`Error: ${error instanceof Error ? error.message : 'Failed to close the round'}`);
+    } finally {
+      setIsClosingRound(false);
+    }
+  };
+
   const handleStartGame = async () => {
     if (window.confirm('Are you sure you want to start the game? This will open Round 1 for all teams.')) {
       setIsStartingGame(true);
@@ -109,15 +147,61 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleOpenRound = async (round: 'r2' | 'r3' | 'r4') => {
+    if (window.confirm(`Are you sure you want to open ${round.toUpperCase()}? This will copy post_fund values from ${String.fromCharCode(round.charCodeAt(1) - 1)} to pre_fund for all teams.`)) {
+      setIsOpeningRound(true);
+      try {
+        const response = await fetch('/api/admin/open-round', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ round }),
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          // Refresh the round status and team data
+          await fetchRoundStatus();
+          await fetchTeamData();
+          setResetStatus(`Successfully opened ${round.toUpperCase()}. Pre-fund values have been updated.`);
+        } else {
+          throw new Error(result.error || 'Failed to open the round');
+        }
+      } catch (error) {
+        console.error('Failed to open the round:', error);
+        setResetStatus(`Error: ${error instanceof Error ? error.message : 'Failed to open the round'}`);
+      } finally {
+        setIsOpeningRound(false);
+      }
+    }
+  };
+
   // Initial data fetch
   useEffect(() => {
     fetchRoundStatus();
   }, [fetchRoundStatus]);
 
-  // Fetch team data when round changes
+  // Check if all teams have submitted for the current round
+  const checkAllTeamsSubmitted = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/admin/have-all-teams-submitted?round=${activeRound}`);
+      const result = await response.json();
+      if (result.success) {
+        setAllTeamsSubmitted(result.allSubmitted);
+      }
+    } catch (error) {
+      console.error('Failed to check team submission status:', error);
+      setResetStatus('Failed to check team submission status');
+    }
+  }, [activeRound]);
+
+  // Fetch team data when active round changes
   useEffect(() => {
     fetchTeamData();
-  }, [fetchTeamData]);
+    checkAllTeamsSubmitted();
+  }, [fetchTeamData, checkAllTeamsSubmitted]);
 
   const handleInputChange = (team: string, field: keyof TeamData, value: any) => {
     setTeamData(prev => 
@@ -271,27 +355,41 @@ export default function AdminDashboard() {
           />
         </div>
         
-        {/* Action Buttons */}
-        <div className="flex space-x-2 ml-4">
-          {activeRound === 'r1' && (
+        <div className="flex space-x-2">
+          {activeRound === 'r1' && roundStatus.r1.status === 'locked' && (
             <button
-              className={`px-4 py-2 text-white rounded ${
-                isStartingGame 
-                  ? 'bg-blue-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
               onClick={handleStartGame}
               disabled={isStartingGame}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:bg-blue-300"
             >
               {isStartingGame ? 'Starting...' : 'Game Start'}
             </button>
           )}
-          <button
-            className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-            onClick={() => console.log('Close round clicked for', activeRound)}
-          >
-            Close the round
-          </button>
+          
+          {['r2', 'r3', 'r4'].includes(activeRound) && roundStatus[activeRound].status === 'locked' && (
+            <button
+              onClick={() => handleOpenRound(activeRound as 'r2' | 'r3' | 'r4')}
+              disabled={isOpeningRound}
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded disabled:bg-green-300"
+            >
+              {isOpeningRound ? 'Opening...' : `Open ${activeRound.toUpperCase()}`}
+            </button>
+          )}
+          
+          {roundStatus[activeRound]?.status === 'open' && (
+            <button
+              onClick={handleCloseRound}
+              disabled={!allTeamsSubmitted || isClosingRound}
+              className={`px-4 py-2 text-white rounded ${
+                !allTeamsSubmitted || isClosingRound
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-yellow-600 hover:bg-yellow-700'
+              }`}
+              title={!allTeamsSubmitted ? 'Not all teams have submitted their portfolio' : 'Close the current round'}
+            >
+              {isClosingRound ? 'Closing...' : 'Close the round'}
+            </button>
+          )}
         </div>
       </div>
 
