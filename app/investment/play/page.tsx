@@ -31,7 +31,7 @@ export default function InvestmentPlayPage() {
   
   // Determine user role and render appropriate component
   const userRole = getUserRole(session.user?.email);
-  console.log(userRole)
+  // console.log(userRole)
 
   return (
     <div className="min-h-screen bg-black pt-20">
