@@ -3,6 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Round } from './admin/types';
 import ClosedRound from './ClosedRound';
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
+
+interface TeamResult {
+  team: string;
+  post_fund: number | null;
+  rank: number;
+}
 
 const RoundTabs = ({ 
   activeRound, 
@@ -398,6 +406,32 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
     r3: { status: 'locked' },
     r4: { status: 'locked' },
   });
+  const [isResultsOpen, setIsResultsOpen] = useState(false);
+  const [isLoadingResults, setIsLoadingResults] = useState(false);
+  const [results, setResults] = useState<TeamResult[]>([]);
+
+  const fetchFinalResults = useCallback(async () => {
+    try {
+      setIsLoadingResults(true);
+      const response = await fetch('/api/final-results');
+      const result = await response.json();
+      
+      if (result.success) {
+        setResults(result.data);
+      } else {
+        console.error('Failed to fetch final results:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching final results:', error);
+    } finally {
+      setIsLoadingResults(false);
+    }
+  }, []);
+
+  const openResultsModal = useCallback(() => {
+    setIsResultsOpen(true);
+    fetchFinalResults();
+  }, [fetchFinalResults]);
 
   // Fetch round status
   const fetchRoundStatus = useCallback(async () => {
@@ -453,15 +487,120 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
           roundStatus={roundStatus}
         />
 
-        {currentRoundStatus === 'locked' ? (
-          <LockedRound />
-        ) : (
-          <OpenRound 
-            round={activeRound} 
-            isRoundClosed={currentRoundStatus === 'closed'}
-            teamName={teamName}
-          />
-        )}
+        <div className="space-y-6">
+          {roundStatus.r4.status === 'closed' && (
+            <div className="flex justify-center">
+              <button
+                onClick={openResultsModal}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+              >
+                최종 결과 보기
+              </button>
+            </div>
+          )}
+          
+          {currentRoundStatus === 'locked' ? (
+            <LockedRound />
+          ) : (
+            <OpenRound 
+              round={activeRound} 
+              isRoundClosed={currentRoundStatus === 'closed'}
+              teamName={teamName}
+            />
+          )}
+        </div>
+
+        <Transition appear show={isResultsOpen} as={Fragment}>
+          <Dialog as="div" className="relative z-10" onClose={() => setIsResultsOpen(false)}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black/50" />
+            </Transition.Child>
+
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-gray-800 p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-2xl font-bold leading-6 text-white mb-6 text-center"
+                    >
+                      최종 결과
+                    </Dialog.Title>
+                    
+                    {isLoadingResults ? (
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {results.map((team) => (
+                          <div 
+                            key={team.team}
+                            className={`flex items-center justify-between p-4 rounded-lg ${
+                              team.team === teamName 
+                                ? 'bg-purple-900/50 border border-purple-500' 
+                                : 'bg-gray-700/50'
+                            }`}
+                          >
+                            <div className="flex items-center space-x-4">
+                              <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                                team.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
+                                team.rank === 2 ? 'bg-gray-300 text-gray-800' :
+                                team.rank === 3 ? 'bg-amber-600 text-white' :
+                                'bg-gray-600 text-white'
+                              } font-bold`}>
+                                {team.rank}
+                              </div>
+                              <span className={`font-medium ${
+                                team.team === teamName ? 'text-purple-300' : 'text-white'
+                              }`}>
+                                {team.team}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-lg text-white">
+                                {team.post_fund ? team.post_fund.toLocaleString() : 'N/A'}
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {team.post_fund ? 'KRW' : 'No data'}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-6 flex justify-end">
+                      <button
+                        type="button"
+                        className="px-4 py-2 text-sm font-medium text-white bg-gray-600 hover:bg-gray-500 rounded-md"
+                        onClick={() => setIsResultsOpen(false)}
+                      >
+                        닫기
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
       </div>
     </div>
   );
