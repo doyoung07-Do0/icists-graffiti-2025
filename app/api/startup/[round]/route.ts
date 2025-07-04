@@ -11,11 +11,10 @@ function isValidRound(round: string): round is Round {
 // Handle GET request
 export async function GET(
   request: Request,
-  { params }: { params: { round: string } }
+  { params }: { params: Promise<{ round: string }> }
 ) {
   try {
-    // Await params before destructuring
-    const { round } = await Promise.resolve(params);
+    const { round } = await params;
     
     // Validate round parameter
     if (!isValidRound(round)) {

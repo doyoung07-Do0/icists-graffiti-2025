@@ -11,11 +11,10 @@ function isValidRound(round: string): round is Round {
 // Handle GET request
 export async function GET(
   request: Request,
-  { params }: { params: { round: string; team: string } }
+  { params }: { params: Promise<{ round: string; team: string }> }
 ) {
   try {
-    // Await params before destructuring
-    const { round, team } = await Promise.resolve(params);
+    const { round, team } = await params;
     
     // Validate round parameter
     if (!isValidRound(round)) {
@@ -56,7 +55,7 @@ export async function GET(
 // Handle POST request for updating team data
 export async function POST(
   request: Request,
-  { params }: { params: { round: string; team: string } }
+  { params }: { params: Promise<{ round: string; team: string }> }
 ) {
   try {
     // Await params before destructuring
