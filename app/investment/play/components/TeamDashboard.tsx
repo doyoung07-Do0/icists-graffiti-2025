@@ -155,7 +155,13 @@ const OpenRound: React.FC<OpenRoundProps> = ({ round, isRoundClosed = false }) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teamData || teamData.submitted || teamData.pre_fund === null) return;
+    if (!teamData || teamData.pre_fund === null) return;
+    
+    // If already submitted, don't proceed
+    if (teamData.submitted) {
+      setError('Portfolio has already been submitted');
+      return;
+    }
     
     // Validate that total doesn't exceed pre_fund
     const total = teamData.s1 + teamData.s2 + teamData.s3 + teamData.s4;
@@ -177,12 +183,14 @@ const OpenRound: React.FC<OpenRoundProps> = ({ round, isRoundClosed = false }) =
           s2: teamData.s2,
           s3: teamData.s3,
           s4: teamData.s4,
+          submitted: true // Explicitly set submitted to true
         })
       });
       
       const result = await response.json();
       
       if (result.success) {
+        // Update local state to reflect the submission
         setTeamData(prev => prev ? { ...prev, submitted: true } : null);
         setSuccess('Portfolio submitted successfully!');
       } else {
@@ -349,15 +357,22 @@ const OpenRound: React.FC<OpenRoundProps> = ({ round, isRoundClosed = false }) =
               
               <button
                 type="submit"
-                disabled={isRoundClosed || teamData.submitted || isSubmitting || remain !== 0}
+                disabled={isRoundClosed || teamData.submitted || isSubmitting}
                 className={`px-4 py-2 rounded-md text-white font-medium transition-colors ${
-                  isRoundClosed || teamData.submitted || remain !== 0 
+                  isRoundClosed || teamData.submitted 
                     ? 'bg-gray-700 cursor-not-allowed' 
                     : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
                 {isRoundClosed ? 'Round Closed' : teamData.submitted ? 'Submitted' : 'Submit Portfolio'}
               </button>
+              
+              {/* Debug info - can be removed in production */}
+              <div className="mt-2 text-xs text-gray-500">
+                Debug: Submitted={teamData.submitted ? 'true' : 'false'}, 
+                isRoundClosed={isRoundClosed ? 'true' : 'false'}, 
+                remain={remain}
+              </div>
               
               {teamData.submitted && (
                 <p className="text-sm text-gray-400 mt-2 text-center">
@@ -436,11 +451,14 @@ export default function TeamDashboard() {
           roundStatus={roundStatus}
         />
 
-        {currentRoundStatus === 'locked' && <LockedRound />}
-        <OpenRound 
-          round={activeRound} 
-          isRoundClosed={currentRoundStatus === 'closed'}
-        />
+        {currentRoundStatus === 'locked' ? (
+          <LockedRound />
+        ) : (
+          <OpenRound 
+            round={activeRound} 
+            isRoundClosed={currentRoundStatus === 'closed'}
+          />
+        )}
       </div>
     </div>
   );

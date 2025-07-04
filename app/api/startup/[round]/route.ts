@@ -14,7 +14,8 @@ export async function GET(
   { params }: { params: { round: string } }
 ) {
   try {
-    const { round } = params;
+    // Await params before destructuring
+    const { round } = await Promise.resolve(params);
     
     // Validate round parameter
     if (!isValidRound(round)) {
