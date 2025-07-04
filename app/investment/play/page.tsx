@@ -33,11 +33,16 @@ export default function InvestmentPlayPage() {
   const userRole = getUserRole(session.user?.email);
   // console.log(userRole)
 
+  // Extract team number from email (e.g., team5@icists.com -> team5)
+  const teamName = userRole === 'team' && session.user?.email
+    ? session.user.email.split('@')[0]
+    : null;
+
   return (
     <div className="min-h-screen bg-black pt-20">
       <div className="container mx-auto px-4 py-8">
         {userRole === 'admin' && <AdminDashboard />}
-        {userRole === 'team' && <TeamDashboard/>}
+        {userRole === 'team' && teamName && <TeamDashboard teamName={teamName} />}
         {userRole === 'unauthorized' && <UnauthorizedAccess />}
       </div>
     </div>

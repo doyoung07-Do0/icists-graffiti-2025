@@ -60,6 +60,7 @@ const LockedRound = () => (
 interface OpenRoundProps {
   round: Round;
   isRoundClosed?: boolean;
+  teamName: string;
 }
 
 interface TeamData {
@@ -80,7 +81,7 @@ interface StartupData {
   post_cap: number | null;
 }
 
-const OpenRound: React.FC<OpenRoundProps> = ({ round, isRoundClosed = false }) => {
+const OpenRound: React.FC<OpenRoundProps> = ({ round, isRoundClosed = false, teamName }) => {
   const [teamData, setTeamData] = useState<TeamData | null>(null);
   const [startupData, setStartupData] = useState<StartupData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,11 +103,8 @@ const OpenRound: React.FC<OpenRoundProps> = ({ round, isRoundClosed = false }) =
         setIsLoading(true);
         setError(null);
         
-        // In production, you would get the current team's ID from the session or context
-        const teamId = 'team1'; // TODO: Replace with actual team ID from auth context
-        
-        // Fetch team data
-        const teamResponse = await fetch(`/api/teams/${round}/${teamId}`);
+        // Use the teamName from props to fetch the correct team's data
+        const teamResponse = await fetch(`/api/teams/${round}/${teamName}`);
         const teamResult = await teamResponse.json();
         
         if (teamResult.success) {
@@ -387,7 +385,11 @@ const OpenRound: React.FC<OpenRoundProps> = ({ round, isRoundClosed = false }) =
   );
 };
 
-export default function TeamDashboard() {
+interface TeamDashboardProps {
+  teamName: string;
+}
+
+export default function TeamDashboard({ teamName }: TeamDashboardProps) {
   const [activeRound, setActiveRound] = useState<Round>('r1');
   const [isLoading, setIsLoading] = useState(true);
   const [roundStatus, setRoundStatus] = useState<Record<Round, { status: 'locked' | 'open' | 'closed' }>>({
@@ -457,6 +459,7 @@ export default function TeamDashboard() {
           <OpenRound 
             round={activeRound} 
             isRoundClosed={currentRoundStatus === 'closed'}
+            teamName={teamName}
           />
         )}
       </div>
