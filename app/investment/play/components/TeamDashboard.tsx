@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Round } from './admin/types';
+import ClosedRound from './ClosedRound';
 
 const RoundTabs = ({ 
   activeRound, 
@@ -58,6 +59,7 @@ const LockedRound = () => (
 
 interface OpenRoundProps {
   round: Round;
+  isRoundClosed?: boolean;
 }
 
 interface TeamData {
@@ -67,19 +69,31 @@ interface TeamData {
   s3: number;
   s4: number;
   pre_fund: number | null;
+  post_fund: number | null;
   submitted: boolean;
 }
 
-const OpenRound: React.FC<OpenRoundProps> = ({ round }) => {
+interface StartupData {
+  startup: string;
+  pre_cap: number | null;
+  yield: string | null;
+  post_cap: number | null;
+}
+
+const OpenRound: React.FC<OpenRoundProps> = ({ round, isRoundClosed = false }) => {
   const [teamData, setTeamData] = useState<TeamData | null>(null);
+  const [startupData, setStartupData] = useState<StartupData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Calculate remaining funds
+  // Calculate remaining funds and round return
   const remain = teamData && teamData.pre_fund !== null ? 
     teamData.pre_fund - (teamData.s1 + teamData.s2 + teamData.s3 + teamData.s4) : 0;
+    
+  const roundReturn = teamData && teamData.pre_fund && teamData.post_fund ?
+    ((teamData.post_fund - teamData.pre_fund) / teamData.pre_fund) * 100 : 0;
 
   // Fetch team data
   useEffect(() => {
@@ -91,21 +105,30 @@ const OpenRound: React.FC<OpenRoundProps> = ({ round }) => {
         // In production, you would get the current team's ID from the session or context
         const teamId = 'team1'; // TODO: Replace with actual team ID from auth context
         
-        const response = await fetch(`/api/teams/${round}/${teamId}`);
-        const result = await response.json();
+        // Fetch team data
+        const teamResponse = await fetch(`/api/teams/${round}/${teamId}`);
+        const teamResult = await teamResponse.json();
         
-        if (result.success) {
-          setTeamData({
-            team: teamId,
-            s1: result.data.s1 || 0,
-            s2: result.data.s2 || 0,
-            s3: result.data.s3 || 0,
-            s4: result.data.s4 || 0,
-            pre_fund: result.data.pre_fund,
-            submitted: result.data.submitted || false
-          });
+        if (teamResult.success) {
+          setTeamData(teamResult.data);
+          
+          // If round is closed, fetch startup data
+          if (isRoundClosed) {
+            const startupResponse = await fetch(`/api/startup/${round}`);
+            const startupResult = await startupResponse.json();
+            
+            if (startupResult.success) {
+              // Sort startup data by startup name (s1, s2, s3, s4)
+              const sortedData = startupResult.data.sort((a: StartupData, b: StartupData) => 
+                a.startup.localeCompare(b.startup)
+              );
+              setStartupData(sortedData);
+            } else {
+              throw new Error(startupResult.error || 'Failed to fetch startup data');
+            }
+          }
         } else {
-          throw new Error(result.error || 'Failed to load team data');
+          throw new Error(teamResult.error || 'Failed to load team data');
         }
       } catch (err) {
         setError('Failed to load team data');
@@ -190,20 +213,95 @@ const OpenRound: React.FC<OpenRoundProps> = ({ round }) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
-      {/* Left Panel - Hint */}
-      <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
-        <h2 className="text-xl font-bold text-blue-400 mb-4">Hint</h2>
-        <div className="prose prose-invert">
-          <p>Allocate your investment across the four startups (S1, S2, S3, S4) based on your analysis of their potential.</p>
-          <ul className="list-disc pl-5 mt-2 space-y-2">
-            <li>Each startup has different risk and return profiles</li>
-            <li>Diversify your portfolio to manage risk</li>
-            <li>Consider the current market conditions</li>
-            <li>You cannot invest more than your available funds</li>
-          </ul>
-          <p className="mt-4 font-medium">Available Funds: ${teamData.pre_fund !== null ? teamData.pre_fund.toLocaleString() : 'Loading...'}</p>
+      {/* Left Panel - Hint or Closed Round Info */}
+      {isRoundClosed ? (
+        <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+          <h2 className="text-xl font-bold text-blue-400 mb-4">Round Performance</h2>
+          
+          {/* Fund Summary */}
+          <div className="mb-6 p-4 bg-gray-800 rounded-lg">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-400">Initial Fund:</span>
+              <span className="font-medium">${teamData.pre_fund?.toLocaleString() || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-400">Final Value:</span>
+              <span className="font-medium">${teamData.post_fund?.toLocaleString() || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Return:</span>
+              <span className={`font-bold ${roundReturn >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {roundReturn.toFixed(2)}%
+              </span>
+            </div>
+          </div>
+          
+          {/* Startup Performance Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            {startupData.map((startup, index) => {
+              const isPositive = startup.yield && parseFloat(startup.yield) >= 0;
+              return (
+                <div key={startup.startup} className="bg-gray-800 p-3 rounded-lg">
+                  <div className="flex flex-col items-center">
+                    <div className="relative w-24 h-24 mb-2">
+                      {/* Pre-cap Circle */}
+                      <div 
+                        className="absolute inset-0 border-2 border-blue-500 rounded-full flex items-center justify-center text-xs text-gray-400"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          opacity: 0.7
+                        }}
+                      >
+                        Pre
+                      </div>
+                      
+                      {/* Post-cap Circle */}
+                      {startup.post_cap && startup.pre_cap && (
+                        <div 
+                          className={`absolute rounded-full flex items-center justify-center text-xs transition-all duration-500 ${
+                            isPositive ? 'bg-green-900/30 border-2 border-green-500' : 'bg-red-900/30 border-2 border-red-500'
+                          }`}
+                          style={{
+                            width: `${Math.max(40, Math.min(100, (startup.post_cap / (startup.pre_cap || 1)) * 100))}%`,
+                            height: `${Math.max(40, Math.min(100, (startup.post_cap / (startup.pre_cap || 1)) * 100))}%`,
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                        >
+                          Post
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="font-medium">{startup.startup.toUpperCase()}</div>
+                      <div className={`text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                        {(parseFloat(startup.yield || '0') * 100).toFixed(2)}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+          <h2 className="text-xl font-bold text-blue-400 mb-4">Hint</h2>
+          <div className="prose prose-invert">
+            <p>Allocate your investment across the four startups (S1, S2, S3, S4) based on your analysis of their potential.</p>
+            <ul className="list-disc pl-5 mt-2 space-y-2">
+              <li>Each startup has different risk and return profiles</li>
+              <li>Diversify your portfolio to manage risk</li>
+              <li>Consider the current market conditions</li>
+              <li>You cannot invest more than your available funds</li>
+            </ul>
+            <p className="mt-4 font-medium">Available Funds: ${teamData.pre_fund !== null ? teamData.pre_fund.toLocaleString() : 'Loading...'}</p>
+          </div>
+        </div>
+      )}
 
       {/* Right Panel - Portfolio Submission */}
       <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
@@ -251,14 +349,14 @@ const OpenRound: React.FC<OpenRoundProps> = ({ round }) => {
               
               <button
                 type="submit"
-                disabled={teamData.submitted || isSubmitting || remain < 0}
-                className={`w-full py-2 px-4 rounded-md font-medium ${
-                  teamData.submitted
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                } transition-colors`}
+                disabled={isRoundClosed || teamData.submitted || isSubmitting || remain !== 0}
+                className={`px-4 py-2 rounded-md text-white font-medium transition-colors ${
+                  isRoundClosed || teamData.submitted || remain !== 0 
+                    ? 'bg-gray-700 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
-                {teamData.submitted ? 'Submitted' : 'Submit Portfolio'}
+                {isRoundClosed ? 'Round Closed' : teamData.submitted ? 'Submitted' : 'Submit Portfolio'}
               </button>
               
               {teamData.submitted && (
@@ -339,8 +437,10 @@ export default function TeamDashboard() {
         />
 
         {currentRoundStatus === 'locked' && <LockedRound />}
-        {currentRoundStatus === 'open' && <OpenRound round={activeRound} />}
-        {currentRoundStatus === 'closed' && <div>Closed Round UI Coming Soon</div>}
+        <OpenRound 
+          round={activeRound} 
+          isRoundClosed={currentRoundStatus === 'closed'}
+        />
       </div>
     </div>
   );
