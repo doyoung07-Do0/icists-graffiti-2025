@@ -13,8 +13,9 @@ export default function AdminDashboard() {
   const [isResetting, setIsResetting] = useState(false);
   const [resetStatus, setResetStatus] = useState<string | null>(null);
   const [isStartingGame, setIsStartingGame] = useState(false);
-  const [isOpeningRound, setIsOpeningRound] = useState(false);
   const [isClosingRound, setIsClosingRound] = useState(false);
+  const [isOpeningRound, setIsOpeningRound] = useState(false);
+  const [isMarkingAllSubmitted, setIsMarkingAllSubmitted] = useState(false);
   const [allTeamsSubmitted, setAllTeamsSubmitted] = useState(false);
 
   const [roundStatus, setRoundStatus] = useState<Record<Round, { status: 'locked' | 'open' | 'closed' }>>({
@@ -213,13 +214,11 @@ export default function AdminDashboard() {
 
   const toggleSubmitted = async (team: string, currentStatus: boolean) => {
     try {
-      console.log('Sending toggle request for team:', team, 'currentStatus:', currentStatus);
       const requestBody = {
         team,
         action: 'toggle-submission',
         data: { currentStatus }
       };
-      console.log('Request body:', JSON.stringify(requestBody, null, 2));
       
       const response = await fetch(`/api/admin/teams/${activeRound}`, {
         method: 'POST',
@@ -229,9 +228,7 @@ export default function AdminDashboard() {
         body: JSON.stringify(requestBody),
       });
       
-      console.log('Response status:', response.status);
       const result = await response.json();
-      console.log('Response data:', result);
       
       if (result.success) {
         handleInputChange(team, 'submitted', !currentStatus);
@@ -241,6 +238,57 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Failed to toggle submission status:', error);
       setResetStatus('Failed to update submission status');
+    }
+  };
+
+  const markAllAsSubmitted = async () => {
+    if (!window.confirm('Are you sure you want to mark all teams as submitted?')) {
+      return;
+    }
+
+    setIsMarkingAllSubmitted(true);
+    setResetStatus('Marking all teams as submitted...');
+
+    try {
+      // Get teams that are not yet submitted
+      const teamsToUpdate = teamData.filter(team => !team.submitted);
+      
+      // Process each team one by one
+      for (const team of teamsToUpdate) {
+        try {
+          const response = await fetch(`/api/admin/teams/${activeRound}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              team: team.team,
+              action: 'toggle-submission',
+              data: { currentStatus: false } // Toggle from false to true
+            }),
+          });
+
+          const result = await response.json();
+          
+          if (!result.success) {
+            throw new Error(result.error || `Failed to update team ${team.team}`);
+          }
+          
+          // Update local state for this team
+          handleInputChange(team.team, 'submitted', true);
+          
+        } catch (error) {
+          console.error(`Failed to update team ${team.team}:`, error);
+          // Continue with other teams even if one fails
+        }
+      }
+      
+      setResetStatus('All teams have been marked as submitted.');
+    } catch (error) {
+      console.error('Failed to mark all teams as submitted:', error);
+      setResetStatus(`Error: ${error instanceof Error ? error.message : 'Failed to update all teams'}`);
+    } finally {
+      setIsMarkingAllSubmitted(false);
     }
   };
 
@@ -403,6 +451,9 @@ export default function AdminDashboard() {
           onInputChange={handleInputChange}
           setEditingTeam={setEditingTeam}
           onSubmit={handleSubmit}
+          onMarkAllSubmitted={markAllAsSubmitted}
+          isMarkingAllSubmitted={isMarkingAllSubmitted}
+          roundStatus={roundStatus[activeRound]?.status}
         />
       </div>
 

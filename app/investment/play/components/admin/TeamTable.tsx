@@ -9,6 +9,9 @@ interface TeamTableProps {
   onInputChange: (team: string, field: keyof TeamData, value: any) => void;
   setEditingTeam: (team: string | null) => void;
   onSubmit: (team: string) => void;
+  onMarkAllSubmitted?: () => void;
+  isMarkingAllSubmitted?: boolean;
+  roundStatus?: 'locked' | 'open' | 'closed';
 }
 
 const TeamTable = ({
@@ -19,6 +22,9 @@ const TeamTable = ({
   onInputChange,
   setEditingTeam,
   onSubmit,
+  onMarkAllSubmitted,
+  isMarkingAllSubmitted = false,
+  roundStatus = 'locked',
 }: TeamTableProps) => {
   return (
     <div className="overflow-x-auto">
@@ -50,7 +56,23 @@ const TeamTable = ({
               Post Fund
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Submitted
+              <div className="flex flex-col items-start">
+                <span>Submitted</span>
+                {roundStatus === 'open' && onMarkAllSubmitted && (
+                  <button
+                    onClick={onMarkAllSubmitted}
+                    disabled={isMarkingAllSubmitted}
+                    className={`mt-1 px-2 py-1 text-xs rounded ${
+                      isMarkingAllSubmitted
+                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                        : 'bg-green-500 text-white hover:bg-green-600'
+                    }`}
+                    title="Mark all teams as submitted"
+                  >
+                    {isMarkingAllSubmitted ? 'Updating...' : 'Mark All'}
+                  </button>
+                )}
+              </div>
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
