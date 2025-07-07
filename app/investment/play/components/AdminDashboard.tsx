@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import RoundTabs from './admin/RoundTabs';
 import TeamTable from './admin/TeamTable';
 import { TeamData, Round } from './admin/types';
+import { useTeamUpdates } from '@/hooks/useTeamUpdates';
+import { TeamUpdateEvent } from '@/types/sse';
 
 export default function AdminDashboard() {
   const [activeRound, setActiveRound] = useState<'r1' | 'r2' | 'r3' | 'r4'>('r1');
@@ -47,29 +49,51 @@ export default function AdminDashboard() {
 
   // Sort teams from team1 to team16
   const sortTeamData = (teams: TeamData[]): TeamData[] => {
-    return [...teams].sort((a, b) => {
-      // Extract team numbers (e.g., 'team1' -> 1, 'team2' -> 2, etc.)
-      const numA = parseInt(a.team.replace('team', ''), 10);
-      const numB = parseInt(b.team.replace('team', ''), 10);
-      return numA - numB;
-    });
+    return [...teams]
+      .filter(team => team && team.team) // Filter out any undefined or invalid team data
+      .sort((a, b) => {
+        try {
+          // Safely extract team numbers (e.g., 'team1' -> 1, 'team2' -> 2, etc.)
+          const numA = parseInt(a.team.replace('team', ''), 10) || 0;
+          const numB = parseInt(b.team.replace('team', ''), 10) || 0;
+          return numA - numB;
+        } catch (error) {
+          console.error('Error sorting teams:', error);
+          return 0;
+        }
+      });
   };
 
-  // Fetch team data when active round changes
+  // Create a ref to store the current refresh function
+  const refreshRef = useRef<() => Promise<void>>();
+
+  // Define handleTeamUpdate using the ref
+  const handleTeamUpdate = useCallback((message: any) => {
+    console.log('SSE message received, refreshing data...', message);
+    if (refreshRef.current) {
+      refreshRef.current();
+    } else {
+      console.log('Refresh function not ready yet, will refresh on next update');
+    }
+  }, []);
+
+  // Fetch team data
   const fetchTeamData = useCallback(async () => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
       const response = await fetch(`/api/admin/teams/${activeRound}`);
       const result = await response.json();
+      
       if (result.success) {
-        // Sort the team data before setting it
-        const sortedData = sortTeamData(result.data);
-        setTeamData(sortedData);
+        setTeamData(sortTeamData(result.data));
+        // Check if all teams have submitted
+        const allSubmitted = result.data.every((team: TeamData) => team.submitted);
+        setAllTeamsSubmitted(allSubmitted);
       } else {
         throw new Error(result.error || 'Failed to fetch team data');
       }
     } catch (error) {
-      console.error('Failed to fetch team data:', error);
+      console.error('Error fetching team data:', error);
       setResetStatus('Failed to load team data');
     } finally {
       setIsLoading(false);
@@ -378,14 +402,80 @@ export default function AdminDashboard() {
     }
   };
 
+  // Define refreshData after all its dependencies are defined
+  const refreshData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await Promise.all([
+        fetchRoundStatus(),
+        fetchTeamData(),
+      ]);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      setResetStatus('Failed to refresh data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchRoundStatus, fetchTeamData]);
+
+  // Update the refresh ref whenever refreshData changes
+  useEffect(() => {
+    refreshRef.current = refreshData;
+  }, [refreshData]);
+
+  // Set up SSE connection for real-time updates
+  const { isConnected, error: connectionError } = useTeamUpdates('admin', activeRound, handleTeamUpdate);
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <button
+            onClick={refreshData}
+            disabled={isLoading}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 flex items-center"
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </>
+            )}
+          </button>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className={`inline-block w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+          <span className="text-sm text-gray-600">
+            {isConnected ? 'Live updates connected' : 'Disconnected'}
+          </span>
+        </div>
+      </div>
+      {connectionError && (
+        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm">
+          {connectionError.message}
+        </div>
+      )}
+      <div className="mb-6">
+        <p className="text-gray-600">Manage teams and monitor submissions for Round {activeRound}</p>
+      </div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-          Admin Dashboard
-        </h1>
         <button
-          onClick={handleResetRounds}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleResetRounds();
+          }}
           disabled={isResetting}
           className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md shadow-sm hover:shadow-lg hover:bg-gradient-to-r hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >

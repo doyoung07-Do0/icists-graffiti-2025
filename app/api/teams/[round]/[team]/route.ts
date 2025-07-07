@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getTeamData, updateTeamData } from '@/lib/db/queries/admin';
 
+// Import the sendTeamUpdate function from the correct path
+const { sendTeamUpdate } = require('@/app/api/teams/events/route');
+
 type Round = 'r1' | 'r2' | 'r3' | 'r4';
 
 // Helper to validate round parameter
@@ -99,6 +102,28 @@ export async function POST(
       s4: Number(data.s4),
       submitted: true, // Mark as submitted when updating
     });
+
+    // Broadcast the update to all connected admin dashboards
+    if (result) {
+      try {
+        console.log(`[${new Date().toISOString()}] Preparing to broadcast update for team ${team}, round ${round}`);
+        // Import dynamically to avoid circular dependencies
+        const { sendTeamUpdate } = await import('@/app/api/teams/events/route');
+        console.log(`[${new Date().toISOString()}] Sending update to SSE clients`);
+        sendTeamUpdate(team, round, {
+          type: 'team_updated',
+          team: team,
+          round: round,
+          data: result,
+          timestamp: new Date().toISOString()
+        });
+        console.log(`[${new Date().toISOString()}] Update broadcast completed`);
+      } catch (error) {
+        console.error(`[${new Date().toISOString()}] Error broadcasting team update:`, error);
+      }
+    } else {
+      console.error(`[${new Date().toISOString()}] No result to broadcast for team ${team}, round ${round}`);
+    }
     
     return NextResponse.json({ 
       success: true, 
