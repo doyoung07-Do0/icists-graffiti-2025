@@ -47,27 +47,74 @@ export function sendTeamUpdate(team: string, round: string, data: any) {
   return sentCount;
 }
 
+// Send round status updates to all connected clients
+export function broadcastRoundStatusUpdate(round: string, status: 'locked' | 'open' | 'closed') {
+  const now = new Date().toISOString();
+  const message = {
+    type: 'round_status_updated',
+    round,
+    status,
+    timestamp: now
+  };
+
+  console.log(`[${now}] Broadcasting round status update:`, message);
+  
+  // Send to admin clients (they listen to specific rounds)
+  const adminSent = sendTeamUpdate('admin', round, message);
+  
+  // Get all unique team names (excluding admin)
+  const allTeams = new Set(
+    Array.from(clients)
+      .filter(c => c.team && c.team !== 'admin')
+      .map(c => c.team as string)
+  );
+  
+  let totalSent = adminSent;
+  
+  // Send to all team clients
+  allTeams.forEach(team => {
+    // Send to clients listening to this specific round
+    totalSent += sendTeamUpdate(team, round, message);
+    
+    // Also send to clients listening to 'all' rounds
+    totalSent += sendTeamUpdate(team, 'all', message);
+  });
+
+  console.log(`[${now}] Sent round status update to ${totalSent} clients for round ${round}`);
+  return totalSent;
+}
+
 // Keep track of active connections
 let connectionCount = 0;
 
 // Clean up dead connections periodically
 setInterval(() => {
   const now = new Date();
-  const deadConnections = Array.from(clients).filter(client => {
-    // Consider a connection dead if it's older than 2 hours
-    return (now.getTime() - client.connectedAt.getTime()) > 2 * 60 * 60 * 1000;
+  const deadClients = Array.from(clients).filter(client => {
+    // Consider a client dead if we haven't heard from them in 2 minutes
+    const isDead = now.getTime() - client.connectedAt.getTime() > 2 * 60 * 1000;
+    if (isDead) {
+      console.log(`Client ${client.id} (${client.ip}) [team: ${client.team}, round: ${client.round}] marked as dead - last seen at ${client.connectedAt.toISOString()}`);
+    }
+    return isDead;
   });
 
-  deadConnections.forEach(client => {
-    console.log(`Cleaning up dead connection: ${client.id}`);
+  deadClients.forEach(client => {
+    console.log(`Cleaning up dead client ${client.id} (last seen at ${client.connectedAt.toISOString()})`);
     try {
       client.controller.close();
     } catch (error) {
-      console.error('Error closing dead connection:', error);
+      console.error('Error closing dead client connection:', error);
     }
     clients.delete(client);
   });
-}, 5 * 60 * 1000); // Check every 5 minutes
+  
+  // Log current connection stats periodically
+  console.log(`Active connections: ${clients.size}`);
+  const stats = getConnectionStats();
+  console.log('Connection stats by team:', stats.connectionsByTeam);
+  console.log('Connection stats by round:', stats.connectionsByRound);
+}, 30000); // Check every 30 seconds
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -78,10 +125,13 @@ export async function GET(request: Request) {
 
   console.log(`New SSE connection: team=${team}, round=${round}, ip=${clientIp}, user-agent=${userAgent}`);
 
-  if (!team || !round) {
-    console.error('Missing team or round parameter');
-    return new NextResponse('Missing team or round parameter', { status: 400 });
+  if (!team) {
+    console.error('Missing team parameter');
+    return new NextResponse('Missing team parameter', { status: 400 });
   }
+  
+  // If round is not provided, treat it as 'all'
+  const roundToUse = round || 'all';
 
   // Set headers for SSE
   const headers = new Headers();
@@ -100,7 +150,7 @@ export async function GET(request: Request) {
           id: clientId,
           controller,
           team,
-          round,
+          round: roundToUse,
           ip: clientIp,
           userAgent,
           connectedAt: new Date()

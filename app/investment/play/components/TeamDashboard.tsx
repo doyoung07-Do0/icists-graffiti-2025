@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Round } from './admin/types';
+import { useRoundStatusUpdates } from '@/hooks/useRoundStatusUpdates';
 import ClosedRound from './ClosedRound';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -433,24 +434,146 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
     fetchFinalResults();
   }, [fetchFinalResults]);
 
-  // Fetch round status
+  // Type for the round status response item
+  type RoundStatusItem = {
+    round: Round;
+    status: 'locked' | 'open' | 'closed';
+  };
+
+  // Fetch round status from the server
   const fetchRoundStatus = useCallback(async () => {
+    console.log('Fetching round status from server...');
     try {
       const response = await fetch('/api/admin/round-status');
       const result = await response.json();
-      if (result.success) {
-        const statusMap = result.data.reduce((acc: any, item: any) => {
-          acc[item.round] = { status: item.status };
-          return acc;
-        }, {});
-        setRoundStatus(prev => ({ ...prev, ...statusMap }));
+      
+      if (result.success && Array.isArray(result.data)) {
+        console.log('Received round status:', result.data);
+        
+        // Create a new status map with proper typing
+        const statusMap: Record<Round, { status: 'locked' | 'open' | 'closed' }> = {
+          r1: { status: 'locked' },
+          r2: { status: 'locked' },
+          r3: { status: 'locked' },
+          r4: { status: 'locked' }
+        };
+        
+        // Update the status map with the received data
+        result.data.forEach((item: RoundStatusItem) => {
+          if (isRound(item.round)) {
+            statusMap[item.round] = { status: item.status };
+          }
+        });
+        
+        // Only update if the status has actually changed
+        setRoundStatus(prev => {
+          const hasChanged = (Object.keys(statusMap) as Round[]).some(
+            round => !prev[round] || prev[round].status !== statusMap[round].status
+          );
+          
+          if (hasChanged) {
+            console.log('Round status changed, updating UI...');
+            return { ...prev, ...statusMap };
+          }
+          
+          return prev; // No change needed
+        });
       }
+      
+      return result.success;
     } catch (error) {
       console.error('Failed to fetch round status:', error);
+      return false;
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  // Create a ref to store the current round status
+  const roundStatusRef = useRef(roundStatus);
+  
+  // Update the ref whenever roundStatus changes
+  useEffect(() => {
+    roundStatusRef.current = roundStatus;
+  }, [roundStatus]);
+
+  // Function to force a rerender of the component
+  const [, forceRerender] = useState({});
+  const triggerRerender = useCallback(() => {
+    console.log('Triggering rerender of TeamDashboard');
+    forceRerender({});
+  }, []);
+
+  // Type guard to check if a string is a valid Round
+  const isRound = (round: string): round is Round => {
+    return ['r1', 'r2', 'r3', 'r4'].includes(round);
+  };
+
+  // Type for the SSE message for round status updates
+  type RoundStatusUpdateMessage = {
+    type: 'round_status_updated';
+    round: Round;
+    status: 'locked' | 'open' | 'closed';
+    timestamp: string;
+  };
+
+  // Function to handle round status updates from SSE
+  const handleRoundStatusUpdate = useCallback((message: unknown) => {
+    console.log('Received round status update:', message);
+    
+    // Type guard to check if the message is a valid round status update
+    const isRoundStatusUpdate = (msg: any): msg is RoundStatusUpdateMessage => {
+      return (
+        msg &&
+        typeof msg === 'object' &&
+        'type' in msg &&
+        msg.type === 'round_status_updated' &&
+        'round' in msg &&
+        isRound(msg.round) &&
+        'status' in msg &&
+        ['locked', 'open', 'closed'].includes(msg.status) &&
+        'timestamp' in msg &&
+        typeof msg.timestamp === 'string'
+      );
+    };
+    
+    // Check if this is a valid round status update message
+    if (isRoundStatusUpdate(message)) {
+      const { round, status } = message;
+      
+      console.log(`Round status updated for ${round} to ${status}, refreshing data...`);
+      
+      // Update the local state with the new status
+      setRoundStatus(prev => ({
+        ...prev,
+        [round]: { status }
+      }));
+      
+      // Force a rerender to ensure UI updates
+      triggerRerender();
+      
+      // Also fetch the latest round status from the server
+      fetchRoundStatus();
+    } else {
+      console.warn('Received invalid round status update:', message);
+    }
+  }, [fetchRoundStatus, triggerRerender]);
+
+  // Set up SSE connection for round status updates
+  // Listen to all rounds by using 'all' as the round parameter
+  const { isConnected, error: sseError } = useRoundStatusUpdates(
+    teamName, 
+    'all', // Listen to all rounds
+    handleRoundStatusUpdate
+  );
+  
+  // Log SSE connection status
+  useEffect(() => {
+    console.log(`SSE connection status: ${isConnected ? 'connected' : 'disconnected'}`);
+    if (sseError) {
+      console.error('SSE error:', sseError);
+    }
+  }, [isConnected, sseError]);
 
   useEffect(() => {
     fetchRoundStatus();

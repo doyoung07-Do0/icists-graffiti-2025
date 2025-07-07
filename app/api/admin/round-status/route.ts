@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getRoundStatus, updateRoundStatus } from '@/lib/db/queries/admin';
 import { z } from 'zod';
+import { broadcastRoundStatusUpdate } from '@/app/api/teams/events/route';
 
 export async function GET() {
   try {
@@ -34,7 +35,18 @@ export async function POST(request: Request) {
     }
 
     const { round, status } = validation.data;
+    
+    // Update the round status in the database
     await updateRoundStatus(round, status);
+    
+    // Broadcast the update to all connected clients
+    try {
+      await broadcastRoundStatusUpdate(round, status);
+      console.log(`Successfully broadcasted round status update: ${round} -> ${status}`);
+    } catch (broadcastError) {
+      console.error('Error broadcasting round status update:', broadcastError);
+      // Don't fail the request if broadcasting fails, just log the error
+    }
     
     // Return the updated status
     const updatedStatus = await getRoundStatus();
