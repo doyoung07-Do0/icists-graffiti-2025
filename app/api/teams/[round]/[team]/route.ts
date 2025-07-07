@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getTeamData, updateTeamData } from '@/lib/db/queries/admin';
 
 // Import the sendTeamUpdate function from the correct path
-const { sendTeamUpdate } = require('@/app/api/teams/events/route');
+import { sendTeamUpdate } from '@/lib/sse';
 
 type Round = 'r1' | 'r2' | 'r3' | 'r4';
 
@@ -108,7 +108,7 @@ export async function POST(
       try {
         console.log(`[${new Date().toISOString()}] Preparing to broadcast update for team ${team}, round ${round}`);
         // Import dynamically to avoid circular dependencies
-        const { sendTeamUpdate } = await import('@/app/api/teams/events/route');
+        const { sendTeamUpdate } = await import('@/lib/sse');
         console.log(`[${new Date().toISOString()}] Sending update to SSE clients`);
         sendTeamUpdate(team, round, {
           type: 'team_updated',

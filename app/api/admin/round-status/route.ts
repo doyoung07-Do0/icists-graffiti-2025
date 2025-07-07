@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getRoundStatus, updateRoundStatus } from '@/lib/db/queries/admin';
 import { z } from 'zod';
-import { broadcastRoundStatusUpdate } from '@/app/api/teams/events/route';
+import { broadcastRoundStatusUpdate } from '@/lib/sse';
 
 export async function GET() {
   try {
