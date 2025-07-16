@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import RoundTabs from './admin/RoundTabs';
 import TeamTable from './admin/TeamTable';
-import { TeamData, Round } from './admin/types';
-import { useTeamUpdates } from '@/hooks/useTeamUpdates';
-import { TeamUpdateEvent } from '@/types/sse';
+import type { TeamData, Round } from './admin/types';
+import { useSSE } from '@/hooks/useSSE';
 
 export default function AdminDashboard() {
-  const [activeRound, setActiveRound] = useState<'r1' | 'r2' | 'r3' | 'r4'>('r1');
+  const [activeRound, setActiveRound] = useState<'r1' | 'r2' | 'r3' | 'r4'>(
+    'r1',
+  );
   const [teamData, setTeamData] = useState<TeamData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
@@ -20,11 +21,46 @@ export default function AdminDashboard() {
   const [isMarkingAllSubmitted, setIsMarkingAllSubmitted] = useState(false);
   const [allTeamsSubmitted, setAllTeamsSubmitted] = useState(false);
 
-  const [roundStatus, setRoundStatus] = useState<Record<Round, { status: 'locked' | 'open' | 'closed' }>>({
+  const [roundStatus, setRoundStatus] = useState<
+    Record<Round, { status: 'locked' | 'open' | 'closed' }>
+  >({
     r1: { status: 'locked' },
     r2: { status: 'locked' },
     r3: { status: 'locked' },
     r4: { status: 'locked' },
+  });
+
+  // Create a ref to store the current refresh function
+  const refreshRef = useRef<() => Promise<void>>();
+
+  // SSE connection for real-time updates
+  const { isConnected, error: sseError } = useSSE({
+    team: 'admin',
+    round: activeRound,
+    onMessage: (data) => {
+      console.log('SSE message received:', data);
+
+      // Handle different message types
+      if (data.type === 'team_updated') {
+        // Refresh team data when a team updates their portfolio
+        refreshRef.current?.();
+      } else if (data.type === 'round_status_updated') {
+        // Update round status when it changes
+        setRoundStatus((prev) => ({
+          ...prev,
+          [data.round]: { status: data.status },
+        }));
+      } else if (data.type === 'ping') {
+        // Handle ping messages (keep connection alive)
+        console.log('Received ping from server');
+      }
+    },
+    onError: (error) => {
+      console.error('SSE connection error:', error);
+    },
+    onOpen: () => {
+      console.log('SSE connection established for admin dashboard');
+    },
   });
 
   // Fetch round status
@@ -37,7 +73,7 @@ export default function AdminDashboard() {
           acc[item.round] = { status: item.status };
           return acc;
         }, {});
-        setRoundStatus(prev => ({ ...prev, ...statusMap }));
+        setRoundStatus((prev) => ({ ...prev, ...statusMap }));
       }
       return result.success;
     } catch (error) {
@@ -50,12 +86,12 @@ export default function AdminDashboard() {
   // Sort teams from team1 to team16
   const sortTeamData = (teams: TeamData[]): TeamData[] => {
     return [...teams]
-      .filter(team => team && team.team) // Filter out any undefined or invalid team data
+      .filter((team) => team && team.team) // Filter out any undefined or invalid team data
       .sort((a, b) => {
         try {
           // Safely extract team numbers (e.g., 'team1' -> 1, 'team2' -> 2, etc.)
-          const numA = parseInt(a.team.replace('team', ''), 10) || 0;
-          const numB = parseInt(b.team.replace('team', ''), 10) || 0;
+          const numA = Number.parseInt(a.team.replace('team', ''), 10) || 0;
+          const numB = Number.parseInt(b.team.replace('team', ''), 10) || 0;
           return numA - numB;
         } catch (error) {
           console.error('Error sorting teams:', error);
@@ -64,30 +100,19 @@ export default function AdminDashboard() {
       });
   };
 
-  // Create a ref to store the current refresh function
-  const refreshRef = useRef<() => Promise<void>>();
-
-  // Define handleTeamUpdate using the ref
-  const handleTeamUpdate = useCallback((message: any) => {
-    console.log('SSE message received, refreshing data...', message);
-    if (refreshRef.current) {
-      refreshRef.current();
-    } else {
-      console.log('Refresh function not ready yet, will refresh on next update');
-    }
-  }, []);
-
   // Fetch team data
   const fetchTeamData = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/admin/teams/${activeRound}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setTeamData(sortTeamData(result.data));
         // Check if all teams have submitted
-        const allSubmitted = result.data.every((team: TeamData) => team.submitted);
+        const allSubmitted = result.data.every(
+          (team: TeamData) => team.submitted,
+        );
         setAllTeamsSubmitted(allSubmitted);
       } else {
         throw new Error(result.error || 'Failed to fetch team data');
@@ -100,8 +125,17 @@ export default function AdminDashboard() {
     }
   }, [activeRound]);
 
+  // Store the refresh function in the ref
+  useEffect(() => {
+    refreshRef.current = fetchTeamData;
+  }, [fetchTeamData]);
+
   const handleCloseRound = async () => {
-    if (!window.confirm(`Are you sure you want to close ${activeRound.toUpperCase()}? This will calculate final valuations and cannot be undone.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to close ${activeRound.toUpperCase()}? This will calculate final valuations and cannot be undone.`,
+      )
+    ) {
       return;
     }
 
@@ -113,30 +147,38 @@ export default function AdminDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          round: activeRound
+          round: activeRound,
         }),
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         // Refresh the round status and team data
         await fetchRoundStatus();
         await fetchTeamData();
-        setResetStatus(`Successfully closed ${activeRound.toUpperCase()}. Startup valuations have been calculated.`);
+        setResetStatus(
+          `Successfully closed ${activeRound.toUpperCase()}. Startup valuations have been calculated.`,
+        );
       } else {
         throw new Error(result.error || 'Failed to close the round');
       }
     } catch (error) {
       console.error('Failed to close the round:', error);
-      setResetStatus(`Error: ${error instanceof Error ? error.message : 'Failed to close the round'}`);
+      setResetStatus(
+        `Error: ${error instanceof Error ? error.message : 'Failed to close the round'}`,
+      );
     } finally {
       setIsClosingRound(false);
     }
   };
 
   const handleStartGame = async () => {
-    if (window.confirm('Are you sure you want to start the game? This will open Round 1 for all teams.')) {
+    if (
+      window.confirm(
+        'Are you sure you want to start the game? This will open Round 1 for all teams.',
+      )
+    ) {
       setIsStartingGame(true);
       try {
         const response = await fetch('/api/admin/round-status', {
@@ -146,26 +188,28 @@ export default function AdminDashboard() {
           },
           body: JSON.stringify({
             round: 'r1',
-            status: 'open'
+            status: 'open',
           }),
         });
 
         const result = await response.json();
-        
+
         if (result.success) {
           // Update the local state with the new status
           const statusMap = result.data.reduce((acc: any, item: any) => {
             acc[item.round] = { status: item.status };
             return acc;
           }, {});
-          setRoundStatus(prev => ({ ...prev, ...statusMap }));
+          setRoundStatus((prev) => ({ ...prev, ...statusMap }));
           setResetStatus('Game started successfully! Round 1 is now open.');
         } else {
           throw new Error(result.error || 'Failed to start the game');
         }
       } catch (error) {
         console.error('Failed to start the game:', error);
-        setResetStatus(`Error: ${error instanceof Error ? error.message : 'Failed to start the game'}`);
+        setResetStatus(
+          `Error: ${error instanceof Error ? error.message : 'Failed to start the game'}`,
+        );
       } finally {
         setIsStartingGame(false);
       }
@@ -173,7 +217,11 @@ export default function AdminDashboard() {
   };
 
   const handleOpenRound = async (round: 'r2' | 'r3' | 'r4') => {
-    if (window.confirm(`Are you sure you want to open ${round.toUpperCase()}? This will copy post_fund values from ${String.fromCharCode(round.charCodeAt(1) - 1)} to pre_fund for all teams.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to open ${round.toUpperCase()}? This will copy post_fund values from ${String.fromCharCode(round.charCodeAt(1) - 1)} to pre_fund for all teams.`,
+      )
+    ) {
       setIsOpeningRound(true);
       try {
         const response = await fetch('/api/admin/open-round', {
@@ -185,18 +233,22 @@ export default function AdminDashboard() {
         });
 
         const result = await response.json();
-        
+
         if (result.success) {
           // Refresh the round status and team data
           await fetchRoundStatus();
           await fetchTeamData();
-          setResetStatus(`Successfully opened ${round.toUpperCase()}. Pre-fund values have been updated.`);
+          setResetStatus(
+            `Successfully opened ${round.toUpperCase()}. Pre-fund values have been updated.`,
+          );
         } else {
           throw new Error(result.error || 'Failed to open the round');
         }
       } catch (error) {
         console.error('Failed to open the round:', error);
-        setResetStatus(`Error: ${error instanceof Error ? error.message : 'Failed to open the round'}`);
+        setResetStatus(
+          `Error: ${error instanceof Error ? error.message : 'Failed to open the round'}`,
+        );
       } finally {
         setIsOpeningRound(false);
       }
@@ -211,7 +263,9 @@ export default function AdminDashboard() {
   // Check if all teams have submitted for the current round
   const checkAllTeamsSubmitted = useCallback(async () => {
     try {
-      const response = await fetch(`/api/admin/have-all-teams-submitted?round=${activeRound}`);
+      const response = await fetch(
+        `/api/admin/have-all-teams-submitted?round=${activeRound}`,
+      );
       const result = await response.json();
       if (result.success) {
         setAllTeamsSubmitted(result.allSubmitted);
@@ -228,11 +282,13 @@ export default function AdminDashboard() {
     checkAllTeamsSubmitted();
   }, [fetchTeamData, checkAllTeamsSubmitted]);
 
-  const handleInputChange = (team: string, field: keyof TeamData, value: any) => {
-    setTeamData(prev => 
-      prev.map(t => 
-        t.team === team ? { ...t, [field]: value } : t
-      )
+  const handleInputChange = (
+    team: string,
+    field: keyof TeamData,
+    value: any,
+  ) => {
+    setTeamData((prev) =>
+      prev.map((t) => (t.team === team ? { ...t, [field]: value } : t)),
     );
   };
 
@@ -241,9 +297,9 @@ export default function AdminDashboard() {
       const requestBody = {
         team,
         action: 'toggle-submission',
-        data: { currentStatus }
+        data: { currentStatus },
       };
-      
+
       const response = await fetch(`/api/admin/teams/${activeRound}`, {
         method: 'POST',
         headers: {
@@ -251,66 +307,76 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify(requestBody),
       });
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
-        handleInputChange(team, 'submitted', !currentStatus);
+        // Update local state
+        setTeamData((prev) =>
+          prev.map((t) =>
+            t.team === team ? { ...t, submitted: !currentStatus } : t,
+          ),
+        );
+
+        // Check if all teams have submitted
+        const updatedData = teamData.map((t) =>
+          t.team === team ? { ...t, submitted: !currentStatus } : t,
+        );
+        const allSubmitted = updatedData.every((team) => team.submitted);
+        setAllTeamsSubmitted(allSubmitted);
+
+        setResetStatus(
+          `Successfully ${!currentStatus ? 'marked' : 'unmarked'} ${team} as submitted.`,
+        );
       } else {
         throw new Error(result.error || 'Failed to toggle submission status');
       }
     } catch (error) {
       console.error('Failed to toggle submission status:', error);
-      setResetStatus('Failed to update submission status');
+      setResetStatus(
+        `Error: ${error instanceof Error ? error.message : 'Failed to toggle submission status'}`,
+      );
     }
   };
 
   const markAllAsSubmitted = async () => {
-    if (!window.confirm('Are you sure you want to mark all teams as submitted?')) {
+    if (
+      !window.confirm('Are you sure you want to mark all teams as submitted?')
+    ) {
       return;
     }
 
     setIsMarkingAllSubmitted(true);
-    setResetStatus('Marking all teams as submitted...');
-
     try {
-      // Get teams that are not yet submitted
-      const teamsToUpdate = teamData.filter(team => !team.submitted);
-      
-      // Process each team one by one
-      for (const team of teamsToUpdate) {
-        try {
-          const response = await fetch(`/api/admin/teams/${activeRound}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              team: team.team,
-              action: 'toggle-submission',
-              data: { currentStatus: false } // Toggle from false to true
-            }),
-          });
+      const response = await fetch(`/api/admin/teams/${activeRound}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'mark-all-submitted',
+        }),
+      });
 
-          const result = await response.json();
-          
-          if (!result.success) {
-            throw new Error(result.error || `Failed to update team ${team.team}`);
-          }
-          
-          // Update local state for this team
-          handleInputChange(team.team, 'submitted', true);
-          
-        } catch (error) {
-          console.error(`Failed to update team ${team.team}:`, error);
-          // Continue with other teams even if one fails
-        }
+      const result = await response.json();
+
+      if (result.success) {
+        // Update local state
+        setTeamData((prev) =>
+          prev.map((team) => ({ ...team, submitted: true })),
+        );
+        setAllTeamsSubmitted(true);
+        setResetStatus('Successfully marked all teams as submitted.');
+      } else {
+        throw new Error(
+          result.error || 'Failed to mark all teams as submitted',
+        );
       }
-      
-      setResetStatus('All teams have been marked as submitted.');
     } catch (error) {
       console.error('Failed to mark all teams as submitted:', error);
-      setResetStatus(`Error: ${error instanceof Error ? error.message : 'Failed to update all teams'}`);
+      setResetStatus(
+        `Error: ${error instanceof Error ? error.message : 'Failed to mark all teams as submitted'}`,
+      );
     } finally {
       setIsMarkingAllSubmitted(false);
     }
@@ -318,243 +384,242 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (team: string) => {
     try {
-      const teamToUpdate = teamData.find(t => t.team === team);
-      if (!teamToUpdate) return;
+      const teamToUpdate = teamData.find((t) => t.team === team);
+      if (!teamToUpdate) {
+        throw new Error('Team not found');
+      }
 
-      const { team: teamName, ...updateData } = teamToUpdate;
-      
+      const requestBody = {
+        team,
+        action: 'update',
+        data: {
+          s1: teamToUpdate.s1,
+          s2: teamToUpdate.s2,
+          s3: teamToUpdate.s3,
+          s4: teamToUpdate.s4,
+          pre_fund: teamToUpdate.pre_fund,
+          post_fund: teamToUpdate.post_fund,
+          submitted: teamToUpdate.submitted,
+        },
+      };
+
       const response = await fetch(`/api/admin/teams/${activeRound}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          team: teamName,
-          action: 'update',
-          data: updateData
-        }),
+        body: JSON.stringify(requestBody),
       });
-      
+
       const result = await response.json();
+
       if (result.success) {
         setEditingTeam(null);
-        setResetStatus(`Successfully updated ${team} data`);
-        // Refresh data to ensure consistency
-        fetchTeamData();
+        setResetStatus(`Successfully updated ${team}.`);
       } else {
         throw new Error(result.error || 'Failed to update team data');
       }
     } catch (error) {
       console.error('Failed to update team data:', error);
-      setResetStatus(`Failed to update ${team} data`);
+      setResetStatus(
+        `Error: ${error instanceof Error ? error.message : 'Failed to update team data'}`,
+      );
     }
   };
 
   const handleResetRounds = async () => {
-    if (window.confirm('Are you sure you want to reset all rounds? This will reset all data.')) {
-      try {
-        setIsResetting(true);
-        setResetStatus(null);
-        
-        // Reset rounds status first
-        const roundsResponse = await fetch('/api/admin/reset-rounds', {
-          method: 'POST',
-        });
-        
-        if (!roundsResponse.ok) {
-          const errorData = await roundsResponse.json();
-          throw new Error(errorData.error || 'Failed to reset rounds status');
-        }
-        
-        // Reset team data
-        const teamsResponse = await fetch('/api/admin/reset-teams', {
-          method: 'POST',
-        });
-        
-        if (!teamsResponse.ok) {
-          const errorData = await teamsResponse.json();
-          throw new Error(errorData.error || 'Failed to reset team data');
-        }
-        
-        // Reset startup data
-        const startupsResponse = await fetch('/api/admin/reset-startups', {
-          method: 'POST',
-        });
-        
-        if (!startupsResponse.ok) {
-          const errorData = await startupsResponse.json();
-          throw new Error(errorData.error || 'Failed to reset startup data');
-        }
-        
+    if (
+      !window.confirm(
+        'Are you sure you want to reset all rounds? This will reset all team data and round statuses.',
+      )
+    ) {
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const response = await fetch('/api/admin/reset-rounds', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
         // Refresh all data
-        await Promise.all([
-          fetchRoundStatus(),
-          fetchTeamData(),
-        ]);
-        
-        setResetStatus('Successfully reset all rounds, team data, and startup data!');
-      } catch (error) {
-        console.error('Reset failed:', error);
-        setResetStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      } finally {
-        setIsResetting(false);
+        await fetchRoundStatus();
+        await fetchTeamData();
+        setResetStatus('Successfully reset all rounds.');
+      } else {
+        throw new Error(result.error || 'Failed to reset rounds');
       }
+    } catch (error) {
+      console.error('Failed to reset rounds:', error);
+      setResetStatus(
+        `Error: ${error instanceof Error ? error.message : 'Failed to reset rounds'}`,
+      );
+    } finally {
+      setIsResetting(false);
     }
   };
 
-  // Define refreshData after all its dependencies are defined
-  const refreshData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      await Promise.all([
-        fetchRoundStatus(),
-        fetchTeamData(),
-      ]);
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-      setResetStatus('Failed to refresh data');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchRoundStatus, fetchTeamData]);
-
-  // Update the refresh ref whenever refreshData changes
-  useEffect(() => {
-    refreshRef.current = refreshData;
-  }, [refreshData]);
-
-  // Set up SSE connection for real-time updates
-  const { isConnected, error: connectionError } = useTeamUpdates('admin', activeRound, handleTeamUpdate);
-
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          {/* SSE Connection Status */}
+          <div className="flex items-center space-x-2">
+            <div
+              className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+            ></div>
+            <span className="text-sm text-gray-400">
+              {isConnected ? 'Connected' : 'Disconnected'}
+            </span>
+          </div>
+
+          {/* Game Controls */}
           <button
-            onClick={refreshData}
-            disabled={isLoading}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 flex items-center"
+            onClick={handleStartGame}
+            disabled={isStartingGame || roundStatus.r1.status !== 'locked'}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Refreshing...
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Refresh
-              </>
-            )}
+            {isStartingGame ? 'Starting...' : 'Start Game'}
+          </button>
+
+          <button
+            onClick={handleResetRounds}
+            disabled={isResetting}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isResetting ? 'Resetting...' : 'Reset All'}
           </button>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className={`inline-block w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-          <span className="text-sm text-gray-600">
-            {isConnected ? 'Live updates connected' : 'Disconnected'}
-          </span>
-        </div>
       </div>
-      {connectionError && (
-        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm">
-          {connectionError.message}
+
+      {/* Status Messages */}
+      {resetStatus && (
+        <div className="p-4 bg-blue-900/50 border border-blue-500 rounded-lg">
+          <p className="text-blue-300">{resetStatus}</p>
         </div>
       )}
-      <div className="mb-6">
-        <p className="text-gray-600">Manage teams and monitor submissions for Round {activeRound}</p>
-      </div>
-      <div className="flex justify-between items-center mb-6">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleResetRounds();
-          }}
-          disabled={isResetting}
-          className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md shadow-sm hover:shadow-lg hover:bg-gradient-to-r hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          {isResetting ? 'Resetting...' : 'Reset All Data'}
-        </button>
-      </div>
-      
-      <div className="flex items-center justify-between mb-6">
-        {/* Round Tabs */}
-        <div className="flex-1">
-          <RoundTabs 
-            activeRound={activeRound} 
-            onRoundChange={setActiveRound}
-            roundStatus={roundStatus}
-          />
+
+      {sseError && (
+        <div className="p-4 bg-red-900/50 border border-red-500 rounded-lg">
+          <p className="text-red-300">SSE Connection Error: {sseError}</p>
         </div>
-        
-        <div className="flex space-x-2">
-          {activeRound === 'r1' && roundStatus.r1.status === 'locked' && (
+      )}
+
+      {/* Round Tabs */}
+      <RoundTabs
+        activeRound={activeRound}
+        onRoundChange={setActiveRound}
+        roundStatus={roundStatus}
+      />
+
+      {/* Round Controls */}
+      <div className="flex space-x-4">
+        {activeRound === 'r1' && roundStatus.r1.status === 'open' && (
+          <button
+            onClick={handleCloseRound}
+            disabled={isClosingRound}
+            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isClosingRound ? 'Closing...' : 'Close Round 1'}
+          </button>
+        )}
+
+        {activeRound === 'r2' &&
+          roundStatus.r1.status === 'closed' &&
+          roundStatus.r2.status === 'locked' && (
             <button
-              onClick={handleStartGame}
-              disabled={isStartingGame}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:bg-blue-300"
-            >
-              {isStartingGame ? 'Starting...' : 'Game Start'}
-            </button>
-          )}
-          
-          {['r2', 'r3', 'r4'].includes(activeRound) && roundStatus[activeRound].status === 'locked' && (
-            <button
-              onClick={() => handleOpenRound(activeRound as 'r2' | 'r3' | 'r4')}
+              onClick={() => handleOpenRound('r2')}
               disabled={isOpeningRound}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded disabled:bg-green-300"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isOpeningRound ? 'Opening...' : `Open ${activeRound.toUpperCase()}`}
+              {isOpeningRound ? 'Opening...' : 'Open Round 2'}
             </button>
           )}
-          
-          {roundStatus[activeRound]?.status === 'open' && (
+
+        {activeRound === 'r2' && roundStatus.r2.status === 'open' && (
+          <button
+            onClick={handleCloseRound}
+            disabled={isClosingRound}
+            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isClosingRound ? 'Closing...' : 'Close Round 2'}
+          </button>
+        )}
+
+        {activeRound === 'r3' &&
+          roundStatus.r2.status === 'closed' &&
+          roundStatus.r3.status === 'locked' && (
             <button
-              onClick={handleCloseRound}
-              disabled={!allTeamsSubmitted || isClosingRound}
-              className={`px-4 py-2 text-white rounded ${
-                !allTeamsSubmitted || isClosingRound
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-yellow-600 hover:bg-yellow-700'
-              }`}
-              title={!allTeamsSubmitted ? 'Not all teams have submitted their portfolio' : 'Close the current round'}
+              onClick={() => handleOpenRound('r3')}
+              disabled={isOpeningRound}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isClosingRound ? 'Closing...' : 'Close the round'}
+              {isOpeningRound ? 'Opening...' : 'Open Round 3'}
             </button>
           )}
-        </div>
+
+        {activeRound === 'r3' && roundStatus.r3.status === 'open' && (
+          <button
+            onClick={handleCloseRound}
+            disabled={isClosingRound}
+            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isClosingRound ? 'Closing...' : 'Close Round 3'}
+          </button>
+        )}
+
+        {activeRound === 'r4' &&
+          roundStatus.r3.status === 'closed' &&
+          roundStatus.r4.status === 'locked' && (
+            <button
+              onClick={() => handleOpenRound('r4')}
+              disabled={isOpeningRound}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isOpeningRound ? 'Opening...' : 'Open Round 4'}
+            </button>
+          )}
+
+        {activeRound === 'r4' && roundStatus.r4.status === 'open' && (
+          <button
+            onClick={handleCloseRound}
+            disabled={isClosingRound}
+            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isClosingRound ? 'Closing...' : 'Close Round 4'}
+          </button>
+        )}
+
+        {/* Mark All as Submitted */}
+        {roundStatus[activeRound].status === 'open' && !allTeamsSubmitted && (
+          <button
+            onClick={markAllAsSubmitted}
+            disabled={isMarkingAllSubmitted}
+            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isMarkingAllSubmitted ? 'Marking...' : 'Mark All Submitted'}
+          </button>
+        )}
       </div>
 
       {/* Team Table */}
-      <div className="mb-8">
-        <TeamTable
-          data={teamData}
-          isLoading={isLoading}
-          editingTeam={editingTeam}
-          onToggleSubmitted={toggleSubmitted}
-          onInputChange={handleInputChange}
-          setEditingTeam={setEditingTeam}
-          onSubmit={handleSubmit}
-          onMarkAllSubmitted={markAllAsSubmitted}
-          isMarkingAllSubmitted={isMarkingAllSubmitted}
-          roundStatus={roundStatus[activeRound]?.status}
-        />
-      </div>
-
-      {/* Status Message */}
-      {resetStatus && (
-        <div className="mb-6">
-          <p className={`${resetStatus.startsWith('Failed') ? 'text-red-400' : 'text-green-400'}`}>
-            {resetStatus}
-          </p>
-        </div>
-      )}
+      <TeamTable
+        data={teamData}
+        isLoading={isLoading}
+        editingTeam={editingTeam}
+        onToggleSubmitted={toggleSubmitted}
+        onInputChange={handleInputChange}
+        setEditingTeam={setEditingTeam}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }
