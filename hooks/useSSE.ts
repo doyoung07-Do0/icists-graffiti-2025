@@ -1,4 +1,5 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+// DISABLED FOR DEBUGGING INFINITE REQUEST BUG
+// import { useEffect, useRef, useCallback, useState } from 'react';
 
 interface SSEOptions {
   team?: string;
@@ -35,6 +36,8 @@ export function useSSE(options: SSEOptions = {}) {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const isMountedRef = useRef(true);
+  const isDisconnectingRef = useRef(false);
 
   const [state, setState] = useState<SSEState>({
     isConnected: false,
@@ -45,21 +48,33 @@ export function useSSE(options: SSEOptions = {}) {
 
   // Clean up function
   const cleanup = useCallback(() => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
-    }
-
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
+    }
+
+    if (eventSourceRef.current) {
+      // Remove event listeners to prevent memory leaks
+      eventSourceRef.current.onopen = null;
+      eventSourceRef.current.onmessage = null;
+      eventSourceRef.current.onerror = null;
+
+      // Close the connection
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
   }, []);
 
   // Connect function
   const connect = useCallback(() => {
+    // Don't connect if component is unmounted or we're in the process of disconnecting
+    if (!isMountedRef.current || isDisconnectingRef.current) {
+      return;
+    }
+
+    // Don't connect if already connected or connecting
     if (eventSourceRef.current) {
-      return; // Already connected
+      return;
     }
 
     setState((prev) => ({ ...prev, isConnecting: true, error: null }));
@@ -73,6 +88,11 @@ export function useSSE(options: SSEOptions = {}) {
 
       // Connection opened
       eventSource.onopen = () => {
+        if (!isMountedRef.current || isDisconnectingRef.current) {
+          cleanup();
+          return;
+        }
+
         console.log(`SSE connected for team: ${team}, round: ${round}`);
         setState((prev) => ({
           ...prev,
@@ -87,6 +107,8 @@ export function useSSE(options: SSEOptions = {}) {
 
       // Message received
       eventSource.onmessage = (event) => {
+        if (!isMountedRef.current) return;
+
         try {
           const data = JSON.parse(event.data);
           console.log('SSE message received:', data);
@@ -98,6 +120,11 @@ export function useSSE(options: SSEOptions = {}) {
 
       // Error occurred
       eventSource.onerror = (error) => {
+        if (!isMountedRef.current || isDisconnectingRef.current) {
+          cleanup();
+          return;
+        }
+
         console.error('SSE error:', error);
         setState((prev) => ({
           ...prev,
@@ -111,10 +138,12 @@ export function useSSE(options: SSEOptions = {}) {
         // Clean up current connection
         cleanup();
 
-        // Attempt to reconnect if enabled
+        // Only attempt to reconnect if autoReconnect is enabled and we haven't exceeded max attempts
         if (
           autoReconnect &&
-          reconnectAttemptsRef.current < maxReconnectAttempts
+          reconnectAttemptsRef.current < maxReconnectAttempts &&
+          isMountedRef.current &&
+          !isDisconnectingRef.current
         ) {
           reconnectAttemptsRef.current++;
           setState((prev) => ({
@@ -127,7 +156,9 @@ export function useSSE(options: SSEOptions = {}) {
           );
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
+            if (isMountedRef.current && !isDisconnectingRef.current) {
+              connect();
+            }
           }, reconnectInterval);
         } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
           setState((prev) => ({
@@ -158,6 +189,7 @@ export function useSSE(options: SSEOptions = {}) {
 
   // Disconnect function
   const disconnect = useCallback(() => {
+    isDisconnectingRef.current = true;
     cleanup();
     setState({
       isConnected: false,
@@ -167,31 +199,65 @@ export function useSSE(options: SSEOptions = {}) {
     });
     reconnectAttemptsRef.current = 0;
     onClose?.();
+    isDisconnectingRef.current = false;
   }, [cleanup, onClose]);
 
   // Manual reconnect function
   const reconnect = useCallback(() => {
     disconnect();
     reconnectAttemptsRef.current = 0;
-    connect();
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        connect();
+      }
+    }, 100); // Small delay to ensure cleanup is complete
   }, [disconnect, connect]);
 
   // Set up connection on mount
   useEffect(() => {
+    isMountedRef.current = true;
     connect();
 
     // Clean up on unmount
     return () => {
-      cleanup();
+      isMountedRef.current = false;
+      disconnect();
     };
-  }, [connect, cleanup]);
+  }, [connect, disconnect]);
 
   // Reconnect when team or round changes
   useEffect(() => {
-    if (state.isConnected) {
+    if (state.isConnected && isMountedRef.current) {
       reconnect();
     }
-  }, [team, round]);
+  }, [team, round, state.isConnected, reconnect]);
+
+  // Clean up on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      disconnect();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Page is hidden, disconnect to save resources
+        disconnect();
+      } else {
+        // Page is visible again, reconnect
+        if (isMountedRef.current && !state.isConnected) {
+          connect();
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [disconnect, connect, state.isConnected]);
 
   return {
     ...state,

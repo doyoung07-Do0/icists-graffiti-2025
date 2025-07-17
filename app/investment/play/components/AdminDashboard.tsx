@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import RoundTabs from './admin/RoundTabs';
 import TeamTable from './admin/TeamTable';
 import type { TeamData, Round } from './admin/types';
-import { useSSE } from '@/hooks/useSSE';
+// DISABLE SSE FOR DEBUGGING INFINITE REQUEST BUG
+// import { useSSE } from '@/hooks/useSSE';
 
 export default function AdminDashboard() {
   const [activeRound, setActiveRound] = useState<'r1' | 'r2' | 'r3' | 'r4'>(
@@ -34,34 +35,36 @@ export default function AdminDashboard() {
   const refreshRef = useRef<() => Promise<void>>();
 
   // SSE connection for real-time updates
-  const { isConnected, error: sseError } = useSSE({
-    team: 'admin',
-    round: activeRound,
-    onMessage: (data) => {
-      console.log('SSE message received:', data);
+  // Use 'all' as round to listen to all rounds and avoid reconnections when activeRound changes
+  // DISABLE SSE FOR DEBUGGING INFINITE REQUEST BUG
+  // const { isConnected, error: sseError } = useSSE({
+  //   team: 'admin',
+  //   round: 'all', // Listen to all rounds to avoid reconnections
+  //   onMessage: (data) => {
+  //     console.log('SSE message received:', data);
 
-      // Handle different message types
-      if (data.type === 'team_updated') {
-        // Refresh team data when a team updates their portfolio
-        refreshRef.current?.();
-      } else if (data.type === 'round_status_updated') {
-        // Update round status when it changes
-        setRoundStatus((prev) => ({
-          ...prev,
-          [data.round]: { status: data.status },
-        }));
-      } else if (data.type === 'ping') {
-        // Handle ping messages (keep connection alive)
-        console.log('Received ping from server');
-      }
-    },
-    onError: (error) => {
-      console.error('SSE connection error:', error);
-    },
-    onOpen: () => {
-      console.log('SSE connection established for admin dashboard');
-    },
-  });
+  //     // Handle different message types
+  //     if (data.type === 'team_updated') {
+  //       // Refresh team data when a team updates their portfolio
+  //       refreshRef.current?.();
+  //     } else if (data.type === 'round_status_updated') {
+  //       // Update round status when it changes
+  //       setRoundStatus((prev) => ({
+  //         ...prev,
+  //         [data.round]: { status: data.status },
+  //       }));
+  //     } else if (data.type === 'ping') {
+  //       // Handle ping messages (keep connection alive)
+  //       console.log('Received ping from server');
+  //     }
+  //   },
+  //   onError: (error) => {
+  //     console.error('SSE connection error:', error);
+  //   },
+  //   onOpen: () => {
+  //     console.log('SSE connection established for admin dashboard');
+  //   },
+  // });
 
   // Fetch round status
   const fetchRoundStatus = useCallback(async () => {
@@ -471,15 +474,15 @@ export default function AdminDashboard() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
         <div className="flex items-center space-x-4">
-          {/* SSE Connection Status */}
-          <div className="flex items-center space-x-2">
+          {/* SSE Connection Status - DISABLED FOR DEBUGGING */}
+          {/* <div className="flex items-center space-x-2">
             <div
               className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
             ></div>
             <span className="text-sm text-gray-400">
               {isConnected ? 'Connected' : 'Disconnected'}
             </span>
-          </div>
+          </div> */}
 
           {/* Game Controls */}
           <button
@@ -507,11 +510,12 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {sseError && (
+      {/* SSE Error Display - DISABLED FOR DEBUGGING */}
+      {/* {sseError && (
         <div className="p-4 bg-red-900/50 border border-red-500 rounded-lg">
           <p className="text-red-300">SSE Connection Error: {sseError}</p>
         </div>
-      )}
+      )} */}
 
       {/* Round Tabs */}
       <RoundTabs
