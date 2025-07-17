@@ -144,6 +144,20 @@ export default function AdminDashboard() {
     adminSSE.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log('📨 Admin received:', data);
+
+      // Handle team submission messages
+      if (data.type === 'team_submitted') {
+        console.log(
+          `🎯 Team ${data.team} submitted portfolio for round ${data.round}!`,
+        );
+        console.log('📊 Submission data:', data.data);
+
+        // Refresh team data to show updated submission status
+        refreshRef.current?.();
+
+        // Force a re-render to update the UI
+        setTeamData((prev) => [...prev]); // Trigger re-render by creating new array reference
+      }
     };
 
     adminSSE.onerror = (error) => {

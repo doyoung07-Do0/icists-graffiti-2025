@@ -59,6 +59,59 @@ export function sendTeamUpdate(team: string, round: string, data: any) {
   return sentCount;
 }
 
+// Send message to admin clients only
+export function sendAdminUpdate(team: string, round: string, data: any) {
+  const message = `data: ${JSON.stringify(data)}\n\n`;
+  const clientsToRemove: string[] = [];
+  let sentCount = 0;
+  const now = new Date().toISOString();
+
+  console.log(
+    `[${now}] Broadcasting admin-only update for team ${team}, round ${round}`,
+    data,
+  );
+
+  sseClients.forEach((client) => {
+    try {
+      // Send only to admin clients
+      if (
+        client.team === 'admin' &&
+        (client.round === round || client.round === 'all')
+      ) {
+        console.log(
+          `[${now}] Sending to admin client ${client.id} (${client.ip})`,
+        );
+        client.controller.enqueue(new TextEncoder().encode(message));
+        sentCount++;
+      }
+    } catch (error) {
+      console.error(
+        `[${now}] Error sending to admin client ${client.id}:`,
+        error,
+      );
+      clientsToRemove.push(client.id);
+    }
+  });
+
+  // Clean up any broken connections
+  clientsToRemove.forEach((id) => {
+    const client = Array.from(sseClients).find((c) => c.id === id);
+    if (client) {
+      try {
+        client.controller.close();
+      } catch (e) {
+        console.error('Error closing client connection:', e);
+      }
+      sseClients.delete(client);
+    }
+  });
+
+  console.log(
+    `Sent admin-only update to ${sentCount} admin clients for team ${team}, round ${round}`,
+  );
+  return sentCount;
+}
+
 // Send round status updates to all connected clients
 export function broadcastRoundStatusUpdate(
   round: string,

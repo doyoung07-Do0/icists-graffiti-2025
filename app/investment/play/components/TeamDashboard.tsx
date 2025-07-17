@@ -669,6 +669,20 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
     teamSSE.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log(`📨 ${teamName} received:`, data);
+
+      // Handle round status updates
+      if (data.type === 'round_status_updated') {
+        console.log(`🔄 Round status updated: ${data.round} -> ${data.status}`);
+
+        // Update the round status in state
+        setRoundStatus((prev) => ({
+          ...prev,
+          [data.round]: { status: data.status },
+        }));
+
+        // Force a re-render to update the UI
+        triggerRerender();
+      }
     };
 
     teamSSE.onerror = (error) => {
@@ -680,7 +694,7 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
       teamSSE.close();
       console.log(`🔌 ${teamName} SSE connection closed`);
     };
-  }, [teamName]);
+  }, [teamName, triggerRerender]);
 
   if (isLoading) {
     return (
