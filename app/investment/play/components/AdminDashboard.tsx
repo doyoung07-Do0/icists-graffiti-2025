@@ -89,7 +89,7 @@ export default function AdminDashboard() {
   // Sort teams from team1 to team16
   const sortTeamData = (teams: TeamData[]): TeamData[] => {
     return [...teams]
-      .filter((team) => team && team.team) // Filter out any undefined or invalid team data
+      .filter((team) => team?.team) // Filter out any undefined or invalid team data
       .sort((a, b) => {
         try {
           // Safely extract team numbers (e.g., 'team1' -> 1, 'team2' -> 2, etc.)
@@ -441,27 +441,42 @@ export default function AdminDashboard() {
 
     setIsResetting(true);
     try {
-      const response = await fetch('/api/admin/reset-rounds', {
+      // Reset rounds status
+      const roundsResponse = await fetch('/api/admin/reset-rounds', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      const result = await response.json();
+      const roundsResult = await roundsResponse.json();
 
-      if (result.success) {
-        // Refresh all data
-        await fetchRoundStatus();
-        await fetchTeamData();
-        setResetStatus('Successfully reset all rounds.');
-      } else {
-        throw new Error(result.error || 'Failed to reset rounds');
+      if (!roundsResult.success) {
+        throw new Error(roundsResult.error || 'Failed to reset rounds');
       }
+
+      // Reset team data
+      const teamsResponse = await fetch('/api/admin/reset-teams', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const teamsResult = await teamsResponse.json();
+
+      if (!teamsResult.success) {
+        throw new Error(teamsResult.error || 'Failed to reset team data');
+      }
+
+      // Refresh all data
+      await fetchRoundStatus();
+      await fetchTeamData();
+      setResetStatus('Successfully reset all rounds and team data.');
     } catch (error) {
-      console.error('Failed to reset rounds:', error);
+      console.error('Failed to reset:', error);
       setResetStatus(
-        `Error: ${error instanceof Error ? error.message : 'Failed to reset rounds'}`,
+        `Error: ${error instanceof Error ? error.message : 'Failed to reset'}`,
       );
     } finally {
       setIsResetting(false);
