@@ -656,6 +656,32 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
     fetchRoundStatus();
   }, [fetchRoundStatus]);
 
+  // SSE connection for team
+  useEffect(() => {
+    const teamSSE = new EventSource(
+      `/api/teams/events?team=${teamName}&round=all`,
+    );
+
+    teamSSE.onopen = () => {
+      console.log(`✅ ${teamName} SSE Connected!`);
+    };
+
+    teamSSE.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log(`📨 ${teamName} received:`, data);
+    };
+
+    teamSSE.onerror = (error) => {
+      console.error(`❌ ${teamName} SSE Error:`, error);
+    };
+
+    // Cleanup function to close SSE connection when component unmounts
+    return () => {
+      teamSSE.close();
+      console.log(`🔌 ${teamName} SSE connection closed`);
+    };
+  }, [teamName]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white p-6">

@@ -133,6 +133,30 @@ export default function AdminDashboard() {
     refreshRef.current = fetchTeamData;
   }, [fetchTeamData]);
 
+  // SSE connection for admin
+  useEffect(() => {
+    const adminSSE = new EventSource('/api/teams/events?team=admin&round=all');
+
+    adminSSE.onopen = () => {
+      console.log('✅ Admin SSE Connected!');
+    };
+
+    adminSSE.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('📨 Admin received:', data);
+    };
+
+    adminSSE.onerror = (error) => {
+      console.error('❌ Admin SSE Error:', error);
+    };
+
+    // Cleanup function to close SSE connection when component unmounts
+    return () => {
+      adminSSE.close();
+      console.log('🔌 Admin SSE connection closed');
+    };
+  }, []);
+
   const handleCloseRound = async () => {
     if (
       !window.confirm(

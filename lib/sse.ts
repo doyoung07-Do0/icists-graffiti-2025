@@ -26,7 +26,7 @@ export function sendTeamUpdate(team: string, round: string, data: any) {
       // Send to both the specific team and admin clients
       if (
         (client.team === team || client.team === 'admin') &&
-        client.round === round
+        (client.round === round || client.round === 'all')
       ) {
         console.log(
           `[${now}] Sending to client ${client.id} (${client.ip}) [team: ${client.team}]`,
@@ -70,6 +70,18 @@ export function broadcastRoundStatusUpdate(
     status,
   );
 
+  // DEBUG: Log current clients
+  console.log(`[${now}] DEBUG: Current sseClients size:`, sseClients.size);
+  console.log(
+    `[${now}] DEBUG: All connected clients:`,
+    Array.from(sseClients).map((c) => ({
+      id: c.id,
+      team: c.team,
+      round: c.round,
+      connectedAt: c.connectedAt.toISOString(),
+    })),
+  );
+
   const message = `data: ${JSON.stringify({
     type: 'round_status_updated',
     round,
@@ -88,12 +100,20 @@ export function broadcastRoundStatusUpdate(
     connectedAt: Date;
   }> = [];
 
-  // Send to all clients subscribed to this round
+  // Send to all clients subscribed to this round or 'all' rounds
   sseClients.forEach((client) => {
     try {
-      if (client.round === round) {
+      console.log(
+        `[${now}] DEBUG: Checking client ${client.id} (team: ${client.team}, round: ${client.round})`,
+      );
+      if (client.round === round || client.round === 'all') {
+        console.log(`[${now}] DEBUG: Sending to client ${client.id}`);
         client.controller.enqueue(new TextEncoder().encode(message));
         totalSent++;
+      } else {
+        console.log(
+          `[${now}] DEBUG: Skipping client ${client.id} (round mismatch: ${client.round} !== ${round})`,
+        );
       }
     } catch (error) {
       console.error('Error sending round status update:', error);

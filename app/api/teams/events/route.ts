@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { sseClients } from '@/lib/sse';
 
 export async function GET(request: NextRequest) {
+  // TEMPORARILY ENABLED FOR SSE TESTING
   // Extract query parameters
   const { searchParams } = new URL(request.url);
   const team = searchParams.get('team') || 'admin';
@@ -37,6 +38,9 @@ export async function GET(request: NextRequest) {
       console.log(
         `[${new Date().toISOString()}] New SSE connection: ${clientId} (${team}, ${round}) from ${ip}`,
       );
+      console.log(
+        `[${new Date().toISOString()}] DEBUG: sseClients size after adding: ${sseClients.size}`,
+      );
 
       // Send initial connection message
       const initialMessage = {
@@ -57,6 +61,9 @@ export async function GET(request: NextRequest) {
           `[${new Date().toISOString()}] Client disconnected: ${clientId}`,
         );
         sseClients.delete(client);
+        console.log(
+          `[${new Date().toISOString()}] DEBUG: sseClients size after removing: ${sseClients.size}`,
+        );
         controller.close();
       });
     },

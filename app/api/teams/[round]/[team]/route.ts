@@ -108,36 +108,37 @@ export async function POST(
       submitted: true, // Mark as submitted when updating
     });
 
+    // DISABLE SSE BROADCASTING FOR DEBUGGING INFINITE CONNECTION BUG
     // Broadcast the update to all connected admin dashboards
-    if (result) {
-      try {
-        console.log(
-          `[${new Date().toISOString()}] Preparing to broadcast update for team ${team}, round ${round}`,
-        );
-        // Import dynamically to avoid circular dependencies
-        const { sendTeamUpdate } = await import('@/lib/sse');
-        console.log(
-          `[${new Date().toISOString()}] Sending update to SSE clients`,
-        );
-        sendTeamUpdate(team, round, {
-          type: 'team_updated',
-          team: team,
-          round: round,
-          data: result,
-          timestamp: new Date().toISOString(),
-        });
-        console.log(`[${new Date().toISOString()}] Update broadcast completed`);
-      } catch (error) {
-        console.error(
-          `[${new Date().toISOString()}] Error broadcasting team update:`,
-          error,
-        );
-      }
-    } else {
-      console.error(
-        `[${new Date().toISOString()}] No result to broadcast for team ${team}, round ${round}`,
-      );
-    }
+    // if (result) {
+    //   try {
+    //     console.log(
+    //       `[${new Date().toISOString()}] Preparing to broadcast update for team ${team}, round ${round}`,
+    //     );
+    //     // Import dynamically to avoid circular dependencies
+    //     const { sendTeamUpdate } = await import('@/lib/sse');
+    //     console.log(
+    //       `[${new Date().toISOString()}] Sending update to SSE clients`,
+    //     );
+    //     sendTeamUpdate(team, round, {
+    //       type: 'team_updated',
+    //       team: team,
+    //       round: round,
+    //       data: result,
+    //       timestamp: new Date().toISOString(),
+    //     });
+    //     console.log(`[${new Date().toISOString()}] Update broadcast completed`);
+    //   } catch (error) {
+    //     console.error(
+    //       `[${new Date().toISOString()}] Error broadcasting team update:`,
+    //       error,
+    //     );
+    //   }
+    // } else {
+    //   console.error(
+    //     `[${new Date().toISOString()}] No result to broadcast for team ${team}, round ${round}`,
+    //   );
+    // }
 
     return NextResponse.json({
       success: true,
