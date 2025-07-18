@@ -9,6 +9,40 @@ export const sseClients = new Set<{
   connectedAt: Date;
 }>();
 
+// Log connection statistics periodically
+export function logConnectionStats() {
+  const now = new Date().toISOString();
+  const stats = getConnectionStats();
+
+  console.log(`[${now}] 🔗 SSE Connection Stats:`);
+  console.log(`  📊 Total Connections: ${stats.totalConnections}`);
+
+  if (stats.totalConnections > 0) {
+    console.log(`  👥 Connections by Team:`);
+    Object.entries(stats.connectionsByTeam).forEach(([team, count]) => {
+      console.log(`    - ${team}: ${count}`);
+    });
+
+    console.log(`  🎯 Connections by Round:`);
+    Object.entries(stats.connectionsByRound).forEach(([round, count]) => {
+      console.log(`    - ${round}: ${count}`);
+    });
+
+    console.log(`  📋 Active Clients:`);
+    stats.activeSince.forEach((client) => {
+      const age = Math.floor(
+        (Date.now() - new Date(client.connectedAt).getTime()) / 1000,
+      );
+      console.log(
+        `    - ${client.id} (${client.team}/${client.round}) - ${age}s ago`,
+      );
+    });
+  } else {
+    console.log(`  ❌ No active connections`);
+  }
+  console.log(''); // Empty line for readability
+}
+
 // Send message to all connected clients for a specific team and round
 export function sendTeamUpdate(team: string, round: string, data: any) {
   const message = `data: ${JSON.stringify(data)}\n\n`;
@@ -294,5 +328,15 @@ if (typeof setInterval !== 'undefined') {
     if (pingCount > 0) {
       console.log(`Sent ping to ${pingCount} SSE clients`);
     }
+
+    // Log connection stats
+    logConnectionStats();
   }, 120000); // Every 2 minutes
+}
+
+// Set up periodic connection logging (every 30 seconds)
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    logConnectionStats();
+  }, 30000); // Every 30 seconds
 }

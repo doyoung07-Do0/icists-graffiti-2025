@@ -1,10 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { sseClients } from '@/lib/sse';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const team = searchParams.get('team');
-  const round = searchParams.get('round');
+  const team = searchParams.get('team') || 'admin';
+  const round = searchParams.get('round') || 'all';
+
+  // Generate unique client ID
+  const clientId = `${team}-${round}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Get client IP and user agent
+  const ip =
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+  const userAgent = request.headers.get('user-agent') || 'unknown';
 
   // Set up SSE response
   const encoder = new TextEncoder();
@@ -20,10 +31,26 @@ export async function GET(request: NextRequest) {
 
   const stream = new ReadableStream({
     start(controller) {
+      // Add client to tracking
+      const client = {
+        id: clientId,
+        controller,
+        team,
+        round,
+        ip,
+        userAgent,
+        connectedAt: new Date(),
+      };
+
+      sseClients.add(client);
+      console.log(
+        `[${new Date().toISOString()}] ✅ Client connected: ${clientId} (${team}/${round}) from ${ip}`,
+      );
+
       // Send initial connection message
       controller.enqueue(
         encoder.encode(
-          'data: {"type":"connected","message":"SSE connection established"}\n\n',
+          `data: {"type":"connected","message":"SSE connection established","clientId":"${clientId}","team":"${team}","round":"${round}"}\n\n`,
         ),
       );
 
@@ -52,6 +79,10 @@ export async function GET(request: NextRequest) {
       // Handle client disconnect
       request.signal.addEventListener('abort', () => {
         cleanup();
+        sseClients.delete(client);
+        console.log(
+          `[${new Date().toISOString()}] ❌ Client disconnected: ${clientId} (${team}/${round})`,
+        );
         controller.close();
       });
     },

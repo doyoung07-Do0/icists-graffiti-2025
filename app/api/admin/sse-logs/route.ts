@@ -1,51 +1,59 @@
 import { NextResponse } from 'next/server';
+import { getConnectionStats } from '@/lib/sse';
 
-// Mock data for now - in production this would come from actual SSE logging
-const mockConnectionLogs = [
-  {
-    id: '1',
-    timestamp: new Date(Date.now() - 5000).toISOString(),
-    environment: 'Development',
-    event: 'connect',
-    message: 'Client connected successfully',
-  },
-  {
-    id: '2',
-    timestamp: new Date(Date.now() - 10000).toISOString(),
-    environment: 'Development',
-    event: 'reconnect',
-    message: 'Client reconnected after 30s timeout',
-  },
-  {
-    id: '3',
-    timestamp: new Date(Date.now() - 15000).toISOString(),
-    environment: 'Production',
-    event: 'error',
-    message: 'Connection failed: Vercel function timeout',
-  },
-  {
-    id: '4',
-    timestamp: new Date(Date.now() - 20000).toISOString(),
-    environment: 'Production',
-    event: 'disconnect',
-    message: 'Client disconnected due to network error',
-  },
-  {
-    id: '5',
-    timestamp: new Date(Date.now() - 25000).toISOString(),
-    environment: 'Development',
-    event: 'connect',
-    message: 'New client connected from localhost:3000',
-  },
-];
+interface ConnectionLog {
+  id: string;
+  timestamp: string;
+  environment: string;
+  event: 'connect' | 'disconnect' | 'error' | 'reconnect';
+  message: string;
+  details?: any;
+}
 
 export async function GET() {
   try {
-    // In production, this would fetch real SSE logs from your logging system
-    // For now, return mock data
+    const stats = getConnectionStats();
+    const now = new Date().toISOString();
+
+    // Convert active clients to connection logs
+    const connectionLogs: ConnectionLog[] = stats.activeSince.map(
+      (client, index) => ({
+        id: `log-${index + 1}`,
+        timestamp: client.connectedAt,
+        environment: 'Development',
+        event: 'connect' as const,
+        message: `Client ${client.id} (${client.team}/${client.round}) connected from ${client.ip}`,
+        details: {
+          clientId: client.id,
+          team: client.team,
+          round: client.round,
+          ip: client.ip,
+          userAgent: client.userAgent,
+          connectedAt: client.connectedAt,
+        },
+      }),
+    );
+
+    // If no active connections, return a "no connections" log
+    if (connectionLogs.length === 0) {
+      connectionLogs.push({
+        id: 'no-connections',
+        timestamp: now,
+        environment: 'Development',
+        event: 'disconnect',
+        message: 'No active SSE connections',
+        details: {},
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      data: mockConnectionLogs,
+      data: connectionLogs,
+      debug: {
+        totalConnections: stats.totalConnections,
+        connectionsByTeam: stats.connectionsByTeam,
+        connectionsByRound: stats.connectionsByRound,
+      },
     });
   } catch (error) {
     console.error('Error fetching SSE logs:', error);
