@@ -503,7 +503,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
               background:
                 isRoundClosed || teamData.submitted || remain < 0
                   ? '#374151'
-                  : 'linear-gradient(to right, #1f4d2e, #2d5a3d)',
+                  : 'linear-gradient(to right,rgb(50, 234, 112),rgb(34, 107, 59))',
               border: 'none',
               outline: 'none',
               color: 'white',
@@ -844,26 +844,112 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
         </div>
 
         <div className="space-y-6">
-          {roundStatus.r4.status === 'closed' && (
-            <div className="flex justify-center">
-              <button
-                onClick={openResultsModal}
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
-              >
-                최종 결과 보기
-              </button>
-            </div>
-          )}
-
           {currentRoundStatus === 'locked' ? (
             <LockedRound />
           ) : (
-            <OpenRound
-              key={`${activeRound}-${teamName}-${refetchTrigger}`}
-              round={activeRound}
-              isRoundClosed={currentRoundStatus === 'closed'}
-              teamName={teamName}
-            />
+            <>
+              <OpenRound
+                key={`${activeRound}-${teamName}-${refetchTrigger}`}
+                round={activeRound}
+                isRoundClosed={currentRoundStatus === 'closed'}
+                teamName={teamName}
+              />
+
+              {/* Cumulative Investment Ranking Component - Only show in closed rounds */}
+              {currentRoundStatus === 'closed' && (
+                <div
+                  className="p-6 rounded-lg border border-gray-700"
+                  style={{
+                    backgroundColor: '#0a0a0a',
+                  }}
+                >
+                  <h2
+                    className="text-xl font-bold mb-6 text-center"
+                    style={{
+                      background:
+                        'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      color: 'transparent',
+                      display: 'inline-block',
+                    }}
+                  >
+                    누적 투자금 순위
+                  </h2>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-700">
+                          <th className="text-left py-3 px-4 font-medium text-gray-300">
+                            team
+                          </th>
+                          <th className="text-center py-3 px-2 font-medium text-gray-300">
+                            s1
+                          </th>
+                          <th className="text-center py-3 px-2 font-medium text-gray-300">
+                            s2
+                          </th>
+                          <th className="text-center py-3 px-2 font-medium text-gray-300">
+                            s3
+                          </th>
+                          <th className="text-center py-3 px-2 font-medium text-gray-300">
+                            s4
+                          </th>
+                          <th className="text-center py-3 px-2 font-medium text-gray-300">
+                            s5
+                          </th>
+                          <th className="text-center py-3 px-4 font-medium text-gray-300">
+                            투자금 총합
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Array.from({ length: 15 }, (_, index) => {
+                          const teamNumber = index + 1;
+                          const s1 = Math.floor(Math.random() * 500) + 100;
+                          const s2 = Math.floor(Math.random() * 500) + 100;
+                          const s3 = Math.floor(Math.random() * 500) + 100;
+                          const s4 = Math.floor(Math.random() * 500) + 100;
+                          const s5 = Math.floor(Math.random() * 500) + 100;
+                          const total = s1 + s2 + s3 + s4 + s5;
+
+                          return (
+                            <tr
+                              key={teamNumber}
+                              className="border-b border-gray-800 hover:bg-gray-800/50"
+                            >
+                              <td className="py-3 px-4 font-medium text-white">
+                                team{teamNumber}
+                              </td>
+                              <td className="text-center py-3 px-2 text-white">
+                                {s1.toLocaleString()}
+                              </td>
+                              <td className="text-center py-3 px-2 text-white">
+                                {s2.toLocaleString()}
+                              </td>
+                              <td className="text-center py-3 px-2 text-white">
+                                {s3.toLocaleString()}
+                              </td>
+                              <td className="text-center py-3 px-2 text-white">
+                                {s4.toLocaleString()}
+                              </td>
+                              <td className="text-center py-3 px-2 text-white">
+                                {s5.toLocaleString()}
+                              </td>
+                              <td className="text-center py-3 px-4 font-bold text-green-400">
+                                {total.toLocaleString()}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
