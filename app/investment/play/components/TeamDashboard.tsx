@@ -262,7 +262,7 @@ const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
             display: 'inline-block',
           }}
         >
-          누적 투자금 순위
+          누적 투자금 및 순위
         </h2>
         <div className="text-center text-red-400 py-4">
           {error || 'Failed to load ranking data'}
@@ -290,7 +290,7 @@ const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
           display: 'inline-block',
         }}
       >
-        누적 투자금 순위
+        누적 투자금 및 순위
       </h2>
 
       <div className="overflow-x-auto">

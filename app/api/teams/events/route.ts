@@ -1,75 +1,64 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { sseClients } from '@/lib/sse';
 
 export async function GET(request: NextRequest) {
-  // TEMPORARILY ENABLED FOR SSE TESTING
-  // Extract query parameters
   const { searchParams } = new URL(request.url);
-  const team = searchParams.get('team') || 'admin';
-  const round = searchParams.get('round') || 'r1';
+  const team = searchParams.get('team');
+  const round = searchParams.get('round');
 
-  // Get client IP and user agent for logging
-  const ip =
-    request.headers.get('x-forwarded-for') ||
-    request.headers.get('x-real-ip') ||
-    'unknown';
-  const userAgent = request.headers.get('user-agent') || 'unknown';
-
-  // Create unique client ID
-  const clientId = `${team}-${round}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-  // Create a ReadableStream for SSE
+  // Set up SSE response
+  const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
-      // Add client to the set of connected clients
-      const client = {
-        id: clientId,
-        controller,
-        team,
-        round,
-        ip,
-        userAgent,
-        connectedAt: new Date(),
-      };
-
-      sseClients.add(client);
-
-      console.log(
-        `[${new Date().toISOString()}] New SSE connection: ${clientId} (${team}, ${round}) from ${ip}`,
-      );
-      console.log(
-        `[${new Date().toISOString()}] DEBUG: sseClients size after adding: ${sseClients.size}`,
-      );
-
       // Send initial connection message
-      const initialMessage = {
-        type: 'connected',
-        clientId,
-        team,
-        round,
-        timestamp: new Date().toISOString(),
-      };
-
       controller.enqueue(
-        new TextEncoder().encode(`data: ${JSON.stringify(initialMessage)}\n\n`),
+        encoder.encode(
+          'data: {"type":"connected","message":"SSE connection established"}\n\n',
+        ),
       );
+
+      // Set up timeout to prevent Vercel function timeout (4.5 minutes to be safe)
+      const timeout = setTimeout(
+        () => {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"type":"timeout","message":"Connection timeout - reconnecting..."}\n\n',
+            ),
+          );
+          controller.close();
+        },
+        4.5 * 60 * 1000,
+      ); // 4.5 minutes
+
+      // Set up heartbeat every 30 seconds
+      const heartbeat = setInterval(() => {
+        controller.enqueue(
+          encoder.encode(
+            `data: {"type":"ping","timestamp":"${new Date().toISOString()}"}\n\n`,
+          ),
+        );
+      }, 30000);
+
+      // Cleanup function
+      const cleanup = () => {
+        clearTimeout(timeout);
+        clearInterval(heartbeat);
+      };
 
       // Handle client disconnect
       request.signal.addEventListener('abort', () => {
-        console.log(
-          `[${new Date().toISOString()}] Client disconnected: ${clientId}`,
-        );
-        sseClients.delete(client);
-        console.log(
-          `[${new Date().toISOString()}] DEBUG: sseClients size after removing: ${sseClients.size}`,
-        );
+        cleanup();
         controller.close();
       });
+
+      // Handle stream close
+      stream.cancel = async () => {
+        cleanup();
+        controller.close();
+      };
     },
   });
 
-  // Return SSE response
   return new NextResponse(stream, {
     headers: {
       'Content-Type': 'text/event-stream',
