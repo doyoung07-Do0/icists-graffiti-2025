@@ -13,7 +13,7 @@ function isValidTeam(team: string): boolean {
   return (
     /^team\d{1,2}$/.test(team) &&
     Number.parseInt(team.replace('team', ''), 10) >= 1 &&
-    Number.parseInt(team.replace('team', ''), 10) <= 16
+    Number.parseInt(team.replace('team', ''), 10) <= 15
   );
 }
 
@@ -40,7 +40,7 @@ export async function GET(
       return NextResponse.json(
         {
           success: false,
-          error: 'Invalid team parameter. Must be team1-team16.',
+          error: 'Invalid team parameter. Must be team1-team15.',
         },
         { status: 400 },
       );

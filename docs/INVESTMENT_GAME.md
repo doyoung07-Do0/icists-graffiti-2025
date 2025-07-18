@@ -5,7 +5,7 @@ The Investment Game is a core component of GRAFFITI 2025, designed to match AI s
 ## Example of Progression
 
 - Startups: 5 total (Startup1~Startup5)
-- Student Teams: 16 total (Team1~Team16)
+- Student Teams: 15 total (Team1~Team15)
 
 ### Capital Raise
 
@@ -76,7 +76,7 @@ The Investment Game is a core component of GRAFFITI 2025, designed to match AI s
 
 **Startup Pitching (Q&A)**
 
-- Participants are divided into 16 groups, with startups spending 5 minutes answering questions from each group.
+- Participants are divided into 15 groups, with startups spending 5 minutes answering questions from each group.
 
 **Portfolio Submission**
 

@@ -17,7 +17,7 @@ The API provides endpoints to check and toggle the `submitted` field for each te
 **Parameters:**
 
 - `round`: The round identifier (r1, r2, r3, or r4)
-- `team`: The team identifier (team1-team16)
+- `team`: The team identifier (team1-team15)
 
 **Example Request:**
 
@@ -57,7 +57,7 @@ GET /api/admin/teams/r1/team5/submission-status
 **Parameters:**
 
 - `round`: The round identifier (r1, r2, r3, or r4)
-- `team`: The team identifier (team1-team16)
+- `team`: The team identifier (team1-team15)
 
 **Example Request:**
 
@@ -106,7 +106,7 @@ POST /api/admin/teams/r1/team5/toggle-submission
 ```json
 {
   "success": false,
-  "error": "Invalid team parameter. Must be team1-team16."
+  "error": "Invalid team parameter. Must be team1-team15."
 }
 ```
 
@@ -179,15 +179,18 @@ Each round has its own team table with the following schema:
 
 ```sql
 CREATE TABLE team_r1 (
-  team varchar(10) PRIMARY KEY NOT NULL,  -- team1-team16
+  team varchar(10) PRIMARY KEY NOT NULL,  -- team1-team15
   s1 integer DEFAULT 0 NOT NULL,
   s2 integer DEFAULT 0 NOT NULL,
   s3 integer DEFAULT 0 NOT NULL,
   s4 integer DEFAULT 0 NOT NULL,
+  s5 integer DEFAULT 0 NOT NULL,
   pre_fund integer,
   post_fund integer,
   submitted boolean DEFAULT false NOT NULL
 );
+```
+
 ```
 
 The same schema applies to `team_r2`, `team_r3`, and `team_r4`.
@@ -195,7 +198,8 @@ The same schema applies to `team_r2`, `team_r3`, and `team_r4`.
 ## Notes
 
 - The API validates both round and team parameters before processing
-- Team names must follow the pattern `team1` through `team16`
+- Team names must follow the pattern `team1` through `team15`
 - Round names must be `r1`, `r2`, `r3`, or `r4`
 - The toggle operation switches the boolean value (true ↔ false)
 - All endpoints return consistent JSON responses with success/error indicators
+```

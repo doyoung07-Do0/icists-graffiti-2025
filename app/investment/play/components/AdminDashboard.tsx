@@ -86,7 +86,7 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  // Sort teams from team1 to team16
+  // Sort teams from team1 to team15
   const sortTeamData = (teams: TeamData[]): TeamData[] => {
     return [...teams]
       .filter((team) => team?.team) // Filter out any undefined or invalid team data

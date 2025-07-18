@@ -4,7 +4,7 @@ import { team_r1, team_r2, team_r3, team_r4 } from '@/lib/db/schema';
 
 // Helper function to generate team data for initialization
 const generateTeamData = () => {
-  return Array.from({ length: 16 }, (_, i) => ({
+  return Array.from({ length: 15 }, (_, i) => ({
     team: `team${i + 1}`,
     s1: 0,
     s2: 0,
