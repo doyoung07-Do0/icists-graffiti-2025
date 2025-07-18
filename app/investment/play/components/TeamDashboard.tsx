@@ -76,6 +76,7 @@ interface OpenRoundProps {
   round: Round;
   isRoundClosed?: boolean;
   teamName: string;
+  onPortfolioSubmitted?: () => void;
 }
 
 interface TeamData {
@@ -90,6 +91,40 @@ interface TeamData {
   submitted: boolean;
 }
 
+interface CumulativeInvestmentData {
+  team: string;
+  currentRound: Round;
+  s1: number;
+  s2: number;
+  s3: number;
+  s4: number;
+  s5: number;
+  total: number;
+  preFund: number;
+}
+
+interface TeamRankingData {
+  team: string;
+  s1: number;
+  s2: number;
+  s3: number;
+  s4: number;
+  s5: number;
+  total: number;
+  postFund: number;
+  rank: number;
+}
+
+interface CumulativeRankingDisplayProps {
+  currentRound: Round;
+}
+
+interface CumulativeInvestmentDisplayProps {
+  teamName: string;
+  currentRound: Round;
+  refetchTrigger: number;
+}
+
 interface StartupData {
   startup: string;
   pre_cap: number | null;
@@ -97,10 +132,416 @@ interface StartupData {
   post_cap: number | null;
 }
 
+const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
+  currentRound,
+}) => {
+  const [rankingData, setRankingData] = useState<TeamRankingData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch ranking data with caching
+  const fetchRankingData = useCallback(async () => {
+    // Check if we already have data for this round and it's recent (within 5 minutes)
+    const cacheKey = `ranking-${currentRound}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    const now = Date.now();
+
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+      if (now - timestamp < fiveMinutes) {
+        setRankingData(data);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `/api/teams/cumulative?currentRound=${currentRound}`,
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        setRankingData(result.data.teams);
+
+        // Cache the data for 5 minutes
+        sessionStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            data: result.data.teams,
+            timestamp: now,
+          }),
+        );
+      } else {
+        throw new Error(result.error || 'Failed to fetch ranking data');
+      }
+    } catch (err) {
+      setError('Failed to load ranking data');
+      console.error('Error fetching ranking data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentRound]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchRankingData();
+  }, [fetchRankingData]);
+
+  // Clear cache when round status changes (e.g., when a round closes)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === `round-status-${currentRound}`) {
+        // Clear the cache when round status changes
+        sessionStorage.removeItem(`ranking-${currentRound}`);
+        fetchRankingData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [currentRound, fetchRankingData]);
+
+  // Function to manually clear cache (for debugging or admin use)
+  const clearCache = useCallback(() => {
+    sessionStorage.removeItem(`ranking-${currentRound}`);
+    fetchRankingData();
+  }, [currentRound, fetchRankingData]);
+
+  if (isLoading) {
+    return (
+      <div
+        className="p-6 rounded-lg border border-gray-700"
+        style={{
+          backgroundColor: '#0a0a0a',
+        }}
+      >
+        <h2
+          className="text-xl font-bold mb-6 text-center"
+          style={{
+            background:
+              'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            display: 'inline-block',
+          }}
+        >
+          누적 투자금 및 순위
+        </h2>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !rankingData.length) {
+    return (
+      <div
+        className="p-6 rounded-lg border border-gray-700"
+        style={{
+          backgroundColor: '#0a0a0a',
+        }}
+      >
+        <h2
+          className="text-xl font-bold mb-6 text-center"
+          style={{
+            background:
+              'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            display: 'inline-block',
+          }}
+        >
+          누적 투자금 순위
+        </h2>
+        <div className="text-center text-red-400 py-4">
+          {error || 'Failed to load ranking data'}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="p-6 rounded-lg border border-gray-700"
+      style={{
+        backgroundColor: '#0a0a0a',
+      }}
+    >
+      <h2
+        className="text-xl font-bold mb-6 text-center"
+        style={{
+          background:
+            'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          color: 'transparent',
+          display: 'inline-block',
+        }}
+      >
+        누적 투자금 순위
+      </h2>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-700">
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                Rank
+              </th>
+              <th className="text-left py-3 px-4 font-medium text-gray-300">
+                team
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s1
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s2
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s3
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s4
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s5
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-gray-300">
+                Total Fund
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rankingData.map((team) => (
+              <tr
+                key={team.team}
+                className="border-b border-gray-800 hover:bg-gray-800/50"
+              >
+                <td className="text-center py-3 px-2 font-bold text-white">
+                  {team.rank}
+                </td>
+                <td className="py-3 px-4 font-medium text-white">
+                  {team.team}
+                </td>
+                <td className="text-center py-3 px-2 text-white">
+                  {team.s1.toLocaleString()}
+                </td>
+                <td className="text-center py-3 px-2 text-white">
+                  {team.s2.toLocaleString()}
+                </td>
+                <td className="text-center py-3 px-2 text-white">
+                  {team.s3.toLocaleString()}
+                </td>
+                <td className="text-center py-3 px-2 text-white">
+                  {team.s4.toLocaleString()}
+                </td>
+                <td className="text-center py-3 px-2 text-white">
+                  {team.s5.toLocaleString()}
+                </td>
+                <td className="text-center py-3 px-4 font-bold text-green-400">
+                  {team.postFund.toLocaleString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const CumulativeInvestmentDisplay: React.FC<
+  CumulativeInvestmentDisplayProps
+> = ({ teamName, currentRound, refetchTrigger }) => {
+  const [cumulativeData, setCumulativeData] =
+    useState<CumulativeInvestmentData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch cumulative investment data
+  const fetchCumulativeData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `/api/teams/cumulative/${teamName}?currentRound=${currentRound}`,
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        setCumulativeData(result.data);
+      } else {
+        throw new Error(result.error || 'Failed to fetch cumulative data');
+      }
+    } catch (err) {
+      setError('Failed to load cumulative investment data');
+      console.error('Error fetching cumulative data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [teamName, currentRound]);
+
+  // Initial fetch and refetch when refetchTrigger changes
+  useEffect(() => {
+    fetchCumulativeData();
+  }, [fetchCumulativeData, refetchTrigger]);
+
+  if (isLoading) {
+    return (
+      <div
+        className="p-6 rounded-lg border border-gray-700"
+        style={{
+          backgroundColor: '#0a0a0a',
+        }}
+      >
+        <h2
+          className="text-xl font-bold mb-6 text-center"
+          style={{
+            background:
+              'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            display: 'inline-block',
+          }}
+        >
+          나의 누적 투자금
+        </h2>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !cumulativeData) {
+    return (
+      <div
+        className="p-6 rounded-lg border border-gray-700"
+        style={{
+          backgroundColor: '#0a0a0a',
+        }}
+      >
+        <h2
+          className="text-xl font-bold mb-6 text-center"
+          style={{
+            background:
+              'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            display: 'inline-block',
+          }}
+        >
+          나의 누적 투자금
+        </h2>
+        <div className="text-center text-red-400 py-4">
+          {error || 'Failed to load cumulative investment data'}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="p-6 rounded-lg border border-gray-700"
+      style={{
+        backgroundColor: '#0a0a0a',
+      }}
+    >
+      <h2
+        className="text-xl font-bold mb-6 text-center"
+        style={{
+          background:
+            'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          color: 'transparent',
+          display: 'inline-block',
+        }}
+      >
+        나의 누적 투자금
+      </h2>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-700">
+              <th className="text-left py-3 px-4 font-medium text-gray-300">
+                team
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s1
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s2
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s3
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s4
+              </th>
+              <th className="text-center py-3 px-2 font-medium text-gray-300">
+                s5
+              </th>
+              <th className="text-center py-3 px-4 font-medium text-gray-300">
+                Total Fund
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-gray-800 bg-gray-800/30">
+              <td className="py-3 px-4 font-medium text-white">
+                {cumulativeData.team}
+              </td>
+              <td className="text-center py-3 px-2 text-white">
+                {cumulativeData.s1.toLocaleString()}
+              </td>
+              <td className="text-center py-3 px-2 text-white">
+                {cumulativeData.s2.toLocaleString()}
+              </td>
+              <td className="text-center py-3 px-2 text-white">
+                {cumulativeData.s3.toLocaleString()}
+              </td>
+              <td className="text-center py-3 px-2 text-white">
+                {cumulativeData.s4.toLocaleString()}
+              </td>
+              <td className="text-center py-3 px-2 text-white">
+                {cumulativeData.s5.toLocaleString()}
+              </td>
+              <td className="text-center py-3 px-4 font-bold text-green-400">
+                {cumulativeData.preFund.toLocaleString()}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 const OpenRound: React.FC<OpenRoundProps> = ({
   round,
   isRoundClosed = false,
   teamName,
+  onPortfolioSubmitted,
 }) => {
   const [teamData, setTeamData] = useState<TeamData | null>(null);
   const [startupData, setStartupData] = useState<StartupData[]>([]);
@@ -120,31 +561,81 @@ const OpenRound: React.FC<OpenRoundProps> = ({
       ? ((teamData.post_fund - teamData.pre_fund) / teamData.pre_fund) * 100
       : 0;
 
-  // Fetch team data
-  const fetchTeamData = useCallback(async () => {
+  // --- Caching logic for closed rounds ---
+  const TEAM_CACHE_KEY = `closed_round_team_${round}_${teamName}`;
+  const STARTUP_CACHE_KEY = `closed_round_startup_${round}`;
+  const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+
+  // Fetch team and startup data with caching for closed rounds
+  const fetchTeamAndStartupData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // Use the teamName from props to fetch the correct team's data
-      const teamResponse = await fetch(`/api/teams/${round}/${teamName}`);
-      const teamResult = await teamResponse.json();
+      // TEAM DATA
+      let teamResult:
+        | { success: boolean; data?: TeamData; error?: string }
+        | undefined;
+      if (isRoundClosed) {
+        const cached = sessionStorage.getItem(TEAM_CACHE_KEY);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < CACHE_EXPIRY) {
+            setTeamData(data);
+            teamResult = { success: true, data };
+          } else {
+            sessionStorage.removeItem(TEAM_CACHE_KEY);
+          }
+        }
+      }
+      if (!teamResult) {
+        const teamResponse = await fetch(`/api/teams/${round}/${teamName}`);
+        const apiResult: { success: boolean; data?: TeamData; error?: string } =
+          await teamResponse.json();
+        teamResult = apiResult;
+        if (teamResult.success && isRoundClosed) {
+          sessionStorage.setItem(
+            TEAM_CACHE_KEY,
+            JSON.stringify({ data: teamResult.data, timestamp: Date.now() }),
+          );
+        }
+        setTeamData(teamResult.data ?? null);
+      }
 
-      if (teamResult.success) {
-        setTeamData(teamResult.data);
-
-        // If round is closed, fetch startup data
-        if (isRoundClosed) {
+      // STARTUP DATA (only for closed rounds)
+      if (isRoundClosed) {
+        let startupResult:
+          | { success: boolean; data?: StartupData[]; error?: string }
+          | undefined;
+        const cached = sessionStorage.getItem(STARTUP_CACHE_KEY);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < CACHE_EXPIRY) {
+            setStartupData(data);
+            startupResult = { success: true, data };
+          } else {
+            sessionStorage.removeItem(STARTUP_CACHE_KEY);
+          }
+        }
+        if (!startupResult) {
           const startupResponse = await fetch(`/api/startup/${round}`);
-          const startupResult = await startupResponse.json();
-
-          if (startupResult.success) {
+          const apiResult: {
+            success: boolean;
+            data?: StartupData[];
+            error?: string;
+          } = await startupResponse.json();
+          startupResult = apiResult;
+          if (startupResult.success && startupResult.data) {
             // Sort startup data by startup name (s1, s2, s3, s4, s5)
             const sortedData = startupResult.data.sort(
               (a: StartupData, b: StartupData) =>
                 a.startup.localeCompare(b.startup),
             );
             setStartupData(sortedData);
+            sessionStorage.setItem(
+              STARTUP_CACHE_KEY,
+              JSON.stringify({ data: sortedData, timestamp: Date.now() }),
+            );
           } else {
             throw new Error(
               startupResult.error || 'Failed to fetch startup data',
@@ -152,11 +643,11 @@ const OpenRound: React.FC<OpenRoundProps> = ({
           }
         }
       } else {
-        throw new Error(teamResult.error || 'Failed to load team data');
+        setStartupData([]); // clear if not closed
       }
     } catch (err) {
       setError('Failed to load team data');
-      console.error('Error fetching team data:', err);
+      console.error('Error fetching team/startup data:', err);
     } finally {
       setIsLoading(false);
     }
@@ -164,8 +655,20 @@ const OpenRound: React.FC<OpenRoundProps> = ({
 
   // Initial fetch
   useEffect(() => {
-    fetchTeamData();
-  }, [fetchTeamData]);
+    fetchTeamAndStartupData();
+  }, [fetchTeamAndStartupData]);
+
+  // Invalidate cache on round status change
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'round_status_cache_cleared') {
+        sessionStorage.removeItem(TEAM_CACHE_KEY);
+        sessionStorage.removeItem(STARTUP_CACHE_KEY);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [TEAM_CACHE_KEY, STARTUP_CACHE_KEY]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -232,6 +735,9 @@ const OpenRound: React.FC<OpenRoundProps> = ({
       if (result.success) {
         // Update local state to reflect the submission
         setTeamData((prev) => (prev ? { ...prev, submitted: true } : null));
+
+        // Trigger refetch of cumulative investment data
+        onPortfolioSubmitted?.();
       } else {
         throw new Error(result.error || 'Failed to submit portfolio');
       }
@@ -373,7 +879,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
             </ul>
             <p className="mt-4 font-medium">
               Available Funds: $
-              {teamData.pre_fund !== null
+              {teamData?.pre_fund !== null
                 ? teamData.pre_fund.toLocaleString()
                 : 'Loading...'}
             </p>
@@ -853,101 +1359,23 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
                 round={activeRound}
                 isRoundClosed={currentRoundStatus === 'closed'}
                 teamName={teamName}
+                onPortfolioSubmitted={() =>
+                  setRefetchTrigger((prev) => prev + 1)
+                }
               />
+
+              {/* Team's Own Cumulative Investment Component - Only show in open rounds */}
+              {currentRoundStatus === 'open' && (
+                <CumulativeInvestmentDisplay
+                  teamName={teamName}
+                  currentRound={activeRound}
+                  refetchTrigger={refetchTrigger}
+                />
+              )}
 
               {/* Cumulative Investment Ranking Component - Only show in closed rounds */}
               {currentRoundStatus === 'closed' && (
-                <div
-                  className="p-6 rounded-lg border border-gray-700"
-                  style={{
-                    backgroundColor: '#0a0a0a',
-                  }}
-                >
-                  <h2
-                    className="text-xl font-bold mb-6 text-center"
-                    style={{
-                      background:
-                        'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      color: 'transparent',
-                      display: 'inline-block',
-                    }}
-                  >
-                    누적 투자금 순위
-                  </h2>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-700">
-                          <th className="text-left py-3 px-4 font-medium text-gray-300">
-                            team
-                          </th>
-                          <th className="text-center py-3 px-2 font-medium text-gray-300">
-                            s1
-                          </th>
-                          <th className="text-center py-3 px-2 font-medium text-gray-300">
-                            s2
-                          </th>
-                          <th className="text-center py-3 px-2 font-medium text-gray-300">
-                            s3
-                          </th>
-                          <th className="text-center py-3 px-2 font-medium text-gray-300">
-                            s4
-                          </th>
-                          <th className="text-center py-3 px-2 font-medium text-gray-300">
-                            s5
-                          </th>
-                          <th className="text-center py-3 px-4 font-medium text-gray-300">
-                            투자금 총합
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Array.from({ length: 15 }, (_, index) => {
-                          const teamNumber = index + 1;
-                          const s1 = Math.floor(Math.random() * 500) + 100;
-                          const s2 = Math.floor(Math.random() * 500) + 100;
-                          const s3 = Math.floor(Math.random() * 500) + 100;
-                          const s4 = Math.floor(Math.random() * 500) + 100;
-                          const s5 = Math.floor(Math.random() * 500) + 100;
-                          const total = s1 + s2 + s3 + s4 + s5;
-
-                          return (
-                            <tr
-                              key={teamNumber}
-                              className="border-b border-gray-800 hover:bg-gray-800/50"
-                            >
-                              <td className="py-3 px-4 font-medium text-white">
-                                team{teamNumber}
-                              </td>
-                              <td className="text-center py-3 px-2 text-white">
-                                {s1.toLocaleString()}
-                              </td>
-                              <td className="text-center py-3 px-2 text-white">
-                                {s2.toLocaleString()}
-                              </td>
-                              <td className="text-center py-3 px-2 text-white">
-                                {s3.toLocaleString()}
-                              </td>
-                              <td className="text-center py-3 px-2 text-white">
-                                {s4.toLocaleString()}
-                              </td>
-                              <td className="text-center py-3 px-2 text-white">
-                                {s5.toLocaleString()}
-                              </td>
-                              <td className="text-center py-3 px-4 font-bold text-green-400">
-                                {total.toLocaleString()}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <CumulativeRankingDisplay currentRound={activeRound} />
               )}
             </>
           )}
