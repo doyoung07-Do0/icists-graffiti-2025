@@ -172,7 +172,9 @@ export const stream = pgTable(
 export type Stream = InferSelectModel<typeof stream>;
 
 export const round_state = pgTable('round_state', {
-  round: varchar('round', { enum: ['r1', 'r2', 'r3', 'r4'] }).primaryKey().notNull(),
+  round: varchar('round', { enum: ['r1', 'r2', 'r3', 'r4'] })
+    .primaryKey()
+    .notNull(),
   status: varchar('status', { enum: ['locked', 'open', 'closed'] }).notNull(),
 });
 
@@ -186,6 +188,7 @@ const createTeamTable = (round: 'r1' | 'r2' | 'r3' | 'r4') => {
     s2: integer('s2').default(0).notNull(),
     s3: integer('s3').default(0).notNull(),
     s4: integer('s4').default(0).notNull(),
+    s5: integer('s5').default(0).notNull(),
     pre_fund: integer('pre_fund'),
     post_fund: integer('post_fund'),
     submitted: boolean('submitted').default(false).notNull(),
@@ -203,10 +206,12 @@ export type TeamRound = InferSelectModel<typeof team_r1>;
 // Function to create startup table for a specific round
 const createStartupTable = (round: 'r1' | 'r2' | 'r3' | 'r4') => {
   return pgTable(`startup_${round}`, {
-    startup: varchar('startup', { enum: ['s1', 's2', 's3', 's4'] }).primaryKey(),
+    startup: varchar('startup', {
+      enum: ['s1', 's2', 's3', 's4', 's5'],
+    }).primaryKey(),
     pre_cap: integer('pre_cap'),
     yield: decimal('yield', { precision: 10, scale: 4 }),
-    post_cap: integer('post_cap')
+    post_cap: integer('post_cap'),
   });
 };
 

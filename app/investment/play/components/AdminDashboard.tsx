@@ -443,6 +443,7 @@ export default function AdminDashboard() {
           s2: teamToUpdate.s2,
           s3: teamToUpdate.s3,
           s4: teamToUpdate.s4,
+          s5: teamToUpdate.s5,
           pre_fund: teamToUpdate.pre_fund,
           post_fund: teamToUpdate.post_fund,
           submitted: teamToUpdate.submitted,

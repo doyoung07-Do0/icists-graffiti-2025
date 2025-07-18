@@ -83,6 +83,7 @@ interface TeamData {
   s2: number;
   s3: number;
   s4: number;
+  s5: number;
   pre_fund: number | null;
   post_fund: number | null;
   submitted: boolean;
@@ -111,7 +112,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
   const remain =
     teamData && teamData.pre_fund !== null
       ? teamData.pre_fund -
-        (teamData.s1 + teamData.s2 + teamData.s3 + teamData.s4)
+        (teamData.s1 + teamData.s2 + teamData.s3 + teamData.s4 + teamData.s5)
       : 0;
 
   const roundReturn =
@@ -138,7 +139,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
           const startupResult = await startupResponse.json();
 
           if (startupResult.success) {
-            // Sort startup data by startup name (s1, s2, s3, s4)
+            // Sort startup data by startup name (s1, s2, s3, s4, s5)
             const sortedData = startupResult.data.sort(
               (a: StartupData, b: StartupData) =>
                 a.startup.localeCompare(b.startup),
@@ -168,7 +169,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    startup: 's1' | 's2' | 's3' | 's4',
+    startup: 's1' | 's2' | 's3' | 's4' | 's5',
   ) => {
     if (!teamData) return;
 
@@ -192,7 +193,8 @@ const OpenRound: React.FC<OpenRoundProps> = ({
     }
 
     // Validate that total doesn't exceed pre_fund
-    const total = teamData.s1 + teamData.s2 + teamData.s3 + teamData.s4;
+    const total =
+      teamData.s1 + teamData.s2 + teamData.s3 + teamData.s4 + teamData.s5;
     if (total > teamData.pre_fund) {
       setError(
         `Total investment (${total.toLocaleString()}) exceeds available funds (${teamData.pre_fund.toLocaleString()})`,
@@ -213,6 +215,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
           s2: teamData.s2,
           s3: teamData.s3,
           s4: teamData.s4,
+          s5: teamData.s5,
           submitted: true, // Explicitly set submitted to true
         }),
       });
@@ -350,8 +353,8 @@ const OpenRound: React.FC<OpenRoundProps> = ({
           <h2 className="text-xl font-bold text-blue-400 mb-4">Hint</h2>
           <div className="prose prose-invert">
             <p>
-              Allocate your investment across the four startups (S1, S2, S3, S4)
-              based on your analysis of their potential.
+              Allocate your investment across the five startups (S1, S2, S3, S4,
+              S5) based on your analysis of their potential.
             </p>
             <ul className="list-disc pl-5 mt-2 space-y-2">
               <li>Each startup has different risk and return profiles</li>
@@ -389,7 +392,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
-            {(['s1', 's2', 's3', 's4'] as const).map((startup) => (
+            {(['s1', 's2', 's3', 's4', 's5'] as const).map((startup) => (
               <div key={startup} className="flex items-center">
                 <label className="w-16 font-medium">
                   {startup.toUpperCase()}

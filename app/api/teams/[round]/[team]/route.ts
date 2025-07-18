@@ -88,12 +88,13 @@ export async function POST(
       (!data.s1 && data.s1 !== 0) ||
       (!data.s2 && data.s2 !== 0) ||
       (!data.s3 && data.s3 !== 0) ||
-      (!data.s4 && data.s4 !== 0)
+      (!data.s4 && data.s4 !== 0) ||
+      (!data.s5 && data.s5 !== 0)
     ) {
       return NextResponse.json(
         {
           success: false,
-          error: 'All startup allocations (s1-s4) are required',
+          error: 'All startup allocations (s1-s5) are required',
         },
         { status: 400 },
       );
@@ -105,6 +106,7 @@ export async function POST(
       s2: Number(data.s2),
       s3: Number(data.s3),
       s4: Number(data.s4),
+      s5: Number(data.s5),
       submitted: true, // Mark as submitted when updating
     });
 

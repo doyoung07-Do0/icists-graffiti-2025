@@ -13,6 +13,7 @@ interface TeamData {
   s2: number;
   s3: number;
   s4: number;
+  s5: number;
   post_fund: number | null;
 }
 
@@ -42,33 +43,36 @@ const ClosedRound: React.FC<ClosedRoundProps> = ({ round }) => {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // In production, get the current team's ID from the session or context
         const teamId = 'team1'; // TODO: Replace with actual team ID from auth context
-        
+
         // Fetch team data
         const teamResponse = await fetch(`/api/teams/${round}/${teamId}`);
         const teamResult = await teamResponse.json();
-        
+
         if (!teamResult.success) {
           throw new Error(teamResult.error || 'Failed to fetch team data');
         }
-        
+
         setTeamData(teamResult.data);
-        
+
         // Fetch startup data for the round
         const startupResponse = await fetch(`/api/startup/${round}`);
         const startupResult = await startupResponse.json();
-        
+
         if (!startupResult.success) {
-          throw new Error(startupResult.error || 'Failed to fetch startup data');
+          throw new Error(
+            startupResult.error || 'Failed to fetch startup data',
+          );
         }
-        
-        // Sort startup data by startup name (s1, s2, s3, s4)
-        const sortedData = startupResult.data.sort((a: StartupData, b: StartupData) => 
-          a.startup.localeCompare(b.startup)
+
+        // Sort startup data by startup name (s1, s2, s3, s4, s5)
+        const sortedData = startupResult.data.sort(
+          (a: StartupData, b: StartupData) =>
+            a.startup.localeCompare(b.startup),
         );
-        
+
         setStartupData(sortedData);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -107,14 +111,16 @@ const ClosedRound: React.FC<ClosedRoundProps> = ({ round }) => {
 
   // Find the maximum market cap for scaling circle sizes
   const maxCap = Math.max(
-    ...startupData.map(s => Math.max(s.pre_cap || 0, s.post_cap || 0))
+    ...startupData.map((s) => Math.max(s.pre_cap || 0, s.post_cap || 0)),
   );
 
   return (
     <div className="space-y-8">
       {/* Portfolio Summary */}
       <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
-        <h2 className="text-xl font-bold text-blue-400 mb-4">Portfolio Summary</h2>
+        <h2 className="text-xl font-bold text-blue-400 mb-4">
+          Portfolio Summary
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-gray-800 p-4 rounded-lg">
             <p className="text-sm text-gray-400">Post-Fund Value</p>
@@ -127,54 +133,68 @@ const ClosedRound: React.FC<ClosedRoundProps> = ({ round }) => {
 
       {/* Startup Performance Grid */}
       <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
-        <h2 className="text-xl font-bold text-blue-400 mb-6">Startup Performance</h2>
+        <h2 className="text-xl font-bold text-blue-400 mb-6">
+          Startup Performance
+        </h2>
         <div className="grid grid-cols-2 gap-8">
           {startupData.map((startup, index) => {
-            const investment = teamData[`s${index + 1}` as keyof TeamData] as number || 0;
-            const returnAmount = startup.post_cap && startup.pre_cap 
-              ? (investment * (startup.post_cap / startup.pre_cap)) - investment
-              : 0;
+            const investment =
+              (teamData[`s${index + 1}` as keyof TeamData] as number) || 0;
+            const returnAmount =
+              startup.post_cap && startup.pre_cap
+                ? investment * (startup.post_cap / startup.pre_cap) - investment
+                : 0;
             const isPositiveReturn = returnAmount >= 0;
-            
+
             return (
               <div key={startup.startup} className="bg-gray-800 p-6 rounded-lg">
                 <div className="flex flex-col items-center">
-                  <h3 className="text-lg font-bold mb-4">{startup.startup.toUpperCase()}</h3>
-                  
+                  <h3 className="text-lg font-bold mb-4">
+                    {startup.startup.toUpperCase()}
+                  </h3>
+
                   {/* Pre-cap/Post-cap Visualization */}
                   <div className="relative flex items-center justify-center mb-4">
                     {/* Pre-cap Circle */}
-                    <div 
+                    <div
                       className={`absolute border-2 border-blue-500 rounded-full flex items-center justify-center transition-all duration-500`}
                       style={{
                         width: '120px',
                         height: '120px',
                       }}
                     >
-                      <span className="text-xs text-gray-400">Pre: ${startup.pre_cap?.toLocaleString() || 'N/A'}</span>
+                      <span className="text-xs text-gray-400">
+                        Pre: ${startup.pre_cap?.toLocaleString() || 'N/A'}
+                      </span>
                     </div>
-                    
+
                     {/* Post-cap Circle */}
-                    <div 
+                    <div
                       className={`absolute rounded-full flex items-center justify-center transition-all duration-500 ${
-                        isPositiveReturn ? 'bg-green-900/50 border-2 border-green-500' : 'bg-red-900/50 border-2 border-red-500'
+                        isPositiveReturn
+                          ? 'bg-green-900/50 border-2 border-green-500'
+                          : 'bg-red-900/50 border-2 border-red-500'
                       }`}
                       style={{
-                        width: startup.post_cap && startup.pre_cap 
-                          ? `${Math.max(80, Math.min(200, (startup.post_cap / startup.pre_cap) * 200))}px`
-                          : '120px',
-                        height: startup.post_cap && startup.pre_cap 
-                          ? `${Math.max(80, Math.min(200, (startup.post_cap / startup.pre_cap) * 200))}px`
-                          : '120px',
+                        width:
+                          startup.post_cap && startup.pre_cap
+                            ? `${Math.max(80, Math.min(200, (startup.post_cap / startup.pre_cap) * 200))}px`
+                            : '120px',
+                        height:
+                          startup.post_cap && startup.pre_cap
+                            ? `${Math.max(80, Math.min(200, (startup.post_cap / startup.pre_cap) * 200))}px`
+                            : '120px',
                         transition: 'all 0.5s ease-in-out',
                       }}
                     >
                       <span className="text-xs">
-                        {startup.post_cap ? `$${startup.post_cap.toLocaleString()}` : 'N/A'}
+                        {startup.post_cap
+                          ? `$${startup.post_cap.toLocaleString()}`
+                          : 'N/A'}
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Performance Metrics */}
                   <div className="w-full mt-4 space-y-2">
                     <div className="flex justify-between">
@@ -183,18 +203,27 @@ const ClosedRound: React.FC<ClosedRoundProps> = ({ round }) => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-400">Yield:</span>
-                      <span className={isPositiveReturn ? 'text-green-400' : 'text-red-400'}>
+                      <span
+                        className={
+                          isPositiveReturn ? 'text-green-400' : 'text-red-400'
+                        }
+                      >
                         {startup.yield || '0.00%'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-400">Return:</span>
-                      <span className={isPositiveReturn ? 'text-green-400' : 'text-red-400'}>
-                        {isPositiveReturn ? '+' : ''}{returnAmount.toLocaleString(undefined, {
+                      <span
+                        className={
+                          isPositiveReturn ? 'text-green-400' : 'text-red-400'
+                        }
+                      >
+                        {isPositiveReturn ? '+' : ''}
+                        {returnAmount.toLocaleString(undefined, {
                           style: 'currency',
                           currency: 'USD',
                           minimumFractionDigits: 0,
-                          maximumFractionDigits: 0
+                          maximumFractionDigits: 0,
                         })}
                       </span>
                     </div>
@@ -205,15 +234,24 @@ const ClosedRound: React.FC<ClosedRoundProps> = ({ round }) => {
           })}
         </div>
       </div>
-      
+
       {/* Performance Summary */}
       <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
-        <h2 className="text-xl font-bold text-blue-400 mb-4">Performance Summary</h2>
+        <h2 className="text-xl font-bold text-blue-400 mb-4">
+          Performance Summary
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-800 p-4 rounded-lg">
             <p className="text-sm text-gray-400">Total Investment</p>
             <p className="text-2xl font-bold">
-              ${(teamData.s1 + teamData.s2 + teamData.s3 + teamData.s4).toLocaleString()}
+              $
+              {(
+                teamData.s1 +
+                teamData.s2 +
+                teamData.s3 +
+                teamData.s4 +
+                teamData.s5
+              ).toLocaleString()}
             </p>
           </div>
           <div className="bg-gray-800 p-4 rounded-lg">

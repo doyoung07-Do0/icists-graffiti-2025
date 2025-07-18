@@ -8,24 +8,22 @@ function TeamRow({
   onEdit,
   onSave,
 }: TeamRowProps) {
-  // Calculate remain based on pre_fund and sum of s1-s4
-  const remain = team.pre_fund - (team.s1 + team.s2 + team.s3 + team.s4);
+  // Calculate remain based on pre_fund and sum of s1-s5
+  const remain =
+    team.pre_fund - (team.s1 + team.s2 + team.s3 + team.s4 + team.s5);
 
   const handleInputChange = (field: keyof typeof team, value: string) => {
     // For number inputs, convert to number, but allow empty string for post_fund
-    const numValue = field === 'post_fund' && value === '' 
-      ? null 
-      : Number(value);
-    
+    const numValue =
+      field === 'post_fund' && value === '' ? null : Number(value);
+
     onInputChange(team.team, field as any, numValue);
   };
 
   return (
     <tr>
       <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-sm font-semibold text-white">
-          {team.team}
-        </span>
+        <span className="text-sm font-semibold text-white">{team.team}</span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         {isEditing ? (
@@ -40,7 +38,7 @@ function TeamRow({
           team.pre_fund
         )}
       </td>
-      {(['s1', 's2', 's3', 's4'] as const).map((field) => (
+      {(['s1', 's2', 's3', 's4', 's5'] as const).map((field) => (
         <td key={field} className="px-6 py-4 whitespace-nowrap">
           {isEditing ? (
             <input
@@ -69,7 +67,7 @@ function TeamRow({
             onChange={(e) => handleInputChange('post_fund', e.target.value)}
           />
         ) : (
-          team.post_fund ?? '—'
+          (team.post_fund ?? '—')
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">

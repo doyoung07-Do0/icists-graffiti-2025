@@ -7,6 +7,7 @@ export interface TeamData {
   s2: number;
   s3: number;
   s4: number;
+  s5: number;
   pre_fund: number;
   post_fund: number | null;
   submitted: boolean;
@@ -29,7 +30,11 @@ export interface TeamRowProps {
   team: TeamData;
   isEditing: boolean;
   onToggleSubmitted: (team: string, currentStatus: boolean) => void;
-  onInputChange: (team: string, field: keyof Omit<TeamData, 'team' | 'remain'>, value: any) => void;
+  onInputChange: (
+    team: string,
+    field: keyof Omit<TeamData, 'team' | 'remain'>,
+    value: any,
+  ) => void;
   onEdit: () => void;
   onSave: () => void;
 }
@@ -39,13 +44,17 @@ export interface TeamTableProps {
   isLoading: boolean;
   editingTeam: string | null;
   onToggleSubmitted: (team: string, currentStatus: boolean) => void;
-  onInputChange: (team: string, field: keyof Omit<TeamData, 'team' | 'remain'>, value: any) => void;
+  onInputChange: (
+    team: string,
+    field: keyof Omit<TeamData, 'team' | 'remain'>,
+    value: any,
+  ) => void;
   setEditingTeam: (team: string | null) => void;
   onSubmit: (team: string) => void;
 }
 
 export interface StartupData {
-  startup: 's1' | 's2' | 's3' | 's4';
+  startup: 's1' | 's2' | 's3' | 's4' | 's5';
   pre_cap: number | null;
   yield: number | null;
   post_cap: number | null;
@@ -56,6 +65,7 @@ export interface UpdateTeamData {
   s2?: number;
   s3?: number;
   s4?: number;
+  s5?: number;
   pre_fund?: number;
   post_fund?: number | null;
   submitted?: boolean;

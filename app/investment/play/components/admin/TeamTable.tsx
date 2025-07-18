@@ -50,6 +50,9 @@ const TeamTable = ({
               S4
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              S5
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Remain
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -82,7 +85,7 @@ const TeamTable = ({
         <tbody className="divide-y divide-gray-200">
           {isLoading ? (
             <tr>
-              <td colSpan={10} className="px-6 py-4 text-center">
+              <td colSpan={11} className="px-6 py-4 text-center">
                 Loading...
               </td>
             </tr>

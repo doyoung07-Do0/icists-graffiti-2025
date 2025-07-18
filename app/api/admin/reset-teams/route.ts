@@ -10,6 +10,7 @@ const generateTeamData = () => {
     s2: 0,
     s3: 0,
     s4: 0,
+    s5: 0,
     pre_fund: 1000,
     post_fund: null,
     submitted: false,

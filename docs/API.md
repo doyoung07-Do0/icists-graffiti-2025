@@ -5,6 +5,7 @@ This document outlines the API endpoints available for the Admin Dashboard.
 ## Round Status
 
 ### Get Round Status
+
 - **Endpoint**: `GET /api/admin/round-status`
 - **Description**: Get the status of all rounds (r1, r2, r3, r4)
 - **Response**:
@@ -23,6 +24,7 @@ This document outlines the API endpoints available for the Admin Dashboard.
 ## Teams
 
 ### Get Teams for Round
+
 - **Endpoint**: `GET /api/admin/teams/:round`
 - **Description**: Get all teams for a specific round
 - **Parameters**:
@@ -38,6 +40,7 @@ This document outlines the API endpoints available for the Admin Dashboard.
         "s2": 0,
         "s3": 0,
         "s4": 0,
+        "s5": 0,
         "pre_fund": 1000,
         "post_fund": null,
         "submitted": false
@@ -47,6 +50,7 @@ This document outlines the API endpoints available for the Admin Dashboard.
   ```
 
 ### Update Team Data
+
 - **Endpoint**: `POST /api/admin/teams/:round`
 - **Description**: Update team data or toggle submission status
 - **Parameters**:
@@ -89,6 +93,7 @@ This document outlines the API endpoints available for the Admin Dashboard.
 ## Reset Endpoints
 
 ### Reset Rounds Status
+
 - **Endpoint**: `POST /api/admin/reset-rounds`
 - **Description**: Reset all rounds status to 'locked'
 - **Response**:
@@ -100,6 +105,7 @@ This document outlines the API endpoints available for the Admin Dashboard.
   ```
 
 ### Reset Team Data
+
 - **Endpoint**: `POST /api/admin/reset-teams`
 - **Description**: Reset all team data for all rounds
 - **Response**:
@@ -122,6 +128,7 @@ All error responses follow this format:
 ```
 
 ### Common Error Status Codes
+
 - `400 Bad Request`: Invalid input or missing required fields
 - `404 Not Found`: Resource not found
 - `500 Internal Server Error`: Server-side error occurred
