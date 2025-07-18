@@ -752,9 +752,10 @@ const OpenRound: React.FC<OpenRoundProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
-      </div>
+      // <div className="flex items-center justify-center min-h-[60vh]">
+      //   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
+      // </div>
+      <div />
     );
   }
 
@@ -1041,6 +1042,7 @@ interface TeamDashboardProps {
 export default function TeamDashboard({ teamName }: TeamDashboardProps) {
   const [activeRound, setActiveRound] = useState<Round>('r1');
   const [isLoading, setIsLoading] = useState(true);
+  const [isTabLoading, setIsTabLoading] = useState(false); // Add tab loading state
   const [roundStatus, setRoundStatus] = useState<
     Record<Round, { status: 'locked' | 'open' | 'closed' }>
   >({
@@ -1317,6 +1319,14 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
     };
   }, [teamName, triggerRerender]);
 
+  // Handle round change with loading state
+  const handleRoundChange = useCallback((round: Round) => {
+    setIsTabLoading(true);
+    setActiveRound(round);
+    // Add a small delay to allow for smooth transition
+    setTimeout(() => setIsTabLoading(false), 100);
+  }, []);
+
   if (isLoading) {
     return <div />;
   }
@@ -1344,7 +1354,7 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
 
           <RoundTabs
             activeRound={activeRound}
-            onRoundChange={setActiveRound}
+            onRoundChange={handleRoundChange}
             roundStatus={roundStatus}
           />
         </div>
@@ -1354,29 +1364,50 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
             <LockedRound />
           ) : (
             <>
-              <OpenRound
-                key={`${activeRound}-${teamName}-${refetchTrigger}`}
-                round={activeRound}
-                isRoundClosed={currentRoundStatus === 'closed'}
-                teamName={teamName}
-                onPortfolioSubmitted={() =>
-                  setRefetchTrigger((prev) => prev + 1)
-                }
-              />
-
-              {/* Team's Own Cumulative Investment Component - Only show in open rounds */}
-              {currentRoundStatus === 'open' && (
-                <CumulativeInvestmentDisplay
-                  teamName={teamName}
-                  currentRound={activeRound}
-                  refetchTrigger={refetchTrigger}
-                />
+              {/* Loading Overlay for Tab Switches */}
+              {isTabLoading && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
+                </div>
               )}
 
-              {/* Cumulative Investment Ranking Component - Only show in closed rounds */}
-              {currentRoundStatus === 'closed' && (
-                <CumulativeRankingDisplay currentRound={activeRound} />
-              )}
+              {/* Fixed Layout Container */}
+              <div className="grid grid-cols-1 gap-6">
+                {/* Main Content Area - Always present */}
+                <div className="order-1">
+                  <OpenRound
+                    key={`${activeRound}-${teamName}`} // Remove refetchTrigger from key
+                    round={activeRound}
+                    isRoundClosed={currentRoundStatus === 'closed'}
+                    teamName={teamName}
+                    onPortfolioSubmitted={() =>
+                      setRefetchTrigger((prev) => prev + 1)
+                    }
+                  />
+                </div>
+
+                {/* Team's Own Cumulative Investment Component - Fixed position */}
+                <div className="order-2">
+                  {currentRoundStatus === 'open' && (
+                    <CumulativeInvestmentDisplay
+                      key={`cumulative-${activeRound}-${teamName}`} // Add stable key
+                      teamName={teamName}
+                      currentRound={activeRound}
+                      refetchTrigger={refetchTrigger}
+                    />
+                  )}
+                </div>
+
+                {/* Cumulative Investment Ranking Component - Fixed position */}
+                <div className="order-3">
+                  {currentRoundStatus === 'closed' && (
+                    <CumulativeRankingDisplay
+                      key={`ranking-${activeRound}`} // Add stable key
+                      currentRound={activeRound}
+                    />
+                  )}
+                </div>
+              </div>
             </>
           )}
         </div>
