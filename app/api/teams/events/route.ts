@@ -8,6 +8,16 @@ export async function GET(request: NextRequest) {
 
   // Set up SSE response
   const encoder = new TextEncoder();
+
+  // Create cleanup function outside of ReadableStream
+  let timeout: NodeJS.Timeout;
+  let heartbeat: NodeJS.Timeout;
+
+  const cleanup = () => {
+    if (timeout) clearTimeout(timeout);
+    if (heartbeat) clearInterval(heartbeat);
+  };
+
   const stream = new ReadableStream({
     start(controller) {
       // Send initial connection message
@@ -18,7 +28,7 @@ export async function GET(request: NextRequest) {
       );
 
       // Set up timeout to prevent Vercel function timeout (4.5 minutes to be safe)
-      const timeout = setTimeout(
+      timeout = setTimeout(
         () => {
           controller.enqueue(
             encoder.encode(
@@ -31,7 +41,7 @@ export async function GET(request: NextRequest) {
       ); // 4.5 minutes
 
       // Set up heartbeat every 30 seconds
-      const heartbeat = setInterval(() => {
+      heartbeat = setInterval(() => {
         controller.enqueue(
           encoder.encode(
             `data: {"type":"ping","timestamp":"${new Date().toISOString()}"}\n\n`,
@@ -39,23 +49,11 @@ export async function GET(request: NextRequest) {
         );
       }, 30000);
 
-      // Cleanup function
-      const cleanup = () => {
-        clearTimeout(timeout);
-        clearInterval(heartbeat);
-      };
-
       // Handle client disconnect
       request.signal.addEventListener('abort', () => {
         cleanup();
         controller.close();
       });
-
-      // Handle stream close
-      stream.cancel = async () => {
-        cleanup();
-        controller.close();
-      };
     },
   });
 
