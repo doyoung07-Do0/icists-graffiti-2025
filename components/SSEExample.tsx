@@ -9,29 +9,35 @@ export default function SSEExample() {
   >([]);
   const [messageCount, setMessageCount] = useState(0);
 
-  // Connect to SSE endpoint
-  const { isConnected, error, reconnect } = useSSE({
-    team: 'example',
-    round: 'r1',
-    onMessage: (data) => {
-      // Handle incoming messages
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: messageCount + 1,
-          text: JSON.stringify(data, null, 2),
-          timestamp: new Date().toLocaleTimeString(),
-        },
-      ]);
-      setMessageCount((prev) => prev + 1);
+  // Connect to SSE endpoint with new interface
+  const { isConnected, error, connect } = useSSE(
+    '/api/teams/events?team=example&round=r1',
+    {
+      onMessage: (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          // Handle incoming messages
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: messageCount + 1,
+              text: JSON.stringify(data, null, 2),
+              timestamp: new Date().toLocaleTimeString(),
+            },
+          ]);
+          setMessageCount((prev) => prev + 1);
+        } catch (err) {
+          console.error('Error parsing SSE message:', err);
+        }
+      },
+      onError: (error) => {
+        console.error('SSE connection error:', error);
+      },
+      onOpen: () => {
+        console.log('SSE connection established');
+      },
     },
-    onError: (error) => {
-      console.error('SSE connection error:', error);
-    },
-    onOpen: () => {
-      console.log('SSE connection established');
-    },
-  });
+  );
 
   const clearMessages = () => {
     setMessages([]);
@@ -46,7 +52,7 @@ export default function SSEExample() {
       <div className="flex items-center space-x-4 mb-4">
         <div className="flex items-center space-x-2">
           <div
-            className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+            className={`size-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
           />
           <span className="text-gray-300">
             {isConnected ? 'Connected' : 'Disconnected'}
@@ -54,13 +60,15 @@ export default function SSEExample() {
         </div>
 
         <button
-          onClick={reconnect}
+          type="button"
+          onClick={connect}
           className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Reconnect
         </button>
 
         <button
+          type="button"
           onClick={clearMessages}
           className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
         >
