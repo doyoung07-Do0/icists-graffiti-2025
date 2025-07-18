@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Round } from './admin/types';
+import type { Round } from './admin/types';
 // DISABLE SSE FOR DEBUGGING INFINITE REQUEST BUG
 // import { useRoundStatusUpdates } from '@/hooks/useRoundStatusUpdates';
 import ClosedRound from './ClosedRound';
@@ -35,6 +35,7 @@ const RoundTabs = ({
     <div className="flex border-b border-gray-700 mb-6">
       {rounds.map((round) => (
         <button
+          type="button"
           key={round}
           onClick={() => onRoundChange(round)}
           className={`px-6 py-2 font-medium flex items-center space-x-2 ${
@@ -106,7 +107,6 @@ const OpenRound: React.FC<OpenRoundProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   // Calculate remaining funds and round return
   const remain =
@@ -173,13 +173,21 @@ const OpenRound: React.FC<OpenRoundProps> = ({
   ) => {
     if (!teamData) return;
 
-    // Convert input to number and ensure it's not negative
-    const value = Math.max(0, Number(e.target.value) || 0);
+    // Only allow integers
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    const numValue = Math.max(0, Number(value) || 0);
 
     setTeamData({
       ...teamData,
-      [startup]: value,
+      [startup]: numValue,
     });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Prevent form submission on Enter key
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -204,7 +212,6 @@ const OpenRound: React.FC<OpenRoundProps> = ({
 
     setIsSubmitting(true);
     setError(null);
-    setSuccess(null);
 
     try {
       const response = await fetch(`/api/teams/${round}/${teamData.team}`, {
@@ -225,7 +232,6 @@ const OpenRound: React.FC<OpenRoundProps> = ({
       if (result.success) {
         // Update local state to reflect the submission
         setTeamData((prev) => (prev ? { ...prev, submitted: true } : null));
-        setSuccess('Portfolio submitted successfully!');
       } else {
         throw new Error(result.error || 'Failed to submit portfolio');
       }
@@ -291,7 +297,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
           <div className="grid grid-cols-2 gap-4">
             {startupData.map((startup, index) => {
               const isPositive =
-                startup.yield && parseFloat(startup.yield) >= 0;
+                startup.yield && Number.parseFloat(startup.yield) >= 0;
               return (
                 <div
                   key={startup.startup}
@@ -339,7 +345,10 @@ const OpenRound: React.FC<OpenRoundProps> = ({
                       <div
                         className={`text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}
                       >
-                        {(parseFloat(startup.yield || '0') * 100).toFixed(2)}%
+                        {(
+                          Number.parseFloat(startup.yield || '0') * 100
+                        ).toFixed(2)}
+                        %
                       </div>
                     </div>
                   </div>
@@ -373,9 +382,25 @@ const OpenRound: React.FC<OpenRoundProps> = ({
       )}
 
       {/* Right Panel - Portfolio Submission */}
-      <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
-        <h2 className="text-xl font-bold text-blue-400 mb-6">
-          Portfolio Allocation
+      <div
+        className="p-6 rounded-lg border border-gray-700"
+        style={{
+          backgroundColor: '#0a0a0a',
+        }}
+      >
+        <h2
+          className="text-xl font-bold mb-6"
+          style={{
+            background:
+              'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            display: 'inline-block',
+          }}
+        >
+          포트폴리오 제출
         </h2>
 
         {error && (
@@ -384,75 +409,119 @@ const OpenRound: React.FC<OpenRoundProps> = ({
           </div>
         )}
 
-        {success && (
-          <div className="bg-green-900/50 border border-green-700 text-green-200 px-4 py-3 rounded mb-4">
-            {success}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            {(['s1', 's2', 's3', 's4', 's5'] as const).map((startup) => (
-              <div key={startup} className="flex items-center">
-                <label className="w-16 font-medium">
-                  {startup.toUpperCase()}
-                </label>
-                <div className="relative flex-1">
-                  <span className="absolute left-3 top-2">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max={teamData.pre_fund || undefined}
-                    value={teamData[startup]}
-                    onChange={(e) => handleInputChange(e, startup)}
-                    disabled={teamData.submitted}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-md pl-8 pr-4 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
+          {/* Fund Summary Card */}
+          <div
+            className="rounded-lg p-4 mb-6"
+            style={{
+              backgroundColor: '#111111',
+            }}
+          >
+            <div className="flex justify-between items-center">
+              <div className="text-left">
+                <div className="text-sm text-gray-400">Total Fund</div>
+                <div className="text-lg font-bold text-white">
+                  ${teamData.pre_fund?.toLocaleString() || '0'}
                 </div>
               </div>
-            ))}
-
-            <div className="pt-4 border-t border-gray-700 mt-6">
-              <div className="flex justify-between items-center mb-4">
-                <span className="font-medium">Remaining:</span>
-                <span
+              <div className="text-right">
+                <div className="text-sm text-gray-400">Remaining</div>
+                <div
                   className={`text-lg font-bold ${remain < 0 ? 'text-red-400' : 'text-green-400'}`}
                 >
                   ${remain.toLocaleString()}
-                </span>
+                </div>
               </div>
-
-              <button
-                type="submit"
-                disabled={isRoundClosed || teamData.submitted || isSubmitting}
-                className={`px-4 py-2 rounded-md text-white font-medium transition-colors ${
-                  isRoundClosed || teamData.submitted
-                    ? 'bg-gray-700 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
-                {isRoundClosed
-                  ? 'Round Closed'
-                  : teamData.submitted
-                    ? 'Submitted'
-                    : 'Submit Portfolio'}
-              </button>
-
-              {/* Debug info - can be removed in production */}
-              <div className="mt-2 text-xs text-gray-500">
-                Debug: Submitted={teamData.submitted ? 'true' : 'false'},
-                isRoundClosed={isRoundClosed ? 'true' : 'false'}, remain=
-                {remain}
-              </div>
-
-              {teamData.submitted && (
-                <p className="text-sm text-gray-400 mt-2 text-center">
-                  Your portfolio has been submitted. You cannot make further
-                  changes.
-                </p>
-              )}
             </div>
           </div>
+
+          {/* Startup Investment Cards */}
+          <div className="space-y-3 mb-6">
+            {(['s1', 's2', 's3', 's4', 's5'] as const).map((startup) => (
+              <div
+                key={startup}
+                className="rounded-lg p-4"
+                style={{
+                  backgroundColor: '#111111',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{
+                        background: 'linear-gradient(135deg, #D0D7B1, #4BDE80)',
+                        boxShadow: '0 0 10px rgba(75, 222, 128, 0.3)',
+                      }}
+                    >
+                      <span className="text-black font-bold text-sm">
+                        {startup.toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="font-medium text-white">
+                      Startup {startup.slice(1)}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                      $
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      min="0"
+                      max={teamData.pre_fund || undefined}
+                      value={teamData[startup]}
+                      onChange={(e) => handleInputChange(e, startup)}
+                      onKeyDown={handleKeyDown}
+                      disabled={teamData.submitted}
+                      className="w-32 border border-gray-600 rounded-md pl-8 pr-4 py-2 text-white text-right disabled:opacity-50 disabled:cursor-not-allowed focus:border-green-500 focus:outline-none"
+                      style={{
+                        backgroundColor: '#1a1a1a',
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={
+              isRoundClosed || teamData.submitted || isSubmitting || remain < 0
+            }
+            className={`w-full py-3 rounded-lg font-medium transition-all duration-200 ${
+              isRoundClosed || teamData.submitted || remain < 0
+                ? 'cursor-not-allowed'
+                : 'active:scale-95'
+            }`}
+            style={{
+              background:
+                isRoundClosed || teamData.submitted || remain < 0
+                  ? '#374151'
+                  : 'linear-gradient(to right, #1f4d2e, #2d5a3d)',
+              border: 'none',
+              outline: 'none',
+              color: 'white',
+            }}
+          >
+            {isSubmitting ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white" />
+                <span>제출 중...</span>
+              </div>
+            ) : teamData.submitted ? (
+              '제출 완료'
+            ) : remain < 0 ? (
+              '잔액 부족'
+            ) : (
+              '포트폴리오 제출'
+            )}
+          </button>
         </form>
       </div>
     </div>
@@ -743,19 +812,7 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
   }, [teamName, triggerRerender]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white p-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-6">
-            Team Dashboard
-          </h1>
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-800 rounded w-1/4 mb-6"></div>
-            <div className="h-64 bg-gray-800 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return <div />;
   }
 
   const currentRoundStatus = roundStatus[activeRound].status;
@@ -763,7 +820,18 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent mb-6">
+        <h1
+          className="text-3xl font-bold mb-6"
+          style={{
+            background:
+              'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            display: 'inline-block',
+          }}
+        >
           Team Dashboard
         </h1>
 
