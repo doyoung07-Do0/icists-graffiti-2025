@@ -120,50 +120,51 @@ const OpenRound: React.FC<OpenRoundProps> = ({
       : 0;
 
   // Fetch team data
-  useEffect(() => {
-    const fetchTeamData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+  const fetchTeamData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        // Use the teamName from props to fetch the correct team's data
-        const teamResponse = await fetch(`/api/teams/${round}/${teamName}`);
-        const teamResult = await teamResponse.json();
+      // Use the teamName from props to fetch the correct team's data
+      const teamResponse = await fetch(`/api/teams/${round}/${teamName}`);
+      const teamResult = await teamResponse.json();
 
-        if (teamResult.success) {
-          setTeamData(teamResult.data);
+      if (teamResult.success) {
+        setTeamData(teamResult.data);
 
-          // If round is closed, fetch startup data
-          if (isRoundClosed) {
-            const startupResponse = await fetch(`/api/startup/${round}`);
-            const startupResult = await startupResponse.json();
+        // If round is closed, fetch startup data
+        if (isRoundClosed) {
+          const startupResponse = await fetch(`/api/startup/${round}`);
+          const startupResult = await startupResponse.json();
 
-            if (startupResult.success) {
-              // Sort startup data by startup name (s1, s2, s3, s4)
-              const sortedData = startupResult.data.sort(
-                (a: StartupData, b: StartupData) =>
-                  a.startup.localeCompare(b.startup),
-              );
-              setStartupData(sortedData);
-            } else {
-              throw new Error(
-                startupResult.error || 'Failed to fetch startup data',
-              );
-            }
+          if (startupResult.success) {
+            // Sort startup data by startup name (s1, s2, s3, s4)
+            const sortedData = startupResult.data.sort(
+              (a: StartupData, b: StartupData) =>
+                a.startup.localeCompare(b.startup),
+            );
+            setStartupData(sortedData);
+          } else {
+            throw new Error(
+              startupResult.error || 'Failed to fetch startup data',
+            );
           }
-        } else {
-          throw new Error(teamResult.error || 'Failed to load team data');
         }
-      } catch (err) {
-        setError('Failed to load team data');
-        console.error('Error fetching team data:', err);
-      } finally {
-        setIsLoading(false);
+      } else {
+        throw new Error(teamResult.error || 'Failed to load team data');
       }
-    };
+    } catch (err) {
+      setError('Failed to load team data');
+      console.error('Error fetching team data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [round, teamName, isRoundClosed]);
 
+  // Initial fetch
+  useEffect(() => {
     fetchTeamData();
-  }, [round]);
+  }, [fetchTeamData]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -571,6 +572,13 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
     forceRerender({});
   }, []);
 
+  // Function to trigger refetch of team data
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const triggerRefetch = useCallback(() => {
+    console.log('Triggering refetch of team data');
+    setRefetchTrigger((prev) => prev + 1);
+  }, []);
+
   // Type guard to check if a string is a valid Round
   const isRound = (round: string): round is Round => {
     return ['r1', 'r2', 'r3', 'r4'].includes(round);
@@ -683,6 +691,25 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
         // Force a re-render to update the UI
         triggerRerender();
       }
+
+      // Handle submission toggle updates
+      if (data.type === 'submission_toggled') {
+        console.log(
+          `🔄 Submission status toggled: ${data.team} -> ${data.submitted ? 'submitted' : 'not submitted'}`,
+        );
+
+        // Force a re-render to update the UI
+        triggerRerender();
+
+        // Also refetch team data to get the updated submitted status
+        // This will update the OpenRound component's teamData state
+        if (data.team === teamName) {
+          console.log(
+            `🔄 Refetching team data for ${teamName} after submission toggle`,
+          );
+          triggerRefetch();
+        }
+      }
     };
 
     teamSSE.onerror = (error) => {
@@ -743,6 +770,7 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
             <LockedRound />
           ) : (
             <OpenRound
+              key={`${activeRound}-${teamName}-${refetchTrigger}`}
               round={activeRound}
               isRoundClosed={currentRoundStatus === 'closed'}
               teamName={teamName}

@@ -407,7 +407,12 @@ export default function AdminDashboard() {
           prev.map((team) => ({ ...team, submitted: true })),
         );
         setAllTeamsSubmitted(true);
-        setResetStatus('Successfully marked all teams as submitted.');
+        setResetStatus(
+          `Successfully marked all teams as submitted. ${result.data.successfulUpdates}/${result.data.totalTeams} teams updated.`,
+        );
+
+        // Refresh team data to ensure UI is in sync
+        await fetchTeamData();
       } else {
         throw new Error(
           result.error || 'Failed to mark all teams as submitted',
