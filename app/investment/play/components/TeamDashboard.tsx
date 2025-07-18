@@ -27,12 +27,12 @@ const RoundTabs = ({
 
   const statusColors = {
     locked: 'bg-gray-100 text-gray-700',
-    open: 'bg-blue-100 text-blue-700',
+    open: 'bg-green-100 text-green-700',
     closed: 'bg-green-100 text-green-700',
   };
 
   return (
-    <div className="flex border-b border-gray-700 mb-6">
+    <div className="flex border-b border-gray-700">
       {rounds.map((round) => (
         <button
           type="button"
@@ -40,7 +40,7 @@ const RoundTabs = ({
           onClick={() => onRoundChange(round)}
           className={`px-6 py-2 font-medium flex items-center space-x-2 ${
             activeRound === round
-              ? 'border-b-2 border-blue-500 text-blue-400'
+              ? 'border-b-2 border-green-500 text-green-400'
               : 'text-gray-400 hover:text-white'
           }`}
         >
@@ -247,7 +247,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
       </div>
     );
   }
@@ -820,26 +820,28 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-7xl mx-auto">
-        <h1
-          className="text-3xl font-bold mb-6"
-          style={{
-            background:
-              'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            color: 'transparent',
-            display: 'inline-block',
-          }}
-        >
-          Team Dashboard
-        </h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1
+            className="text-3xl font-bold"
+            style={{
+              background:
+                'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              color: 'transparent',
+              display: 'inline-block',
+            }}
+          >
+            Team Dashboard
+          </h1>
 
-        <RoundTabs
-          activeRound={activeRound}
-          onRoundChange={setActiveRound}
-          roundStatus={roundStatus}
-        />
+          <RoundTabs
+            activeRound={activeRound}
+            onRoundChange={setActiveRound}
+            roundStatus={roundStatus}
+          />
+        </div>
 
         <div className="space-y-6">
           {roundStatus.r4.status === 'closed' && (
