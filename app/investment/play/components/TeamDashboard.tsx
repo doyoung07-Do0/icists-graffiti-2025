@@ -710,6 +710,22 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
           triggerRefetch();
         }
       }
+
+      // Handle team data reset
+      if (data.type === 'team_data_reset') {
+        console.log(
+          `🔄 Team data reset received for ${data.team} in round ${data.round}`,
+        );
+
+        // Force a complete re-render of the entire dashboard
+        triggerRerender();
+
+        // Also refetch all data to get the fresh state
+        if (data.team === teamName) {
+          console.log(`🔄 Refetching all data for ${teamName} after reset`);
+          triggerRefetch();
+        }
+      }
     };
 
     teamSSE.onerror = (error) => {
