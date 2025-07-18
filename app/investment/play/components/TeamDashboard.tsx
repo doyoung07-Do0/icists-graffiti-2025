@@ -1040,7 +1040,16 @@ interface TeamDashboardProps {
 }
 
 export default function TeamDashboard({ teamName }: TeamDashboardProps) {
-  const [activeRound, setActiveRound] = useState<Round>('r1');
+  const [activeRound, setActiveRound] = useState<Round>(() => {
+    // Try to restore the active round from sessionStorage on initial load
+    if (typeof window !== 'undefined') {
+      const savedRound = sessionStorage.getItem('active_round');
+      if (savedRound && ['r1', 'r2', 'r3', 'r4'].includes(savedRound)) {
+        return savedRound as Round;
+      }
+    }
+    return 'r1'; // Default fallback
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isTabLoading, setIsTabLoading] = useState(false); // Add tab loading state
   const [roundStatus, setRoundStatus] = useState<
@@ -1319,10 +1328,16 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
     };
   }, [teamName, triggerRerender]);
 
-  // Handle round change with loading state
+  // Handle round change with loading state and persistence
   const handleRoundChange = useCallback((round: Round) => {
     setIsTabLoading(true);
     setActiveRound(round);
+
+    // Save the active round to sessionStorage
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('active_round', round);
+    }
+
     // Add a small delay to allow for smooth transition
     setTimeout(() => setIsTabLoading(false), 100);
   }, []);
