@@ -1153,25 +1153,81 @@ const OpenRound: React.FC<OpenRoundProps> = ({
           </div>
         </div>
       ) : (
-        <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
-          <h2 className="text-xl font-bold text-blue-400 mb-4">Hint</h2>
-          <div className="prose prose-invert">
+        <div
+          className="p-6 rounded-lg border border-gray-700"
+          style={{ backgroundColor: '#0a0a0a' }}
+        >
+          <h2
+            className="text-xl font-bold mb-4 text-center"
+            style={{
+              background:
+                'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              color: 'transparent',
+              display: 'inline-block',
+            }}
+          >
+            게임 규칙
+          </h2>
+          <div className="text-gray-300 space-y-3 text-sm leading-relaxed">
             <p>
-              Allocate your investment across the five startups (S1, S2, S3, S4,
-              S5) based on your analysis of their potential.
+              "포트폴리오 제출" 버튼을 클릭하면, "나의 누적 투자금"에 이번
+              라운드 투자금이 누적됩니다.
             </p>
-            <ul className="list-disc pl-5 mt-2 space-y-2">
-              <li>Each startup has different risk and return profiles</li>
-              <li>Diversify your portfolio to manage risk</li>
-              <li>Consider the current market conditions</li>
-              <li>You cannot invest more than your available funds</li>
-            </ul>
-            <p className="mt-4 font-medium">
-              Available Funds: $
-              {teamData?.pre_fund !== null
-                ? teamData.pre_fund.toLocaleString()
-                : 'Loading...'}
-            </p>
+
+            <div
+              className="mt-4 p-4 rounded-lg"
+              style={{ backgroundColor: '#111' }}
+            >
+              {' '}
+              <h3 className="font-semibold text-white mb-2 text-lg">
+                각 라운드 종료 후
+              </h3>
+              <p>
+                모든 팀들의 포트폴리오가 제출 완료되면 라운드가 종료됩니다.
+                라운드 종료 후 Total fund의 수익률이 결정되고, 각 스타트업에
+                모인 투자금과 각 팀의 Total fund 및 누적 투자금 정보들이 모두
+                공개됩니다.
+              </p>
+            </div>
+
+            <div
+              className="mt-4 p-4 rounded-lg"
+              style={{ backgroundColor: '#111' }}
+            >
+              <h3 className="font-semibold text-white mb-2 text-lg">
+                모든 라운드 종료 후
+              </h3>
+              <p>
+                최종 Total fund가 많은 팀 순으로 스타트업과 매칭되며, 이때 본인
+                팀은 자리가 남은 스타트업 중 팀의 "누적 투자금"이 가장 큰 곳과
+                매칭됩니다. (한 스타트업 당 3팀이 배정됩니다.)
+              </p>
+            </div>
+
+            <div
+              className="mt-4 p-4 rounded-lg"
+              style={{ backgroundColor: '#111' }}
+            >
+              <h3 className="font-semibold text-white mb-2 text-lg">
+                Total fund 운용 전략
+              </h3>
+              <p>
+                각 스타트업은 15개의 팀으로 부터 모인 자본(라운드 별)을 바탕으로
+                수익률이 결정됩니다. 규모가 작을수록 high risk, high
+                return입니다(기대 수익률 자체는 높지만 표준 편차가 큼). 순위를
+                높이기 위한 도박이 필요할 때 비인기 스타트업에 투자해보세요!
+              </p>
+
+              <h3 className="font-semibold text-white mb-2 mt-4">
+                수익률 공식(TODO)
+              </h3>
+              <p className="text-gray-400">mean = </p>
+              <p className="text-gray-400">std_dev = </p>
+              <p className="text-gray-400">N(mean, sigma²)</p>
+            </div>
           </div>
         </div>
       )}
