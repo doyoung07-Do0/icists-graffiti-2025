@@ -9,13 +9,77 @@ export const sseClients = new Set<{
   connectedAt: Date;
 }>();
 
+// Track global intervals for cleanup
+let cleanupInterval: NodeJS.Timeout | null = null;
+let statsInterval: NodeJS.Timeout | null = null;
+
+// Connection limits to prevent resource exhaustion
+const MAX_CONNECTIONS = 100;
+const MAX_CONNECTIONS_PER_TEAM = 20;
+
+// Cleanup function for global intervals
+export function cleanupGlobalIntervals() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+  if (statsInterval) {
+    clearInterval(statsInterval);
+    statsInterval = null;
+  }
+}
+
+// Check if we can accept new connections
+export function canAcceptConnection(team: string): boolean {
+  const stats = getConnectionStats();
+
+  // Check total connection limit
+  if (stats.totalConnections >= MAX_CONNECTIONS) {
+    console.warn(
+      `Connection limit reached: ${stats.totalConnections}/${MAX_CONNECTIONS}`,
+    );
+    return false;
+  }
+
+  // Check per-team connection limit
+  const teamConnections = stats.connectionsByTeam[team] || 0;
+  if (teamConnections >= MAX_CONNECTIONS_PER_TEAM) {
+    console.warn(
+      `Team connection limit reached for ${team}: ${teamConnections}/${MAX_CONNECTIONS_PER_TEAM}`,
+    );
+    return false;
+  }
+
+  return true;
+}
+
+// Get memory usage info (if available)
+export function getMemoryInfo() {
+  if (typeof process !== 'undefined' && process.memoryUsage) {
+    const memUsage = process.memoryUsage();
+    return {
+      rss: Math.round(memUsage.rss / 1024 / 1024), // MB
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024), // MB
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024), // MB
+    };
+  }
+  return null;
+}
+
 // Log connection statistics periodically
 export function logConnectionStats() {
   const now = new Date().toISOString();
   const stats = getConnectionStats();
+  const memoryInfo = getMemoryInfo();
 
   console.log(`[${now}] 🔗 SSE Connection Stats:`);
   console.log(`  📊 Total Connections: ${stats.totalConnections}`);
+
+  if (memoryInfo) {
+    console.log(
+      `  💾 Memory Usage: RSS: ${memoryInfo.rss}MB, Heap: ${memoryInfo.heapUsed}/${memoryInfo.heapTotal}MB`,
+    );
+  }
 
   if (stats.totalConnections > 0) {
     console.log(`  👥 Connections by Team:`);
@@ -287,6 +351,58 @@ export function getConnectionStats() {
   };
 }
 
+// Emergency cleanup function for critical memory situations
+export function emergencyCleanup(): number {
+  const now = new Date();
+  const maxAge = 2 * 60 * 1000; // 2 minutes
+  const clientsToRemove: string[] = [];
+  let removedCount = 0;
+
+  console.warn(`[${now.toISOString()}] 🚨 Emergency cleanup triggered`);
+
+  // Remove all connections older than 2 minutes
+  sseClients.forEach((client) => {
+    const age = now.getTime() - client.connectedAt.getTime();
+    if (age > maxAge) {
+      clientsToRemove.push(client.id);
+    }
+  });
+
+  // Force close all connections if memory usage is critical
+  const memoryInfo = getMemoryInfo();
+  if (memoryInfo && memoryInfo.heapUsed > 500) {
+    // 500MB threshold
+    console.warn(
+      `[${now.toISOString()}] 🚨 Critical memory usage (${memoryInfo.heapUsed}MB), forcing cleanup of all connections`,
+    );
+    sseClients.forEach((client) => {
+      clientsToRemove.push(client.id);
+    });
+  }
+
+  // Clean up connections
+  clientsToRemove.forEach((id) => {
+    const client = Array.from(sseClients).find((c) => c.id === id);
+    if (client) {
+      try {
+        client.controller.close();
+      } catch (e) {
+        console.error(
+          'Error closing client connection during emergency cleanup:',
+          e,
+        );
+      }
+      sseClients.delete(client);
+      removedCount++;
+    }
+  });
+
+  console.warn(
+    `[${now.toISOString()}] 🚨 Emergency cleanup completed: removed ${removedCount} connections`,
+  );
+  return removedCount;
+}
+
 // Clean up dead connections (call this periodically)
 export function cleanupDeadConnections(maxAgeMinutes = 5): number {
   const now = new Date();
@@ -315,12 +431,19 @@ export function cleanupDeadConnections(maxAgeMinutes = 5): number {
   return clientsToRemove.length;
 }
 
-// Set up periodic cleanup (every 2 minutes)
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const removed = cleanupDeadConnections(5);
-    if (removed > 0) {
-      console.log(`Cleaned up ${removed} dead SSE connections`);
+// Set up periodic cleanup (every 2 minutes) - with proper cleanup
+if (typeof setInterval !== 'undefined' && !cleanupInterval) {
+  cleanupInterval = setInterval(() => {
+    // Check memory usage and trigger emergency cleanup if needed
+    const memoryInfo = getMemoryInfo();
+    if (memoryInfo && memoryInfo.heapUsed > 400) {
+      // 400MB threshold
+      emergencyCleanup();
+    } else {
+      const removed = cleanupDeadConnections(5);
+      if (removed > 0) {
+        console.log(`Cleaned up ${removed} dead SSE connections`);
+      }
     }
 
     // Send ping to keep connections alive
@@ -334,9 +457,9 @@ if (typeof setInterval !== 'undefined') {
   }, 120000); // Every 2 minutes
 }
 
-// Set up periodic connection logging (every 30 seconds)
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
+// Set up periodic connection logging (every 30 seconds) - with proper cleanup
+if (typeof setInterval !== 'undefined' && !statsInterval) {
+  statsInterval = setInterval(() => {
     logConnectionStats();
   }, 30000); // Every 30 seconds
 }
