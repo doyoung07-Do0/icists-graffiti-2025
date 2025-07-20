@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Round } from './admin/types';
 // DISABLE SSE FOR DEBUGGING INFINITE REQUEST BUG
 // import { useRoundStatusUpdates } from '@/hooks/useRoundStatusUpdates';
-import ClosedRound from './ClosedRound';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 
@@ -117,6 +116,7 @@ interface TeamRankingData {
 
 interface CumulativeRankingDisplayProps {
   currentRound: Round;
+  teamName: string;
 }
 
 interface CumulativeInvestmentDisplayProps {
@@ -134,6 +134,7 @@ interface StartupData {
 
 const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
   currentRound,
+  teamName,
 }) => {
   const [rankingData, setRankingData] = useState<TeamRankingData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -297,28 +298,38 @@ const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-700">
-              <th className="text-center py-3 px-2 font-medium text-gray-300">
+              <th className="text-center py-3 px-2 font-medium text-white">
                 Rank
               </th>
-              <th className="text-left py-3 px-4 font-medium text-gray-300">
+              <th className="text-left py-3 px-4 font-medium text-white">
                 team
               </th>
-              <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s1
+              <th className="text-center py-3 px-2 font-bold text-white">
+                배럴아이
               </th>
-              <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s2
+              <th className="text-center py-3 px-2 font-bold text-white">
+                일리아스
               </th>
-              <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s3
+              <th className="text-center py-3 px-2 font-bold text-white">
+                북엔드
               </th>
-              <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s4
+              <th className="text-center py-3 px-2 font-bold text-white">
+                라스커
               </th>
-              <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s5
+              <th className="text-center py-3 px-2 font-bold text-white">
+                뉴톤
               </th>
-              <th className="text-center py-3 px-4 font-medium text-gray-300">
+              <th
+                className="text-center py-3 px-4 font-bold text-lg"
+                style={{
+                  background:
+                    'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                }}
+              >
                 Total Fund
               </th>
             </tr>
@@ -327,30 +338,183 @@ const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
             {rankingData.map((team) => (
               <tr
                 key={team.team}
-                className="border-b border-gray-800 hover:bg-gray-800/50"
+                className={`border-b border-gray-800 hover:bg-gray-800/50 ${
+                  team.team === teamName
+                    ? 'bg-green-900/30 border-l-4 border-l-green-500'
+                    : ''
+                }`}
               >
-                <td className="text-center py-3 px-2 font-bold text-white">
-                  {team.rank}
+                <td className="text-center py-3 px-2 font-bold">
+                  <span
+                    className={`${
+                      team.rank <= 3
+                        ? 'text-gray-300'
+                        : team.rank <= 6
+                          ? 'text-gray-400'
+                          : team.rank <= 9
+                            ? 'text-gray-500'
+                            : team.rank <= 12
+                              ? 'text-gray-600'
+                              : 'text-gray-700'
+                    }`}
+                  >
+                    {team.rank}
+                  </span>
                 </td>
-                <td className="py-3 px-4 font-medium text-white">
-                  {team.team}
+                <td className="py-3 px-4 font-medium">
+                  <span
+                    className={
+                      team.team === teamName ? 'text-white' : 'text-gray-400'
+                    }
+                  >
+                    {team.team}
+                  </span>
                 </td>
                 <td className="text-center py-3 px-2 text-white">
-                  {team.s1.toLocaleString()}
+                  {(() => {
+                    const values = [
+                      team.s1,
+                      team.s2,
+                      team.s3,
+                      team.s4,
+                      team.s5,
+                    ];
+                    const maxValue = Math.max(...values);
+                    const minValue = Math.min(...values);
+                    const intensity =
+                      maxValue === minValue
+                        ? 0
+                        : (team.s1 - minValue) / (maxValue - minValue);
+                    const bgOpacity = 0.05 + intensity * 0.7;
+                    return (
+                      <span
+                        className="px-2 py-1 rounded"
+                        style={{
+                          backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                        }}
+                      >
+                        {team.s1.toLocaleString()}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="text-center py-3 px-2 text-white">
-                  {team.s2.toLocaleString()}
+                  {(() => {
+                    const values = [
+                      team.s1,
+                      team.s2,
+                      team.s3,
+                      team.s4,
+                      team.s5,
+                    ];
+                    const maxValue = Math.max(...values);
+                    const minValue = Math.min(...values);
+                    const intensity =
+                      maxValue === minValue
+                        ? 0
+                        : (team.s2 - minValue) / (maxValue - minValue);
+                    const bgOpacity = 0.05 + intensity * 0.7;
+                    return (
+                      <span
+                        className="px-2 py-1 rounded"
+                        style={{
+                          backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                        }}
+                      >
+                        {team.s2.toLocaleString()}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="text-center py-3 px-2 text-white">
-                  {team.s3.toLocaleString()}
+                  {(() => {
+                    const values = [
+                      team.s1,
+                      team.s2,
+                      team.s3,
+                      team.s4,
+                      team.s5,
+                    ];
+                    const maxValue = Math.max(...values);
+                    const minValue = Math.min(...values);
+                    const intensity =
+                      maxValue === minValue
+                        ? 0
+                        : (team.s3 - minValue) / (maxValue - minValue);
+                    const bgOpacity = 0.05 + intensity * 0.7;
+                    return (
+                      <span
+                        className="px-2 py-1 rounded"
+                        style={{
+                          backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                        }}
+                      >
+                        {team.s3.toLocaleString()}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="text-center py-3 px-2 text-white">
-                  {team.s4.toLocaleString()}
+                  {(() => {
+                    const values = [
+                      team.s1,
+                      team.s2,
+                      team.s3,
+                      team.s4,
+                      team.s5,
+                    ];
+                    const maxValue = Math.max(...values);
+                    const minValue = Math.min(...values);
+                    const intensity =
+                      maxValue === minValue
+                        ? 0
+                        : (team.s4 - minValue) / (maxValue - minValue);
+                    const bgOpacity = 0.05 + intensity * 0.7;
+                    return (
+                      <span
+                        className="px-2 py-1 rounded"
+                        style={{
+                          backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                        }}
+                      >
+                        {team.s4.toLocaleString()}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="text-center py-3 px-2 text-white">
-                  {team.s5.toLocaleString()}
+                  {(() => {
+                    const values = [
+                      team.s1,
+                      team.s2,
+                      team.s3,
+                      team.s4,
+                      team.s5,
+                    ];
+                    const maxValue = Math.max(...values);
+                    const minValue = Math.min(...values);
+                    const intensity =
+                      maxValue === minValue
+                        ? 0
+                        : (team.s5 - minValue) / (maxValue - minValue);
+                    const bgOpacity = 0.05 + intensity * 0.7;
+                    return (
+                      <span
+                        className="px-2 py-1 rounded"
+                        style={{
+                          backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                        }}
+                      >
+                        {team.s5.toLocaleString()}
+                      </span>
+                    );
+                  })()}
                 </td>
-                <td className="text-center py-3 px-4 font-bold text-green-400">
+                <td
+                  className={`text-center py-3 px-4 font-bold ${
+                    team.team === teamName ? 'text-green-400' : 'text-gray-400'
+                  }`}
+                >
                   {team.postFund.toLocaleString()}
                 </td>
               </tr>
@@ -487,21 +651,21 @@ const CumulativeInvestmentDisplay: React.FC<
                 team
               </th>
               <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s1
+                베럴아이
               </th>
               <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s2
+                일리아스
               </th>
               <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s3
+                북엔드
               </th>
               <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s4
+                라스커
               </th>
               <th className="text-center py-3 px-2 font-medium text-gray-300">
-                s5
+                뉴톤
               </th>
-              <th className="text-center py-3 px-4 font-medium text-gray-300">
+              <th className="text-center py-3 px-4 font-medium text-green-400">
                 Total Fund
               </th>
             </tr>
@@ -512,19 +676,144 @@ const CumulativeInvestmentDisplay: React.FC<
                 {cumulativeData.team}
               </td>
               <td className="text-center py-3 px-2 text-white">
-                {cumulativeData.s1.toLocaleString()}
+                {(() => {
+                  const values = [
+                    cumulativeData.s1,
+                    cumulativeData.s2,
+                    cumulativeData.s3,
+                    cumulativeData.s4,
+                    cumulativeData.s5,
+                  ];
+                  const maxValue = Math.max(...values);
+                  const minValue = Math.min(...values);
+                  const intensity =
+                    maxValue === minValue
+                      ? 0
+                      : (cumulativeData.s1 - minValue) / (maxValue - minValue);
+                  const bgOpacity = 0.05 + intensity * 0.7;
+                  return (
+                    <span
+                      className="px-2 py-1 rounded"
+                      style={{
+                        backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                      }}
+                    >
+                      {cumulativeData.s1.toLocaleString()}
+                    </span>
+                  );
+                })()}
               </td>
               <td className="text-center py-3 px-2 text-white">
-                {cumulativeData.s2.toLocaleString()}
+                {(() => {
+                  const values = [
+                    cumulativeData.s1,
+                    cumulativeData.s2,
+                    cumulativeData.s3,
+                    cumulativeData.s4,
+                    cumulativeData.s5,
+                  ];
+                  const maxValue = Math.max(...values);
+                  const minValue = Math.min(...values);
+                  const intensity =
+                    maxValue === minValue
+                      ? 0
+                      : (cumulativeData.s2 - minValue) / (maxValue - minValue);
+                  const bgOpacity = 0.05 + intensity * 0.7;
+                  return (
+                    <span
+                      className="px-2 py-1 rounded"
+                      style={{
+                        backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                      }}
+                    >
+                      {cumulativeData.s2.toLocaleString()}
+                    </span>
+                  );
+                })()}
               </td>
               <td className="text-center py-3 px-2 text-white">
-                {cumulativeData.s3.toLocaleString()}
+                {(() => {
+                  const values = [
+                    cumulativeData.s1,
+                    cumulativeData.s2,
+                    cumulativeData.s3,
+                    cumulativeData.s4,
+                    cumulativeData.s5,
+                  ];
+                  const maxValue = Math.max(...values);
+                  const minValue = Math.min(...values);
+                  const intensity =
+                    maxValue === minValue
+                      ? 0
+                      : (cumulativeData.s3 - minValue) / (maxValue - minValue);
+                  const bgOpacity = 0.05 + intensity * 0.7;
+                  return (
+                    <span
+                      className="px-2 py-1 rounded"
+                      style={{
+                        backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                      }}
+                    >
+                      {cumulativeData.s3.toLocaleString()}
+                    </span>
+                  );
+                })()}
               </td>
               <td className="text-center py-3 px-2 text-white">
-                {cumulativeData.s4.toLocaleString()}
+                {(() => {
+                  const values = [
+                    cumulativeData.s1,
+                    cumulativeData.s2,
+                    cumulativeData.s3,
+                    cumulativeData.s4,
+                    cumulativeData.s5,
+                  ];
+                  const maxValue = Math.max(...values);
+                  const minValue = Math.min(...values);
+                  const intensity =
+                    maxValue === minValue
+                      ? 0
+                      : (cumulativeData.s4 - minValue) / (maxValue - minValue);
+                  const bgOpacity = 0.05 + intensity * 0.7;
+                  return (
+                    <span
+                      className="px-2 py-1 rounded"
+                      style={{
+                        backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                      }}
+                    >
+                      {cumulativeData.s4.toLocaleString()}
+                    </span>
+                  );
+                })()}
               </td>
               <td className="text-center py-3 px-2 text-white">
-                {cumulativeData.s5.toLocaleString()}
+                {(() => {
+                  const values = [
+                    cumulativeData.s1,
+                    cumulativeData.s2,
+                    cumulativeData.s3,
+                    cumulativeData.s4,
+                    cumulativeData.s5,
+                  ];
+                  const maxValue = Math.max(...values);
+                  const minValue = Math.min(...values);
+                  const intensity =
+                    maxValue === minValue
+                      ? 0
+                      : (cumulativeData.s5 - minValue) / (maxValue - minValue);
+                  const bgOpacity = 0.05 + intensity * 0.7;
+                  return (
+                    <span
+                      className="px-2 py-1 rounded"
+                      style={{
+                        backgroundColor: `rgba(75, 222, 128, ${bgOpacity})`,
+                      }}
+                    >
+                      {cumulativeData.s5.toLocaleString()}
+                    </span>
+                  );
+                })()}
               </td>
               <td className="text-center py-3 px-4 font-bold text-green-400">
                 {cumulativeData.preFund.toLocaleString()}
@@ -555,9 +844,8 @@ const OpenRound: React.FC<OpenRoundProps> = ({
       ? teamData.pre_fund -
         (teamData.s1 + teamData.s2 + teamData.s3 + teamData.s4 + teamData.s5)
       : 0;
-
   const roundReturn =
-    teamData && teamData.pre_fund && teamData.post_fund
+    teamData?.pre_fund && teamData?.post_fund
       ? ((teamData.post_fund - teamData.pre_fund) / teamData.pre_fund) * 100
       : 0;
 
@@ -927,14 +1215,14 @@ const OpenRound: React.FC<OpenRoundProps> = ({
             <div className="flex justify-between items-center">
               <div className="text-left">
                 <div className="text-sm text-gray-400">Total Fund</div>
-                <div className="text-lg font-bold text-white">
+                <div className="text-lg font-bold text-green-400">
                   ${teamData.pre_fund?.toLocaleString() || '0'}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-gray-400">Remaining</div>
                 <div
-                  className={`text-lg font-bold ${remain < 0 ? 'text-red-400' : 'text-green-400'}`}
+                  className={`text-lg font-bold ${remain < 0 ? 'text-red-400' : 'text-white-400'}`}
                 >
                   ${remain.toLocaleString()}
                 </div>
@@ -966,7 +1254,11 @@ const OpenRound: React.FC<OpenRoundProps> = ({
                       </span>
                     </div>
                     <span className="font-medium text-white">
-                      Startup {startup.slice(1)}
+                      {startup === 's1' && '베럴아이'}
+                      {startup === 's2' && '일리아스'}
+                      {startup === 's3' && '북엔드'}
+                      {startup === 's4' && '라스커'}
+                      {startup === 's5' && '뉴톤'}
                     </span>
                   </div>
                   <div className="relative">
@@ -1419,6 +1711,7 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
                     <CumulativeRankingDisplay
                       key={`ranking-${activeRound}`} // Add stable key
                       currentRound={activeRound}
+                      teamName={teamName}
                     />
                   )}
                 </div>
@@ -1466,7 +1759,7 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
 
                     {isLoadingResults ? (
                       <div className="flex justify-center py-8">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500" />
                       </div>
                     ) : (
                       <div className="space-y-4">
