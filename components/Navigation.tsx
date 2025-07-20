@@ -10,18 +10,22 @@ export default function Navigation() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [isInvestmentDropdownOpen, setIsInvestmentDropdownOpen] = useState(false);
+  const [isInvestmentDropdownOpen, setIsInvestmentDropdownOpen] =
+    useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  
-  const isGuest = session?.user?.email ? session.user.email.endsWith('@guest.com') : false;
-  
+
+  const isGuest = session?.user?.email
+    ? session.user.email.endsWith('@guest.com')
+    : false;
+
   // More strict condition: only show user dropdown if it's a real authenticated user
   // Guest users or any user with @guest.com email should be treated as not logged in
-  const isRealUser = session?.user && 
-                     session.user.email && 
-                     !session.user.email.endsWith('@guest.com') &&
-                     !session.user.email.startsWith('guest-');
-  
+  const isRealUser =
+    session?.user &&
+    session.user.email &&
+    !session.user.email.endsWith('@guest.com') &&
+    !session.user.email.startsWith('guest-');
+
   // Inline styles for complete independence
   const navStyles: React.CSSProperties = {
     position: 'fixed',
@@ -43,7 +47,8 @@ export default function Navigation() {
     backdropFilter: 'blur(16px)',
     borderRadius: '16px',
     border: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    boxShadow:
+      '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
     width: '100%',
     minWidth: '0',
     boxSizing: 'border-box',
@@ -89,7 +94,9 @@ export default function Navigation() {
     fontWeight: '500',
     borderRadius: '9999px',
     transition: 'all 0.2s',
-    backgroundColor: pathname.startsWith('/investment') ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+    backgroundColor: pathname.startsWith('/investment')
+      ? 'rgba(255, 255, 255, 0.2)'
+      : 'transparent',
     color: pathname.startsWith('/investment') ? '#ffffff' : '#d1d5db',
     border: 'none',
     cursor: 'pointer',
@@ -209,21 +216,22 @@ export default function Navigation() {
           box-sizing: border-box !important;
         }
       `}</style>
-      
+
       <nav className="navigation-override" style={navStyles}>
         <div className="navigation-container-override" style={containerStyles}>
           <Link href="/" style={logoStyles}>
             GRAFFITI 2025
           </Link>
-          
+
           <div style={menuContainerStyles}>
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               style={getNavLinkStyles(pathname === '/')}
               onMouseEnter={(e) => {
                 if (pathname !== '/') {
                   e.currentTarget.style.color = '#ffffff';
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.backgroundColor =
+                    'rgba(255, 255, 255, 0.1)';
                 }
               }}
               onMouseLeave={(e) => {
@@ -235,54 +243,53 @@ export default function Navigation() {
             >
               Home
             </Link>
-            <Link 
-              href="/about" 
-              style={getNavLinkStyles(pathname === '/about')}
+            <a
+              href="https://icists-graffiti2025.notion.site/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={getNavLinkStyles(false)}
               onMouseEnter={(e) => {
-                if (pathname !== '/about') {
-                  e.currentTarget.style.color = '#ffffff';
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                }
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor =
+                  'rgba(255, 255, 255, 0.1)';
               }}
               onMouseLeave={(e) => {
-                if (pathname !== '/about') {
-                  e.currentTarget.style.color = '#d1d5db';
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
+                e.currentTarget.style.color = '#d1d5db';
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              About
-            </Link>
-            <Link 
-              href="/chat" 
-              style={getNavLinkStyles(pathname.startsWith('/chat'))}
+              Notion
+            </a>
+            <a
+              href="https://chatgpt.com/g/g-68789d665d848191962495cb4db6a748-kaist-graffiti2025-ai-startup-mueosideun-muleoboseyo"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={getNavLinkStyles(false)}
               onMouseEnter={(e) => {
-                if (!pathname.startsWith('/chat')) {
-                  e.currentTarget.style.color = '#ffffff';
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                }
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor =
+                  'rgba(255, 255, 255, 0.1)';
               }}
               onMouseLeave={(e) => {
-                if (!pathname.startsWith('/chat')) {
-                  e.currentTarget.style.color = '#d1d5db';
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
+                e.currentTarget.style.color = '#d1d5db';
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Ice Breaking
-            </Link>
-            
+              Chatbot
+            </a>
+
             {/* Investment Game Dropdown */}
-            <div 
+            <div
               style={dropdownStyles}
               onMouseEnter={() => setIsInvestmentDropdownOpen(true)}
               onMouseLeave={() => setIsInvestmentDropdownOpen(false)}
             >
-              <button 
+              <button
                 style={dropdownButtonStyles}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = '#ffffff';
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.backgroundColor =
+                    'rgba(255, 255, 255, 0.1)';
                 }}
                 onMouseLeave={(e) => {
                   if (!pathname.startsWith('/investment')) {
@@ -296,11 +303,12 @@ export default function Navigation() {
               </button>
               {isInvestmentDropdownOpen && (
                 <div style={dropdownContentStyles}>
-                  <Link 
-                    href="/investment/overview" 
+                  <Link
+                    href="/investment/overview"
                     style={dropdownItemStyles}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                      e.currentTarget.style.backgroundColor =
+                        'rgba(255, 255, 255, 0.2)';
                       e.currentTarget.style.color = '#ffffff';
                     }}
                     onMouseLeave={(e) => {
@@ -310,11 +318,12 @@ export default function Navigation() {
                   >
                     Overview
                   </Link>
-                  <Link 
-                    href="/investment/play" 
+                  <Link
+                    href="/investment/play"
                     style={dropdownItemStyles}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                      e.currentTarget.style.backgroundColor =
+                        'rgba(255, 255, 255, 0.2)';
                       e.currentTarget.style.color = '#ffffff';
                     }}
                     onMouseLeave={(e) => {
@@ -327,25 +336,25 @@ export default function Navigation() {
                 </div>
               )}
             </div>
-            
+
             {/* User Authentication Section */}
             {status === 'loading' ? (
-              <div style={loadingStyles}>
-                Loading...
-              </div>
+              <div style={loadingStyles}>Loading...</div>
             ) : isRealUser ? (
-              <div 
+              <div
                 style={dropdownStyles}
                 onMouseEnter={() => setIsUserDropdownOpen(true)}
                 onMouseLeave={() => setIsUserDropdownOpen(false)}
               >
-                <button 
+                <button
                   style={userButtonStyles}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                    e.currentTarget.style.backgroundColor =
+                      'rgba(255, 255, 255, 0.2)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.backgroundColor =
+                      'rgba(255, 255, 255, 0.1)';
                   }}
                 >
                   <Image
@@ -355,32 +364,43 @@ export default function Navigation() {
                     height={20}
                     style={{ borderRadius: '50%' }}
                   />
-                  <span style={{ 
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '96px',
-                    color: '#ffffff'
-                  }}>
+                  <span
+                    style={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '96px',
+                      color: '#ffffff',
+                    }}
+                  >
                     {session.user.email?.split('@')[0] || 'User'}
                   </span>
                   <span style={{ fontSize: '12px', color: '#ffffff' }}>▼</span>
                 </button>
                 {isUserDropdownOpen && (
                   <div style={userDropdownContentStyles}>
-                    <div style={{
-                      padding: '8px',
-                      fontSize: '14px',
-                      color: '#d1d5db',
-                      pointerEvents: 'none',
-                    }}>
+                    <div
+                      style={{
+                        padding: '8px',
+                        fontSize: '14px',
+                        color: '#d1d5db',
+                        pointerEvents: 'none',
+                      }}
+                    >
                       {session.user.email}
                     </div>
-                    <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.2)', margin: '4px 0' }} />
-                    <button 
+                    <div
+                      style={{
+                        height: '1px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        margin: '4px 0',
+                      }}
+                    />
+                    <button
                       style={dropdownItemStyles}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.backgroundColor =
+                          'rgba(255, 255, 255, 0.2)';
                         e.currentTarget.style.color = '#ffffff';
                       }}
                       onMouseLeave={(e) => {
@@ -399,12 +419,13 @@ export default function Navigation() {
                 )}
               </div>
             ) : (
-              <Link 
-                href="/login" 
+              <Link
+                href="/login"
                 style={loginButtonStyles}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.boxShadow =
+                    '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = '#ffffff';
