@@ -1516,8 +1516,8 @@ const OpenRound: React.FC<OpenRoundProps> = ({
           </h2>
           <div className="text-gray-300 space-y-3 text-sm leading-relaxed">
             <p>
-              "포트폴리오 제출" 버튼을 클릭하면, "나의 누적 투자금"에 이번
-              라운드 투자금이 누적됩니다.
+              &ldquo;포트폴리오 제출&rdquo; 버튼을 클릭하면, &ldquo;나의 누적
+              투자금&rdquo;에 이번 라운드 투자금이 누적됩니다.
             </p>
 
             <div
@@ -1545,8 +1545,8 @@ const OpenRound: React.FC<OpenRoundProps> = ({
               </h3>
               <p>
                 최종 Total fund가 많은 팀 순으로 스타트업과 매칭되며, 이때 본인
-                팀은 자리가 남은 스타트업 중 팀의 "누적 투자금"이 가장 큰 곳과
-                매칭됩니다. (한 스타트업 당 3팀이 배정됩니다.)
+                팀은 자리가 남은 스타트업 중 팀의 &ldquo;누적 투자금&rdquo;이
+                가장 큰 곳과 매칭됩니다. (한 스타트업 당 3팀이 배정됩니다.)
               </p>
             </div>
 
