@@ -8,7 +8,7 @@ import './globals.css';
 import { SessionProvider } from 'next-auth/react';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://chat.vercel.ai'),
+  metadataBase: new URL('https://icists-graffiti-2025.vercel.app'),
   title: 'icists-graffiti-2025 website',
   description: 'Website for graffiti-2025. Made by ICISTS',
 };
