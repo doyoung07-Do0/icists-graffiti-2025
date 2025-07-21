@@ -826,6 +826,165 @@ const CumulativeInvestmentDisplay: React.FC<
   );
 };
 
+interface TeamInvestmentData {
+  team: string;
+  teamNumber: number;
+  investment: number;
+  proportion: number;
+}
+
+interface PieChartProps {
+  startup: string;
+  currentRound: Round;
+  preCap: number | null;
+}
+
+const PieChart: React.FC<PieChartProps> = ({
+  startup,
+  currentRound,
+  preCap,
+}) => {
+  const [teamData, setTeamData] = useState<TeamInvestmentData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hoveredTeam, setHoveredTeam] = useState<TeamInvestmentData | null>(
+    null,
+  );
+
+  // Fetch team investment data for this startup
+  const fetchTeamInvestmentData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `/api/teams/${currentRound}/investment-data?startup=${startup}`,
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        // Calculate proportions based on si/pre_cap ratio
+        const totalInvestment = result.data.reduce(
+          (sum: number, team: any) => sum + team.investment,
+          0,
+        );
+        const teamDataWithProportions = result.data.map((team: any) => ({
+          team: team.team,
+          teamNumber: team.teamNumber,
+          investment: team.investment,
+          proportion:
+            totalInvestment > 0 ? team.investment / totalInvestment : 0,
+        }));
+
+        setTeamData(teamDataWithProportions);
+      }
+    } catch (error) {
+      console.error('Error fetching team investment data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [startup, currentRound]);
+
+  useEffect(() => {
+    fetchTeamInvestmentData();
+  }, [fetchTeamInvestmentData]);
+
+  if (isLoading) {
+    return (
+      <div className="w-20 h-20 rounded-full border-2 border-gray-600 flex items-center justify-center text-xs text-gray-400">
+        Loading...
+      </div>
+    );
+  }
+
+  if (teamData.length === 0) {
+    return (
+      <div className="w-20 h-20 rounded-full border-2 border-gray-600 flex items-center justify-center text-xs text-gray-400">
+        No Data
+      </div>
+    );
+  }
+
+  // Generate pie chart SVG
+  const radius = 36; // 72px diameter / 2
+  const centerX = 40;
+  const centerY = 40;
+  let currentAngle = -Math.PI / 2; // Start from top
+
+  const colors = [
+    '#10B981',
+    '#059669',
+    '#047857',
+    '#065F46',
+    '#064E3B', // Green shades
+    '#3B82F6',
+    '#2563EB',
+    '#1D4ED8',
+    '#1E40AF',
+    '#1E3A8A', // Blue shades
+    '#8B5CF6',
+    '#7C3AED',
+    '#6D28D9',
+    '#5B21B6',
+    '#4C1D95', // Purple shades
+  ];
+
+  const pieSlices = teamData.map((team, index) => {
+    const angle = team.proportion * 2 * Math.PI;
+    const endAngle = currentAngle + angle;
+
+    const x1 = centerX + radius * Math.cos(currentAngle);
+    const y1 = centerY + radius * Math.sin(currentAngle);
+    const x2 = centerX + radius * Math.cos(endAngle);
+    const y2 = centerY + radius * Math.sin(endAngle);
+
+    const largeArcFlag = angle > Math.PI ? 1 : 0;
+
+    const pathData = [
+      `M ${centerX} ${centerY}`,
+      `L ${x1} ${y1}`,
+      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+      'Z',
+    ].join(' ');
+
+    const slice = {
+      pathData,
+      color: colors[index % colors.length],
+      team,
+      angle: currentAngle,
+      endAngle,
+    };
+
+    currentAngle = endAngle;
+    return slice;
+  });
+
+  return (
+    <div className="relative">
+      <svg width="80" height="80" className="mx-auto">
+        {pieSlices.map((slice, index) => (
+          <g key={`${slice.team.team}-${index}`}>
+            <path
+              d={slice.pathData}
+              fill={slice.color}
+              stroke="#1F2937"
+              strokeWidth="1"
+              onMouseEnter={() => setHoveredTeam(slice.team)}
+              onMouseLeave={() => setHoveredTeam(null)}
+              className="cursor-pointer transition-opacity hover:opacity-80"
+            />
+          </g>
+        ))}
+      </svg>
+
+      {/* Hover tooltip */}
+      {hoveredTeam && (
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-gray-800 text-white text-xs px-2 py-1 rounded z-10 whitespace-nowrap">
+          Team {hoveredTeam.teamNumber}: $
+          {hoveredTeam.investment.toLocaleString()}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const OpenRound: React.FC<OpenRoundProps> = ({
   round,
   isRoundClosed = false,
@@ -1080,14 +1239,49 @@ const OpenRound: React.FC<OpenRoundProps> = ({
 
           {/* 3x2 Grid Layout */}
           <div className="grid grid-cols-2 gap-4">
-            {/* Box 1 - Placeholder */}
+            {/* Box 1 - 베럴아이 */}
             <div
               className="p-4 rounded-lg"
               style={{ backgroundColor: '#111111' }}
             >
-              <div className="text-center text-gray-400">
-                <div className="text-lg font-semibold mb-2">Box 1</div>
-                <div className="text-sm">Placeholder</div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-white mb-2">
+                  베럴아이
+                </div>
+                <div className="relative w-20 h-20 mx-auto mb-2">
+                  <PieChart
+                    startup="s1"
+                    currentRound={round}
+                    preCap={
+                      startupData.find((s) => s.startup === 's1')?.pre_cap ||
+                      null
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <div className="text-sm text-gray-400">
+                    $
+                    {startupData
+                      .find((s) => s.startup === 's1')
+                      ?.pre_cap?.toLocaleString() || 'N/A'}
+                  </div>
+                  <div className="text-xs text-gray-400">→</div>
+                  <div
+                    className={`text-sm font-medium ${
+                      startupData.find((s) => s.startup === 's1')?.yield &&
+                      Number.parseFloat(
+                        startupData.find((s) => s.startup === 's1')?.yield ||
+                          '0',
+                      ) >= 0
+                        ? 'text-red-400'
+                        : 'text-blue-400'
+                    }`}
+                  >
+                    {startupData.find((s) => s.startup === 's1')?.yield
+                      ? `${Number.parseFloat(startupData.find((s) => s.startup === 's1')?.yield || '0') >= 0 ? '+' : ''}${(Number.parseFloat(startupData.find((s) => s.startup === 's1')?.yield || '0') * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1116,47 +1310,187 @@ const OpenRound: React.FC<OpenRoundProps> = ({
               </div>
             </div>
 
-            {/* Box 3 - Placeholder */}
+            {/* Box 3 - 일리아스 */}
             <div
               className="p-4 rounded-lg"
               style={{ backgroundColor: '#111111' }}
             >
-              <div className="text-center text-gray-400">
-                <div className="text-lg font-semibold mb-2">Box 3</div>
-                <div className="text-sm">Placeholder</div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-white mb-2">
+                  일리아스
+                </div>
+                <div className="relative w-20 h-20 mx-auto mb-2">
+                  <PieChart
+                    startup="s2"
+                    currentRound={round}
+                    preCap={
+                      startupData.find((s) => s.startup === 's2')?.pre_cap ||
+                      null
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <div className="text-sm text-gray-400">
+                    $
+                    {startupData
+                      .find((s) => s.startup === 's2')
+                      ?.pre_cap?.toLocaleString() || 'N/A'}
+                  </div>
+                  <div className="text-xs text-gray-400">→</div>
+                  <div
+                    className={`text-sm font-medium ${
+                      startupData.find((s) => s.startup === 's2')?.yield &&
+                      Number.parseFloat(
+                        startupData.find((s) => s.startup === 's2')?.yield ||
+                          '0',
+                      ) >= 0
+                        ? 'text-red-400'
+                        : 'text-blue-400'
+                    }`}
+                  >
+                    {startupData.find((s) => s.startup === 's2')?.yield
+                      ? `${Number.parseFloat(startupData.find((s) => s.startup === 's2')?.yield || '0') >= 0 ? '+' : ''}${(Number.parseFloat(startupData.find((s) => s.startup === 's2')?.yield || '0') * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Box 4 - Placeholder */}
+            {/* Box 4 - 북엔드 */}
             <div
               className="p-4 rounded-lg"
               style={{ backgroundColor: '#111111' }}
             >
-              <div className="text-center text-gray-400">
-                <div className="text-lg font-semibold mb-2">Box 4</div>
-                <div className="text-sm">Placeholder</div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-white mb-2">
+                  북엔드
+                </div>
+                <div className="relative w-20 h-20 mx-auto mb-2">
+                  <PieChart
+                    startup="s3"
+                    currentRound={round}
+                    preCap={
+                      startupData.find((s) => s.startup === 's3')?.pre_cap ||
+                      null
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <div className="text-sm text-gray-400">
+                    $
+                    {startupData
+                      .find((s) => s.startup === 's3')
+                      ?.pre_cap?.toLocaleString() || 'N/A'}
+                  </div>
+                  <div className="text-xs text-gray-400">→</div>
+                  <div
+                    className={`text-sm font-medium ${
+                      startupData.find((s) => s.startup === 's3')?.yield &&
+                      Number.parseFloat(
+                        startupData.find((s) => s.startup === 's3')?.yield ||
+                          '0',
+                      ) >= 0
+                        ? 'text-red-400'
+                        : 'text-blue-400'
+                    }`}
+                  >
+                    {startupData.find((s) => s.startup === 's3')?.yield
+                      ? `${Number.parseFloat(startupData.find((s) => s.startup === 's3')?.yield || '0') >= 0 ? '+' : ''}${(Number.parseFloat(startupData.find((s) => s.startup === 's3')?.yield || '0') * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Box 5 - Placeholder */}
+            {/* Box 5 - 라스커 */}
             <div
               className="p-4 rounded-lg"
               style={{ backgroundColor: '#111111' }}
             >
-              <div className="text-center text-gray-400">
-                <div className="text-lg font-semibold mb-2">Box 5</div>
-                <div className="text-sm">Placeholder</div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-white mb-2">
+                  라스커
+                </div>
+                <div className="relative w-20 h-20 mx-auto mb-2">
+                  <PieChart
+                    startup="s4"
+                    currentRound={round}
+                    preCap={
+                      startupData.find((s) => s.startup === 's4')?.pre_cap ||
+                      null
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <div className="text-sm text-gray-400">
+                    $
+                    {startupData
+                      .find((s) => s.startup === 's4')
+                      ?.pre_cap?.toLocaleString() || 'N/A'}
+                  </div>
+                  <div className="text-xs text-gray-400">→</div>
+                  <div
+                    className={`text-sm font-medium ${
+                      startupData.find((s) => s.startup === 's4')?.yield &&
+                      Number.parseFloat(
+                        startupData.find((s) => s.startup === 's4')?.yield ||
+                          '0',
+                      ) >= 0
+                        ? 'text-red-400'
+                        : 'text-blue-400'
+                    }`}
+                  >
+                    {startupData.find((s) => s.startup === 's4')?.yield
+                      ? `${Number.parseFloat(startupData.find((s) => s.startup === 's4')?.yield || '0') >= 0 ? '+' : ''}${(Number.parseFloat(startupData.find((s) => s.startup === 's4')?.yield || '0') * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Box 6 - Placeholder */}
+            {/* Box 6 - 뉴톤 */}
             <div
               className="p-4 rounded-lg"
               style={{ backgroundColor: '#111111' }}
             >
-              <div className="text-center text-gray-400">
-                <div className="text-lg font-semibold mb-2">Box 6</div>
-                <div className="text-sm">Placeholder</div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-white mb-2">
+                  뉴톤
+                </div>
+                <div className="relative w-20 h-20 mx-auto mb-2">
+                  <PieChart
+                    startup="s5"
+                    currentRound={round}
+                    preCap={
+                      startupData.find((s) => s.startup === 's5')?.pre_cap ||
+                      null
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <div className="text-sm text-gray-400">
+                    $
+                    {startupData
+                      .find((s) => s.startup === 's5')
+                      ?.pre_cap?.toLocaleString() || 'N/A'}
+                  </div>
+                  <div className="text-xs text-gray-400">→</div>
+                  <div
+                    className={`text-sm font-medium ${
+                      startupData.find((s) => s.startup === 's5')?.yield &&
+                      Number.parseFloat(
+                        startupData.find((s) => s.startup === 's5')?.yield ||
+                          '0',
+                      ) >= 0
+                        ? 'text-red-400'
+                        : 'text-blue-400'
+                    }`}
+                  >
+                    {startupData.find((s) => s.startup === 's5')?.yield
+                      ? `${Number.parseFloat(startupData.find((s) => s.startup === 's5')?.yield || '0') >= 0 ? '+' : ''}${(Number.parseFloat(startupData.find((s) => s.startup === 's5')?.yield || '0') * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
