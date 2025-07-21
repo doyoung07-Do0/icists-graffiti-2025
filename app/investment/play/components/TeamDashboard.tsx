@@ -1810,6 +1810,7 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
   const [isResultsOpen, setIsResultsOpen] = useState(false);
   const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [results, setResults] = useState<TeamResult[]>([]);
+  const roundStatusRef = useRef(roundStatus);
 
   const fetchFinalResults = useCallback(async () => {
     try {
@@ -1893,9 +1894,6 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
     }
   }, []);
 
-  // Create a ref to store the current round status
-  const roundStatusRef = useRef(roundStatus);
-
   // Update the ref whenever roundStatus changes
   useEffect(() => {
     roundStatusRef.current = roundStatus;
@@ -1976,25 +1974,6 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
     },
     [fetchRoundStatus, triggerRerender],
   );
-
-  // DISABLE SSE FOR DEBUGGING INFINITE REQUEST BUG
-  // Set up SSE connection for round status updates
-  // Listen to all rounds by using 'all' as the round parameter
-  // const { isConnected, error: sseError } = useRoundStatusUpdates(
-  //   teamName,
-  //   'all', // Listen to all rounds
-  //   handleRoundStatusUpdate
-  // );
-
-  // Log SSE connection status - DISABLED FOR DEBUGGING
-  // useEffect(() => {
-  //   console.log(
-  //     `SSE connection status: ${isConnected ? 'connected' : 'disconnected'}`,
-  //   );
-  //   if (sseError) {
-  //     console.error('SSE error:', sseError);
-  //   }
-  // }, [isConnected, sseError]);
 
   useEffect(() => {
     fetchRoundStatus();
