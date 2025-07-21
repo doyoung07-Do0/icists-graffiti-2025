@@ -15,6 +15,58 @@ import { randomNormal } from '@/lib/utils/random';
 
 type Round = 'r1' | 'r2' | 'r3' | 'r4';
 
+/**
+ * 스타트업 투자금에 기반하여 위험과 수익률을 계산하는 함수
+ * @param {number[]} fundingAmounts - 각 스타트업의 투자금 배열 (예: [4000, 5000, 2000, 9000, 2500])
+ * @param {object} [options] - 알고리즘 설정을 위한 선택적 객체
+ * @param {number} [options.averageReturn=0.06] - 전체 스타트업의 평균 목표 기대수익률 (기본값 6%)
+ * @param {number} [options.averageStdDev=0.08] - 전체 스타트업의 평균 목표 표준편차 (기본값 8%)
+ * @returns {object[]} 각 스타트업의 투자금, 기대수익률, 표준편차를 담은 객체 배열
+ */
+function calculateInvestmentReturns(
+  fundingAmounts: number[],
+  options: {
+    averageReturn?: number;
+    averageStdDev?: number;
+  } = {},
+) {
+  // 1. 기본 설정값 (옵션으로 변경 가능)
+  const { averageReturn = 0.06, averageStdDev = 0.08 } = options;
+  const numStartups = fundingAmounts.length;
+
+  if (numStartups === 0) {
+    return [];
+  }
+
+  // 2. 전체 투자금 합계 계산
+  const totalFunding = fundingAmounts.reduce((sum, amount) => sum + amount, 0);
+
+  // 3. 각 스타트업의 역가중치 점수 계산
+  // 점수 = 1 - (개별 투자금 / 전체 투자금) -> 투자금이 적을수록 점수가 높아짐
+  const scores = fundingAmounts.map((amount) => 1 - amount / totalFunding);
+  const totalScore = scores.reduce((sum, score) => sum + score, 0);
+
+  // 4. 분배할 전체 수익률 및 표준편차 풀(pool) 계산
+  const totalReturnPool = averageReturn * numStartups;
+  const totalStdDevPool = averageStdDev * numStartups;
+
+  // 5. 정규화된 점수를 바탕으로 각 스타트업의 최종 수익률과 표준편차 계산
+  const results = fundingAmounts.map((funding, index) => {
+    const normalizedScore = scores[index] / totalScore;
+    const expectedReturn = totalReturnPool * normalizedScore;
+    const stdDev = totalStdDevPool * normalizedScore;
+
+    return {
+      startup: `s${index + 1}`,
+      funding: funding,
+      expectedReturn: expectedReturn,
+      stdDev: stdDev,
+    };
+  });
+
+  return results;
+}
+
 // Helper to get the appropriate team table
 export function getTeamTable(round: Round) {
   switch (round) {
@@ -208,13 +260,13 @@ export async function calculateAndUpdateStartupData(round: Round) {
     throw new Error('No teams have submitted their portfolios');
   }
 
-  // For each startup (s1, s2, s3, s4, s5), calculate the total investment and generate yields
+  // For each startup (s1, s2, s3, s4, s5), calculate the total investment
   const startups = ['s1', 's2', 's3', 's4', 's5'] as const;
   const startupYields: Record<string, number> = {};
 
-  // First, calculate yields for each startup
+  // First, collect all pre_cap values for dynamic calculation
+  const preCapValues: number[] = [];
   for (const startup of startups) {
-    // Calculate total investment in this startup across all teams
     const startupColumn = startup;
     const result = await db
       .select({ total: sum(teamTable[startupColumn]) })
@@ -222,10 +274,24 @@ export async function calculateAndUpdateStartupData(round: Round) {
       .where(eq(teamTable.submitted, true));
 
     const preCap = Number(result[0]?.total) || 0;
+    preCapValues.push(preCap);
+  }
 
-    // Generate a random yield from a normal distribution
-    const mean = 0.05; // 5% average return
-    const stdDev = 0.1; // 10% standard deviation
+  // Calculate dynamic mean and standard deviation based on funding amounts
+  const investmentReturns = calculateInvestmentReturns(preCapValues, {
+    averageReturn: 0.05, // 5% average return
+    averageStdDev: 0.1, // 10% standard deviation
+  });
+
+  // Generate yields for each startup using dynamic parameters
+  for (let i = 0; i < startups.length; i++) {
+    const startup = startups[i];
+    const preCap = preCapValues[i];
+    const returnData = investmentReturns[i];
+
+    // Generate a random yield from a normal distribution using dynamic parameters
+    const mean = returnData.expectedReturn;
+    const stdDev = returnData.stdDev;
     const minYield = -0.3; // -30% minimum return
     const maxYield = 0.5; // +50% maximum return
 

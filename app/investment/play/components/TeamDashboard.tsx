@@ -1516,8 +1516,9 @@ const OpenRound: React.FC<OpenRoundProps> = ({
           </h2>
           <div className="text-gray-300 space-y-3 text-sm leading-relaxed">
             <p>
-              &ldquo;포트폴리오 제출&rdquo; 버튼을 클릭하면, &ldquo;나의 누적
-              투자금&rdquo;에 이번 라운드 투자금이 누적됩니다.
+              &nbsp;&nbsp;&nbsp;&nbsp; &ldquo;포트폴리오 제출&rdquo; 버튼을
+              클릭하면, &ldquo;나의 누적 투자금&rdquo;에 이번 라운드 투자금이
+              누적됩니다.
             </p>
 
             <div
@@ -1525,7 +1526,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
               style={{ backgroundColor: '#111' }}
             >
               {' '}
-              <h3 className="font-semibold text-white mb-2 text-lg">
+              <h3 className="font-semibold text-gray mb-2 text-lg">
                 각 라운드 종료 후
               </h3>
               <p>
@@ -1540,7 +1541,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
               className="mt-4 p-4 rounded-lg"
               style={{ backgroundColor: '#111' }}
             >
-              <h3 className="font-semibold text-white mb-2 text-lg">
+              <h3 className="font-semibold text-gray mb-2 text-lg">
                 모든 라운드 종료 후
               </h3>
               <p>
@@ -1554,7 +1555,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
               className="mt-4 p-4 rounded-lg"
               style={{ backgroundColor: '#111' }}
             >
-              <h3 className="font-semibold text-white mb-2 text-lg">
+              <h3 className="font-semibold text-gray mb-2 text-lg">
                 Total fund 운용 전략
               </h3>
               <p>
@@ -1564,12 +1565,65 @@ const OpenRound: React.FC<OpenRoundProps> = ({
                 높이기 위한 도박이 필요할 때 비인기 스타트업에 투자해보세요!
               </p>
 
-              <h3 className="font-semibold text-white mb-2 mt-4">
-                수익률 공식(TODO)
+              <h3 className="font-bold text-green-500 mb-2 mt-4">
+                수익률 공식
               </h3>
-              <p className="text-gray-400">mean = </p>
-              <p className="text-gray-400">std_dev = </p>
-              <p className="text-gray-400">N(mean, sigma²)</p>
+              <div className="text-gray-300 text-sm">
+                <div className="mb-2 flex gap-2 items-center">
+                  주요 파라미터:
+                  <div className="group relative">
+                    <button type="button" className="cursor-help">
+                      C<sub>total</sub>
+                    </button>
+                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap">
+                      5개 스타트업의 전체 투자금 합계 (Total_cap)
+                    </div>
+                  </div>
+                  ,
+                  <div className="group relative">
+                    <button type="button" className="cursor-help">
+                      C<sub>s</sub>
+                    </button>
+                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap">
+                      특정 스타트업의 투자금 (S_cap)
+                    </div>
+                  </div>
+                  ,
+                  <div className="group relative">
+                    <button type="button" className="cursor-help">
+                      μ<sub>avg</sub>
+                    </button>
+                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap">
+                      5개 스타트업 전체의 목표 평균 수익률(5%)
+                    </div>
+                  </div>
+                  ,
+                  <div className="group relative">
+                    <button type="button" className="cursor-help">
+                      σ<sub>avg</sub>
+                    </button>
+                    <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap">
+                      5개 스타트업 전체의 목표 평균 표준편차(10%)
+                    </div>
+                  </div>
+                  (마우스를 올려 자세한 설명 확인)
+                </div>
+                <div className="font-mono">
+                  <div>
+                    μ<sub>s</sub> = 5/4 × μ<sub>avg</sub> × (1 - C<sub>s</sub>/C
+                    <sub>total</sub>)
+                  </div>
+                  <div className="mb-2">
+                    σ<sub>s</sub> = 5/4 × σ<sub>avg</sub> × (1 - C<sub>s</sub>/C
+                    <sub>total</sub>)
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    각 스타트업의 수익률은 위와 같이 계산된 평균과 표준편차의
+                    정규분포로부터 추출되며 최대 50% 최소 -30%의 범위에
+                    존재합니다.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
