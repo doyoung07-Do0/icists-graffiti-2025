@@ -140,44 +140,17 @@ const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch ranking data with caching
+  // Fetch ranking data (no caching)
   const fetchRankingData = useCallback(async () => {
-    // Check if we already have data for this round and it's recent (within 5 minutes)
-    const cacheKey = `ranking-${currentRound}`;
-    const cached = sessionStorage.getItem(cacheKey);
-    const now = Date.now();
-
-    if (cached) {
-      const { data, timestamp } = JSON.parse(cached);
-      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
-
-      if (now - timestamp < fiveMinutes) {
-        setRankingData(data);
-        setIsLoading(false);
-        return;
-      }
-    }
-
     try {
       setIsLoading(true);
       setError(null);
-
       const response = await fetch(
         `/api/teams/cumulative?currentRound=${currentRound}`,
       );
       const result = await response.json();
-
       if (result.success) {
         setRankingData(result.data.teams);
-
-        // Cache the data for 5 minutes
-        sessionStorage.setItem(
-          cacheKey,
-          JSON.stringify({
-            data: result.data.teams,
-            timestamp: now,
-          }),
-        );
       } else {
         throw new Error(result.error || 'Failed to fetch ranking data');
       }
@@ -194,25 +167,7 @@ const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
     fetchRankingData();
   }, [fetchRankingData]);
 
-  // Clear cache when round status changes (e.g., when a round closes)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === `round-status-${currentRound}`) {
-        // Clear the cache when round status changes
-        sessionStorage.removeItem(`ranking-${currentRound}`);
-        fetchRankingData();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [currentRound, fetchRankingData]);
-
-  // Function to manually clear cache (for debugging or admin use)
-  const clearCache = useCallback(() => {
-    sessionStorage.removeItem(`ranking-${currentRound}`);
-    fetchRankingData();
-  }, [currentRound, fetchRankingData]);
+  // Remove cache clearing and manual clearCache function
 
   if (isLoading) {
     return (
@@ -1008,86 +963,37 @@ const OpenRound: React.FC<OpenRoundProps> = ({
       ? ((teamData.post_fund - teamData.pre_fund) / teamData.pre_fund) * 100
       : 0;
 
-  // --- Caching logic for closed rounds ---
-  const TEAM_CACHE_KEY = `closed_round_team_${round}_${teamName}`;
-  const STARTUP_CACHE_KEY = `closed_round_startup_${round}`;
-  const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
-
-  // Fetch team and startup data with caching for closed rounds
+  // Fetch team and startup data (no caching)
   const fetchTeamAndStartupData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
       // TEAM DATA
-      let teamResult:
-        | { success: boolean; data?: TeamData; error?: string }
-        | undefined;
-      if (isRoundClosed) {
-        const cached = sessionStorage.getItem(TEAM_CACHE_KEY);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < CACHE_EXPIRY) {
-            setTeamData(data);
-            teamResult = { success: true, data };
-          } else {
-            sessionStorage.removeItem(TEAM_CACHE_KEY);
-          }
-        }
-      }
-      if (!teamResult) {
-        const teamResponse = await fetch(`/api/teams/${round}/${teamName}`);
-        const apiResult: { success: boolean; data?: TeamData; error?: string } =
-          await teamResponse.json();
-        teamResult = apiResult;
-        if (teamResult.success && isRoundClosed) {
-          sessionStorage.setItem(
-            TEAM_CACHE_KEY,
-            JSON.stringify({ data: teamResult.data, timestamp: Date.now() }),
-          );
-        }
-        setTeamData(teamResult.data ?? null);
-      }
+      const teamResponse = await fetch(`/api/teams/${round}/${teamName}`);
+      const apiResult: { success: boolean; data?: TeamData; error?: string } =
+        await teamResponse.json();
+      setTeamData(apiResult.data ?? null);
 
       // STARTUP DATA (only for closed rounds)
       if (isRoundClosed) {
-        let startupResult:
-          | { success: boolean; data?: StartupData[]; error?: string }
-          | undefined;
-        const cached = sessionStorage.getItem(STARTUP_CACHE_KEY);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < CACHE_EXPIRY) {
-            setStartupData(data);
-            startupResult = { success: true, data };
-          } else {
-            sessionStorage.removeItem(STARTUP_CACHE_KEY);
-          }
-        }
-        if (!startupResult) {
-          const startupResponse = await fetch(`/api/startup/${round}`);
-          const apiResult: {
-            success: boolean;
-            data?: StartupData[];
-            error?: string;
-          } = await startupResponse.json();
-          startupResult = apiResult;
-          if (startupResult.success && startupResult.data) {
-            // Sort startup data by startup name (s1, s2, s3, s4, s5)
-            const sortedData = startupResult.data.sort(
-              (a: StartupData, b: StartupData) =>
-                a.startup.localeCompare(b.startup),
-            );
-            setStartupData(sortedData);
-            sessionStorage.setItem(
-              STARTUP_CACHE_KEY,
-              JSON.stringify({ data: sortedData, timestamp: Date.now() }),
-            );
-          } else {
-            throw new Error(
-              startupResult.error || 'Failed to fetch startup data',
-            );
-          }
+        const startupResponse = await fetch(`/api/startup/${round}`);
+        const startupResult: {
+          success: boolean;
+          data?: StartupData[];
+          error?: string;
+        } = await startupResponse.json();
+        if (startupResult.success && startupResult.data) {
+          // Sort startup data by startup name (s1, s2, s3, s4, s5)
+          const sortedData = startupResult.data.sort(
+            (a: StartupData, b: StartupData) =>
+              a.startup.localeCompare(b.startup),
+          );
+          setStartupData(sortedData);
+        } else {
+          throw new Error(
+            startupResult.error || 'Failed to fetch startup data',
+          );
         }
       } else {
         setStartupData([]); // clear if not closed
@@ -1105,17 +1011,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
     fetchTeamAndStartupData();
   }, [fetchTeamAndStartupData]);
 
-  // Invalidate cache on round status change
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'round_status_cache_cleared') {
-        sessionStorage.removeItem(TEAM_CACHE_KEY);
-        sessionStorage.removeItem(STARTUP_CACHE_KEY);
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [TEAM_CACHE_KEY, STARTUP_CACHE_KEY]);
+  // Remove cache invalidation and storage event logic
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -1787,16 +1683,7 @@ interface TeamDashboardProps {
 }
 
 export default function TeamDashboard({ teamName }: TeamDashboardProps) {
-  const [activeRound, setActiveRound] = useState<Round>(() => {
-    // Try to restore the active round from sessionStorage on initial load
-    if (typeof window !== 'undefined') {
-      const savedRound = sessionStorage.getItem('active_round');
-      if (savedRound && ['r1', 'r2', 'r3', 'r4'].includes(savedRound)) {
-        return savedRound as Round;
-      }
-    }
-    return 'r1'; // Default fallback
-  });
+  const [activeRound, setActiveRound] = useState<Round>('r1');
   const [isLoading, setIsLoading] = useState(true);
   const [isTabLoading, setIsTabLoading] = useState(false); // Add tab loading state
   const [roundStatus, setRoundStatus] = useState<
@@ -2058,13 +1945,6 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
   const handleRoundChange = useCallback((round: Round) => {
     setIsTabLoading(true);
     setActiveRound(round);
-
-    // Save the active round to sessionStorage
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('active_round', round);
-    }
-
-    // Add a small delay to allow for smooth transition
     setTimeout(() => setIsTabLoading(false), 100);
   }, []);
 
