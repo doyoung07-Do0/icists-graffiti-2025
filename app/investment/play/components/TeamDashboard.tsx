@@ -1059,97 +1059,106 @@ const OpenRound: React.FC<OpenRoundProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
       {/* Left Panel - Hint or Closed Round Info */}
       {isRoundClosed ? (
-        <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
-          <h2 className="text-xl font-bold text-blue-400 mb-4">
+        <div
+          className="p-6 rounded-lg border border-gray-700"
+          style={{ backgroundColor: '#0a0a0a' }}
+        >
+          <h2
+            className="text-xl font-bold mb-4 text-center"
+            style={{
+              background:
+                'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              color: 'transparent',
+              display: 'inline-block',
+            }}
+          >
             Round Performance
           </h2>
 
-          {/* Fund Summary */}
-          <div className="mb-6 p-4 bg-gray-800 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400">Initial Fund:</span>
-              <span className="font-medium">
-                ${teamData.pre_fund?.toLocaleString() || 'N/A'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400">Final Value:</span>
-              <span className="font-medium">
-                ${teamData.post_fund?.toLocaleString() || 'N/A'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">Return:</span>
-              <span
-                className={`font-bold ${roundReturn >= 0 ? 'text-green-400' : 'text-red-400'}`}
-              >
-                {roundReturn.toFixed(2)}%
-              </span>
-            </div>
-          </div>
-
-          {/* Startup Performance Grid */}
+          {/* 3x2 Grid Layout */}
           <div className="grid grid-cols-2 gap-4">
-            {startupData.map((startup, index) => {
-              const isPositive =
-                startup.yield && Number.parseFloat(startup.yield) >= 0;
-              return (
-                <div
-                  key={startup.startup}
-                  className="bg-gray-800 p-3 rounded-lg"
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="relative w-24 h-24 mb-2">
-                      {/* Pre-cap Circle */}
-                      <div
-                        className="absolute inset-0 border-2 border-blue-500 rounded-full flex items-center justify-center text-xs text-gray-400"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          opacity: 0.7,
-                        }}
-                      >
-                        Pre
-                      </div>
+            {/* Box 1 - Placeholder */}
+            <div
+              className="p-4 rounded-lg"
+              style={{ backgroundColor: '#111111' }}
+            >
+              <div className="text-center text-gray-400">
+                <div className="text-lg font-semibold mb-2">Box 1</div>
+                <div className="text-sm">Placeholder</div>
+              </div>
+            </div>
 
-                      {/* Post-cap Circle */}
-                      {startup.post_cap && startup.pre_cap && (
-                        <div
-                          className={`absolute rounded-full flex items-center justify-center text-xs transition-all duration-500 ${
-                            isPositive
-                              ? 'bg-green-900/30 border-2 border-green-500'
-                              : 'bg-red-900/30 border-2 border-red-500'
-                          }`}
-                          style={{
-                            width: `${Math.max(40, Math.min(100, (startup.post_cap / (startup.pre_cap || 1)) * 100))}%`,
-                            height: `${Math.max(40, Math.min(100, (startup.post_cap / (startup.pre_cap || 1)) * 100))}%`,
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                          }}
-                        >
-                          Post
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="text-center">
-                      <div className="font-medium">
-                        {startup.startup.toUpperCase()}
-                      </div>
-                      <div
-                        className={`text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}
-                      >
-                        {(
-                          Number.parseFloat(startup.yield || '0') * 100
-                        ).toFixed(2)}
-                        %
-                      </div>
-                    </div>
-                  </div>
+            {/* Box 2 - Fund Summary */}
+            <div
+              className="p-4 rounded-lg"
+              style={{ backgroundColor: '#111111' }}
+            >
+              <div className="text-center">
+                <div className="text-lg font-semibold text-white mb-2">
+                  Total fund
                 </div>
-              );
-            })}
+                <div className="text-lg font-medium text-gray-400 mb-1">
+                  ${teamData.pre_fund?.toLocaleString() || 'N/A'}
+                </div>
+                <div className="text-sm text-gray-400 mb-1">↓</div>
+                <div className="text-2xl font-bold text-green-400 mb-1">
+                  ${teamData.post_fund?.toLocaleString() || 'N/A'}
+                </div>
+                <div
+                  className={`text-sm font-medium ${roundReturn >= 0 ? 'text-red-400' : 'text-blue-400'}`}
+                >
+                  ({roundReturn >= 0 ? '+' : ''}
+                  {roundReturn.toFixed(2)}%)
+                </div>
+              </div>
+            </div>
+
+            {/* Box 3 - Placeholder */}
+            <div
+              className="p-4 rounded-lg"
+              style={{ backgroundColor: '#111111' }}
+            >
+              <div className="text-center text-gray-400">
+                <div className="text-lg font-semibold mb-2">Box 3</div>
+                <div className="text-sm">Placeholder</div>
+              </div>
+            </div>
+
+            {/* Box 4 - Placeholder */}
+            <div
+              className="p-4 rounded-lg"
+              style={{ backgroundColor: '#111111' }}
+            >
+              <div className="text-center text-gray-400">
+                <div className="text-lg font-semibold mb-2">Box 4</div>
+                <div className="text-sm">Placeholder</div>
+              </div>
+            </div>
+
+            {/* Box 5 - Placeholder */}
+            <div
+              className="p-4 rounded-lg"
+              style={{ backgroundColor: '#111111' }}
+            >
+              <div className="text-center text-gray-400">
+                <div className="text-lg font-semibold mb-2">Box 5</div>
+                <div className="text-sm">Placeholder</div>
+              </div>
+            </div>
+
+            {/* Box 6 - Placeholder */}
+            <div
+              className="p-4 rounded-lg"
+              style={{ backgroundColor: '#111111' }}
+            >
+              <div className="text-center text-gray-400">
+                <div className="text-lg font-semibold mb-2">Box 6</div>
+                <div className="text-sm">Placeholder</div>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
@@ -1271,7 +1280,9 @@ const OpenRound: React.FC<OpenRoundProps> = ({
             <div className="flex justify-between items-center">
               <div className="text-left">
                 <div className="text-sm text-gray-400">Total Fund</div>
-                <div className="text-lg font-bold text-green-400">
+                <div
+                  className={`text-lg font-bold ${isRoundClosed ? 'text-gray-400' : 'text-green-400'}`}
+                >
                   ${teamData.pre_fund?.toLocaleString() || '0'}
                 </div>
               </div>
