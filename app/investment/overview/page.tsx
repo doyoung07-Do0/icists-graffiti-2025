@@ -30,16 +30,16 @@ export default function InvestmentOverview() {
       name: 'seed',
       description: '스타트업의 핵심 키워드 공개. 첫 포트폴리오 제출!',
       pitchingPoints: [
-        '각 스타트업이 해결하려는 문제에 대한 핵심 키워드(5~6개) 공개',
-        '초기 투자금을 분산 투자 형태로 제출',
-        '모든 팀의 투자 후 랜덤 수익률 결정',
+        '각 스타트업이 해결하려는 문제에 대한 핵심 키워드를 공개',
+        '투자 게임 플랫폼에 익숙해지기',
+        '첫 번째 포트폴리오 제출',
       ],
       icon: <BarChart2 className="size-6" />,
     },
     {
       id: 'series-a',
       name: 'Series A',
-      description: '스타트업의 문제 인식과 해결 방안에 대한 심층 분석',
+      description: '스타트업의 문제 인식, 해결 방안과 사업 모델에 대한 피칭',
       pitchingPoints: [
         '문제 인식 배경 및 해결 필요성',
         '제품/서비스 소개',
@@ -51,7 +51,7 @@ export default function InvestmentOverview() {
     {
       id: 'series-b',
       name: 'Series B',
-      description: '사회적 가치와 영리적 가치의 균형에 초점',
+      description: '사회적 가치와 영리적 가치의 균형에 대한 발표',
       pitchingPoints: [
         '사회적 가치와 영리적 가치의 균형',
         '창업 초기 가치와 현재 방향성',
@@ -65,10 +65,9 @@ export default function InvestmentOverview() {
       name: 'Series C',
       description: '스타트업과의 직접적인 질의응답을 통한 최종 투자 결정',
       pitchingPoints: [
-        '16개 조로 나뉘어 진행되는 질의응답 세션',
-        '각 조당 5분씩 진행되는 심층 질의',
-        '최종 포트폴리오 리밸런싱',
-        '최종 수익률 결정',
+        '자유롭게 피칭과 발표를 들으며 생겼던 궁금점들을 질의응답',
+        '최종 포트폴리오 제출',
+        '스타트업과 학생팀 최종 매칭',
       ],
       icon: <Target className="size-6" />,
     },
@@ -132,7 +131,7 @@ export default function InvestmentOverview() {
           <div className="space-y-4 mt-6">
             <h3 className="text-lg font-semibold flex items-center">
               <Clock className="size-6 shrink-0 text-[#4CAF80]" />
-              주요 피칭 포인트
+              &nbsp;&nbsp;주요 진행 포인트
             </h3>
             <ul className="space-y-3 pl-2">
               {selectedRound.pitchingPoints.map((point, index) => (
