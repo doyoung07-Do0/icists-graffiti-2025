@@ -38,6 +38,16 @@ export async function middleware(request: NextRequest) {
 
   const isGuest = guestRegex.test(token?.email ?? '');
 
+  // Require authentication for secret routes
+  if (pathname.startsWith('/secret') && !token) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Prevent guests from accessing secret routes
+  if (pathname.startsWith('/secret') && isGuest) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   if (token && !isGuest && ['/login', '/register'].includes(pathname)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
@@ -52,6 +62,7 @@ export const config = {
     '/api/:path*',
     '/login',
     '/register',
+    '/secret/:path*',
 
     /*
      * Match all request paths except for the ones starting with:

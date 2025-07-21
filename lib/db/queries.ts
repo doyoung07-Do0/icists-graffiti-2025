@@ -81,6 +81,23 @@ export async function createGuestUser() {
   }
 }
 
+export async function updateUserPassword(userId: string, newPassword: string) {
+  const hashedPassword = generateHashedPassword(newPassword);
+
+  try {
+    return await db
+      .update(user)
+      .set({ password: hashedPassword })
+      .where(eq(user.id, userId))
+      .returning();
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to update user password',
+    );
+  }
+}
+
 export async function saveChat({
   id,
   userId,
@@ -546,7 +563,7 @@ export async function resetRoundState() {
   try {
     // First, delete all existing round states
     await db.delete(round_state).execute();
-    
+
     // Then insert the initial round states
     const rounds = await db
       .insert(round_state)
@@ -557,7 +574,7 @@ export async function resetRoundState() {
         { round: 'r4', status: 'locked' },
       ])
       .returning();
-      
+
     return rounds;
   } catch (error) {
     throw new ChatSDKError(
