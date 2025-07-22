@@ -39,9 +39,11 @@ export async function POST(request: Request) {
 
     // Calculate and update startup data
     await calculateAndUpdateStartupData(round);
+    console.log('Startup data updated');
 
     // Update round status to 'closed'
     await updateRoundStatus(round, 'closed');
+    console.log('Round status updated');
 
     // Broadcast round status update to all teams
     try {

@@ -195,12 +195,57 @@ export default function AdminDashboard() {
       const result = await response.json();
 
       if (result.success) {
+        // If closing round 4, perform team-startup matching
+        if (activeRound === 'r4') {
+          console.log('🎯 Round 4 closed, performing team-startup matching...');
+          try {
+            const matchingResponse = await fetch(
+              '/api/admin/team-startup-matching',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  round: 'r4',
+                }),
+              },
+            );
+
+            const matchingResult = await matchingResponse.json();
+
+            if (matchingResult.success) {
+              console.log('✅ Team-startup matching completed successfully');
+              setResetStatus(
+                `Successfully closed ${activeRound.toUpperCase()}. Startup valuations have been calculated and team-startup matching completed.`,
+              );
+            } else {
+              console.error(
+                '❌ Team-startup matching failed:',
+                matchingResult.error,
+              );
+              setResetStatus(
+                `Successfully closed ${activeRound.toUpperCase()}, but team-startup matching failed: ${matchingResult.error}`,
+              );
+            }
+          } catch (matchingError) {
+            console.error(
+              '❌ Error during team-startup matching:',
+              matchingError,
+            );
+            setResetStatus(
+              `Successfully closed ${activeRound.toUpperCase()}, but team-startup matching failed.`,
+            );
+          }
+        } else {
+          setResetStatus(
+            `Successfully closed ${activeRound.toUpperCase()}. Startup valuations have been calculated.`,
+          );
+        }
+
         // Refresh the round status and team data
         await fetchRoundStatus();
         await fetchTeamData();
-        setResetStatus(
-          `Successfully closed ${activeRound.toUpperCase()}. Startup valuations have been calculated.`,
-        );
       } else {
         throw new Error(result.error || 'Failed to close the round');
       }

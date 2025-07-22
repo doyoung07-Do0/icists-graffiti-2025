@@ -117,6 +117,7 @@ interface TeamRankingData {
 interface CumulativeRankingDisplayProps {
   currentRound: Round;
   teamName: string;
+  isRoundClosed?: boolean;
 }
 
 interface CumulativeInvestmentDisplayProps {
@@ -135,10 +136,14 @@ interface StartupData {
 const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
   currentRound,
   teamName,
+  isRoundClosed = false,
 }) => {
   const [rankingData, setRankingData] = useState<TeamRankingData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [matchingData, setMatchingData] = useState<any[]>([]);
+  const [isLoadingMatching, setIsLoadingMatching] = useState(false);
+  const [showMatchingModal, setShowMatchingModal] = useState(false);
 
   // Fetch ranking data (no caching)
   const fetchRankingData = useCallback(async () => {
@@ -166,6 +171,44 @@ const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
   useEffect(() => {
     fetchRankingData();
   }, [fetchRankingData]);
+
+  // ESC key handler for modal
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showMatchingModal) {
+        setShowMatchingModal(false);
+      }
+    };
+
+    if (showMatchingModal) {
+      document.addEventListener('keydown', handleEscKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [showMatchingModal]);
+
+  // Fetch matching results
+  const fetchMatchingResults = async () => {
+    try {
+      setIsLoadingMatching(true);
+      const response = await fetch('/api/admin/final-matching');
+      const result = await response.json();
+
+      if (result.success) {
+        setMatchingData(result.data);
+        setShowMatchingModal(true);
+      } else {
+        throw new Error(result.error || 'Failed to fetch matching results');
+      }
+    } catch (error) {
+      console.error('Error fetching matching results:', error);
+      setError('Failed to fetch matching results');
+    } finally {
+      setIsLoadingMatching(false);
+    }
+  };
 
   // Remove cache clearing and manual clearCache function
 
@@ -234,20 +277,53 @@ const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
         backgroundColor: '#0a0a0a',
       }}
     >
-      <h2
-        className="text-xl font-bold mb-6 text-center"
-        style={{
-          background:
-            'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          color: 'transparent',
-          display: 'inline-block',
-        }}
-      >
-        누적 투자금 및 순위
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2
+          className="text-xl font-bold text-center"
+          style={{
+            background:
+              'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            display: 'inline-block',
+          }}
+        >
+          누적 투자금 및 순위
+        </h2>
+
+        {/* Matching Results Button - Only show in round 4 when closed */}
+        {currentRound === 'r4' && isRoundClosed && (
+          <button
+            type="button"
+            onClick={fetchMatchingResults}
+            disabled={isLoadingMatching}
+            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+              isLoadingMatching
+                ? 'cursor-not-allowed opacity-50'
+                : 'active:scale-95 hover:bg-green-600'
+            }`}
+            style={{
+              background: isLoadingMatching
+                ? '#374151'
+                : 'linear-gradient(to right, rgb(50, 234, 112), rgb(34, 107, 59))',
+              border: 'none',
+              outline: 'none',
+              color: 'white',
+            }}
+          >
+            {isLoadingMatching ? (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white" />
+                <span>로딩 중...</span>
+              </div>
+            ) : (
+              '매칭 결과 확인하기'
+            )}
+          </button>
+        )}
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -477,6 +553,115 @@ const CumulativeRankingDisplay: React.FC<CumulativeRankingDisplayProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Matching Results Modal */}
+      {showMatchingModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setShowMatchingModal(false)}
+        >
+          <div
+            className="bg-gray-800 border border-gray-600 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3
+                className="text-xl font-bold"
+                style={{
+                  background:
+                    'linear-gradient(90deg, #D0D7B1 0%, rgb(18, 245, 101) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  display: 'inline-block',
+                }}
+              >
+                팀-스타트업 매칭 결과
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowMatchingModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {matchingData.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      <th className="text-center py-3 px-4 font-medium text-white">
+                        팀
+                      </th>
+                      <th className="text-center py-3 px-4 font-medium text-white">
+                        매칭된 스타트업
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matchingData.map((match) => (
+                      <tr
+                        key={match.team}
+                        className={`border-b border-gray-800 hover:bg-gray-800/50 ${
+                          match.team === teamName
+                            ? 'bg-green-900/30 border-l-4 border-l-green-500'
+                            : ''
+                        }`}
+                      >
+                        <td className="text-center py-3 px-4 font-medium">
+                          <span
+                            className={
+                              match.team === teamName
+                                ? 'text-white'
+                                : 'text-gray-400'
+                            }
+                          >
+                            {match.team}
+                          </span>
+                        </td>
+                        <td className="text-center py-3 px-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              match.team === teamName
+                                ? 'bg-green-600 text-white'
+                                : 'bg-gray-600 text-gray-300'
+                            }`}
+                          >
+                            {match.startup === 's1' && '베럴아이'}
+                            {match.startup === 's2' && '일리아스'}
+                            {match.startup === 's3' && '북엔드'}
+                            {match.startup === 's4' && '라스커'}
+                            {match.startup === 's5' && '뉴톤'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center text-gray-400 py-8">
+                매칭 결과가 없습니다.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -801,9 +986,6 @@ const PieChart: React.FC<PieChartProps> = ({
 }) => {
   const [teamData, setTeamData] = useState<TeamInvestmentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hoveredTeam, setHoveredTeam] = useState<TeamInvestmentData | null>(
-    null,
-  );
 
   // Fetch team investment data for this startup
   const fetchTeamInvestmentData = useCallback(async () => {
@@ -921,21 +1103,10 @@ const PieChart: React.FC<PieChartProps> = ({
               fill={slice.color}
               stroke="#1F2937"
               strokeWidth="1"
-              onMouseEnter={() => setHoveredTeam(slice.team)}
-              onMouseLeave={() => setHoveredTeam(null)}
-              className="cursor-pointer transition-opacity hover:opacity-80"
             />
           </g>
         ))}
       </svg>
-
-      {/* Hover tooltip */}
-      {hoveredTeam && (
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-gray-800 text-white text-xs px-2 py-1 rounded z-10 whitespace-nowrap">
-          Team {hoveredTeam.teamNumber}: $
-          {hoveredTeam.investment.toLocaleString()}
-        </div>
-      )}
     </div>
   );
 };
@@ -1156,7 +1327,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
                 </div>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="text-sm text-gray-400">
-                    $
+                    Cap: $
                     {startupData
                       .find((s) => s.startup === 's1')
                       ?.pre_cap?.toLocaleString() || 'N/A'}
@@ -1227,7 +1398,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
                 </div>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="text-sm text-gray-400">
-                    $
+                    Cap: $
                     {startupData
                       .find((s) => s.startup === 's2')
                       ?.pre_cap?.toLocaleString() || 'N/A'}
@@ -1273,7 +1444,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
                 </div>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="text-sm text-gray-400">
-                    $
+                    Cap: $
                     {startupData
                       .find((s) => s.startup === 's3')
                       ?.pre_cap?.toLocaleString() || 'N/A'}
@@ -1319,7 +1490,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
                 </div>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="text-sm text-gray-400">
-                    $
+                    Cap: $
                     {startupData
                       .find((s) => s.startup === 's4')
                       ?.pre_cap?.toLocaleString() || 'N/A'}
@@ -1365,7 +1536,7 @@ const OpenRound: React.FC<OpenRoundProps> = ({
                 </div>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="text-sm text-gray-400">
-                    $
+                    Cap: $
                     {startupData
                       .find((s) => s.startup === 's5')
                       ?.pre_cap?.toLocaleString() || 'N/A'}
@@ -2026,6 +2197,7 @@ export default function TeamDashboard({ teamName }: TeamDashboardProps) {
                       key={`ranking-${activeRound}`} // Add stable key
                       currentRound={activeRound}
                       teamName={teamName}
+                      isRoundClosed={currentRoundStatus === 'closed'}
                     />
                   )}
                 </div>

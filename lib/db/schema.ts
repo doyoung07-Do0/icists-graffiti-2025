@@ -222,3 +222,13 @@ export const startup_r3 = createStartupTable('r3');
 export const startup_r4 = createStartupTable('r4');
 
 export type StartupRound = InferSelectModel<typeof startup_r1>;
+
+// Final matching table to record team-startup matches
+export const final_matching = pgTable('final_matching', {
+  team: varchar('team', { length: 10 }).primaryKey(), // team1-team15
+  startup: varchar('startup', {
+    enum: ['s1', 's2', 's3', 's4', 's5'],
+  }).notNull(),
+});
+
+export type FinalMatching = InferSelectModel<typeof final_matching>;
